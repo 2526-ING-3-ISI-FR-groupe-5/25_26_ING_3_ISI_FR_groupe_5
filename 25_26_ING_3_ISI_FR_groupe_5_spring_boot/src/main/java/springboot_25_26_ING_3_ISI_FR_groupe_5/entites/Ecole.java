@@ -23,6 +23,8 @@ public class Ecole {
 
     @OneToMany(mappedBy = "ecole", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssistantPedagogique> assistantPedagogiques;
+
+
     public Ecole() {}
     public Ecole(String adresse, String email, int id, String nom, String telephone) {
         this.adresse = adresse;

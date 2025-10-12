@@ -25,19 +25,21 @@ public class UE {
 
 
     }
+    @ManyToOne
+    @JoinColumn(name = "semestre_id", nullable = false)
+    private Semestre semestre;
+
     @OneToMany(mappedBy = "ue", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Cours> cours;
 
-    // Relation : Appartenir à 1 Filiere
     @ManyToOne
     @JoinColumn(name = "filiere_id", nullable = false)
     private Filiere filiere;
 
-    // Relation : Gerer par 1..* Enseignant
     @ManyToMany(mappedBy = "ues")
     private List<Enseignant> enseignants;
 
-    // Constructeur
+    //
     public UE() {}
     public String getCode() {
         return code;

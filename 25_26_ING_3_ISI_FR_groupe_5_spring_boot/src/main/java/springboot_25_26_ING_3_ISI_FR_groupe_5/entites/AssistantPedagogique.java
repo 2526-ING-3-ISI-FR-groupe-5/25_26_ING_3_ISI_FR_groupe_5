@@ -16,9 +16,12 @@ public class AssistantPedagogique {
         this.nom = nom;
     }
     @ManyToOne
+    @JoinColumn(name = "ecole_id", nullable = false)
+    private Ecole ecole;
+
+    @ManyToOne
     @JoinColumn(name = "administrateur_id", nullable = false)
     private Administrateur administrateur;
-
 
     public AssistantPedagogique() {}
 
