@@ -19,16 +19,13 @@ public class Semestre {
     @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UE> ues;
 
-    // Relation : Englober 1..* Cours
     @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Cours> cours;
 
-    // Relation : Concerné par 1 Annee_academique
     @ManyToOne
     @JoinColumn(name = "annee_academique_id", nullable = false)
     private Annee_academique anneeAcademique;
 
-    // Constructeur
     public Semestre() {}
     public Semestre(int id, Date date_debut, Date date_fin,  Num_semestre semestre) {
         this.id = id;
