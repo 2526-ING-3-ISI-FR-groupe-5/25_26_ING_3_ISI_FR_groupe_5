@@ -3,22 +3,20 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 
 import java.util.Date;
-import java.util.List;
 
 @Entity
 
-public class FICHE_PRESENCE {
+public class Appels {
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private Date date;
     private Date date_debut;
     private Date date_fin;
-    @OneToMany(mappedBy = "fichePresence", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cours> cours;
+    private Long Nbre_heures;
 
-    public FICHE_PRESENCE() {}
-    public FICHE_PRESENCE(int id, Date date, Date date_debut, Date date_fin ) {
+    public Appels() {}
+    public Appels(int id, Date date, Date date_debut, Date date_fin ) {
         this.id = id;
 
         this.date = date;

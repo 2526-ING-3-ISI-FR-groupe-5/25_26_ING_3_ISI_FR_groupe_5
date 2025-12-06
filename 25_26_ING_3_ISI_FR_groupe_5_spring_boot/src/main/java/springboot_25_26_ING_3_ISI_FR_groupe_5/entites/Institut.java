@@ -27,11 +27,8 @@ public class Institut {
         this.telephone = telephone;
         this.ville = ville;
     }
-    @OneToMany(mappedBy = "institut", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Ecole> ecoles;
 
-    @ManyToOne
-    @JoinColumn(name = "administrateur_id", nullable = false)
+
     private Administrateur administrateur;
 
     public Institut() {}

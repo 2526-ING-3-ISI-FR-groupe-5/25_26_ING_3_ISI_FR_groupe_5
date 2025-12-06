@@ -14,6 +14,7 @@ public class UE {
     private String code;
     private int nb_heure;
     private int  credit;
+    private Date dateCreation;
 
     public UE(int id,  String nom , String code,  int nb_heure, int credit) {
         this.id = id;
@@ -25,19 +26,11 @@ public class UE {
 
 
     }
-    @ManyToOne
-    @JoinColumn(name = "semestre_id", nullable = false)
+
     private Semestre semestre;
 
-    @OneToMany(mappedBy = "ue", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cours> cours;
-
-    @ManyToOne
-    @JoinColumn(name = "filiere_id", nullable = false)
     private Filiere filiere;
 
-    @ManyToMany(mappedBy = "ues")
-    private List<Enseignant> enseignants;
 
     //
     public UE() {}

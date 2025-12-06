@@ -13,17 +13,10 @@ public class Ecole {
     private  String adresse;
     private  String email;
     private  String telephone;
-    @ManyToOne
-    @JoinColumn(name = "institut_id", nullable = false)
+
     private Institut institut;
 
-    @ManyToOne
-    @JoinColumn(name = "administrateur_id", nullable = false)
     private Administrateur administrateur;
-
-    @OneToMany(mappedBy = "ecole", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AssistantPedagogique> assistantPedagogiques;
-
 
     public Ecole() {}
     public Ecole(String adresse, String email, int id, String nom, String telephone) {

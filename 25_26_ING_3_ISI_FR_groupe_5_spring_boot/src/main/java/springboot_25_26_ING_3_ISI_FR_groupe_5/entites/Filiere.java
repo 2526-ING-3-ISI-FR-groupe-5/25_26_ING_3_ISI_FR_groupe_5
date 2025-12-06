@@ -15,14 +15,7 @@ public class Filiere {
     private String niveau;
     private String description;
 
-    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UE> ues;
 
-    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cycle> cycles;
-
-    @OneToMany(mappedBy = "filiere", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Etudiant> etudiants;
 
     public Filiere() {}
 
@@ -50,6 +43,5 @@ public class Filiere {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public List<Etudiant> getEtudiants() { return etudiants; }
-    public void setEtudiants(List<Etudiant> etudiants) { this.etudiants = etudiants; }
+
 }

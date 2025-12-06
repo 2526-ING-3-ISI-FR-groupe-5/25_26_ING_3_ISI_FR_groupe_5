@@ -6,7 +6,7 @@ import java.util.List;
 
 @Entity
 
-public class Enseignant {
+public class  Enseignant extends Utilisateur  {
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  int id;
@@ -14,14 +14,6 @@ public class Enseignant {
     private String email;
     private String grade;
     private String specialite;
-
-    @ManyToMany
-    @JoinTable(
-            name = "enseignant_ue",
-            joinColumns = @JoinColumn(name = "enseignant_id"),
-            inverseJoinColumns = @JoinColumn(name = "ue_id")
-    )
-    private List<UE> ues;
 
     public Enseignant() {}
 

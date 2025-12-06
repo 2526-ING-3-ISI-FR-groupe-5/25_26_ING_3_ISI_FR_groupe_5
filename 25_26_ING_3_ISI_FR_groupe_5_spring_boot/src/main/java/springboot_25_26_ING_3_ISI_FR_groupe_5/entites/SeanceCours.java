@@ -2,12 +2,9 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
-import java.util.List;
-
 @Entity
 
-public class Cours {
+public class SeanceCours {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  int id ;
@@ -15,33 +12,12 @@ public class Cours {
     private int  nb_heure;
     private  int nb_credit;
 
-    @ManyToOne
-    @JoinColumn(name = "fiche_presence_id", nullable = false)
-    private FICHE_PRESENCE fichePresence;
 
-    // Relation : Etabli pour 1..* Justificatif
-    @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Justificatif> justificatifs;
-
-    // Relation : Englober par 1 Semestre
-    @ManyToOne
-    @JoinColumn(name = "semestre_id", nullable = false)
-    private Semestre semestre;
-
-    // Relation : Contenu dans 1 UE
-    @ManyToOne
-    @JoinColumn(name = "ue_id", nullable = false)
-    private UE ue;
-
-    // Relation : Dispenser par 1 Enseignant
-    @ManyToOne
-    @JoinColumn(name = "enseignant_id", nullable = false)
-    private Enseignant enseignant;
 
     // Constructeur
-    public Cours() {}
+    public SeanceCours() {}
 
-    public Cours(int id, int nb_credit, int nb_heure, String titre) {
+    public SeanceCours(int id, int nb_credit, int nb_heure, String titre) {
         this.id = id;
         this.nb_credit = nb_credit;
         this.nb_heure = nb_heure;

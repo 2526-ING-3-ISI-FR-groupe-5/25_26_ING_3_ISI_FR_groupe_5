@@ -16,9 +16,6 @@ public class Annee_academique {
     private Date date_fin;
 
 
-    @OneToMany(mappedBy = "anneeAcademique", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Semestre> semestres;
-
     public Annee_academique() {}
 
     public Date getDate_debut() {

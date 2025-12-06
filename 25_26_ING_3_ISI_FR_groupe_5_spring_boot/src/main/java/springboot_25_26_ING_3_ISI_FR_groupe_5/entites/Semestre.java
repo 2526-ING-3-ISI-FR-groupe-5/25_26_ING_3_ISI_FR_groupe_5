@@ -16,14 +16,7 @@ public class Semestre {
     private Num_semestre semestre;
     private Date date_debut;
     private Date date_fin;
-    @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UE> ues;
 
-    @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Cours> cours;
-
-    @ManyToOne
-    @JoinColumn(name = "annee_academique_id", nullable = false)
     private Annee_academique anneeAcademique;
 
     public Semestre() {}

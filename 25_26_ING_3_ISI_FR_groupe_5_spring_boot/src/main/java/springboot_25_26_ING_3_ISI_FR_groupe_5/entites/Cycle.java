@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 
 import jakarta.persistence.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeNiveau;
+
 @Entity
 public class Cycle {
     @Id
@@ -17,12 +18,7 @@ public class Cycle {
         this.specialite = specialite;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "administrateur_id", nullable = false)
     private Administrateur administrateur;
-
-    @ManyToOne
-    @JoinColumn(name = "filiere_id", nullable = false)
     private Filiere filiere;
 
     // Constructeur

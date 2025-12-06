@@ -6,7 +6,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
 import java.util.Date;
 
 @Entity
-public class Etudiant {
+public class Etudiant extends Utilisateur {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,11 +25,8 @@ public class Etudiant {
     @Enumerated(EnumType.STRING)
     private TypeSexe sexe;
 
-    @Temporal(TemporalType.DATE)
     private Date date_naissance;
 
-    @ManyToOne
-    @JoinColumn(name = "filiere_id")
     private Filiere filiere;
 
     public Etudiant() {}

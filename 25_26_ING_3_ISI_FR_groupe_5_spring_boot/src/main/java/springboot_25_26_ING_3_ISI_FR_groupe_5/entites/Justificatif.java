@@ -19,9 +19,8 @@ public class Justificatif {
         this.justificatif = justificatif;
         this.status = status;
     }
-    @ManyToOne
-    @JoinColumn(name = "cours_id", nullable = false)
-    private Cours cours;
+
+    private SeanceCours seanceCours;
 
     public Justificatif() {}
 
