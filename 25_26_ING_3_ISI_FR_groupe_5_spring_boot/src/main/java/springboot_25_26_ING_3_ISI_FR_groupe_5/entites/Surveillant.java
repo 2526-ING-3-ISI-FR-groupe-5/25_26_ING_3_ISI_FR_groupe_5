@@ -4,54 +4,20 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-public class Surveillant  extends  Utilisateur{
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-        private  int id;
+
+public class Surveillant{
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private  Long id;
         private String nom;
         private String email;
         private  String telephone;
-
-    public Surveillant() {}
-    public Surveillant(int id,String email,  String nom, String telephone) {
-        this.id = id;
-
-        this.email = email;
-        this.nom = nom;
-        this.telephone = telephone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
 }

@@ -1,15 +1,21 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import jdk.jfr.DataAmount;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
 
 import java.util.Date;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
 
-public class Utilisateur {
+public abstract class Utilisateur {
+   @Id
+   @GeneratedValue(strategy = GenerationType.TABLE)
     protected Long id;
     protected String nom;
     @Column(unique = true)

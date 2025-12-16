@@ -1,91 +1,24 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Institut {
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  int id;
+    private  Long id;
     private  String nom;
     private  String ville;
     private  String adresse;
     private  String email;
     private  String telephone;
     private  String localite;
-
-
-    public Institut(int id, String adresse, String email,  String localite, String nom, String telephone, String ville) {
-        this.id = id;
-
-        this.adresse = adresse;
-        this.email = email;
-        this.localite = localite;
-        this.nom = nom;
-        this.telephone = telephone;
-        this.ville = ville;
-    }
-
-
-    private Administrateur administrateur;
-
-    public Institut() {}
-
-    public String getNom() {
-        return nom;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public String getAdresse() {
-        return adresse;
-    }
-
-    public void setAdresse(String adresse) {
-        this.adresse = adresse;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getLocalite() {
-        return localite;
-    }
-
-    public void setLocalite(String localite) {
-        this.localite = localite;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
-
-    public String getVille() {
-        return ville;
-    }
-
-    public void setVille(String ville) {
-        this.ville = ville;
-    }
 }
