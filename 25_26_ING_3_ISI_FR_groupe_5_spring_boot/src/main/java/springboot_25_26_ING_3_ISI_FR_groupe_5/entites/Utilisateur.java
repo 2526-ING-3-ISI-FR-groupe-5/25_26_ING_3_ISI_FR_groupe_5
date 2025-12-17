@@ -12,6 +12,9 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Inheritance
+@DiscriminatorColumn(name="Type", length = 3)
+//Administrateur=ADM, AssPeda= ASP, Enseignant=ENS, Etudiant=ETD, Parent=PRT, Surveillant=SRV
 
 public abstract class Utilisateur {
    @Id

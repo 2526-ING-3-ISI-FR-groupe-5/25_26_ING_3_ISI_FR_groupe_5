@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DiscriminatorValue("ASP")
 
-public class AssistantPedagogique {
+public class AssistantPedagogique extends Utilisateur {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
