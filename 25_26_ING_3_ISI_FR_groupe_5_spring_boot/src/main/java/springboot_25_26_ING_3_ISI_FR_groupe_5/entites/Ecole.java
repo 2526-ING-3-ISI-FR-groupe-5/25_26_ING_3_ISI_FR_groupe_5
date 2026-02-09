@@ -24,4 +24,6 @@ public class Ecole {
     private Collection<Cycle> cycles;
     @OneToMany(mappedBy = "ecoles")
     private Collection<AssistantPedagogique> assistantPedagogiques;
+    @ManyToOne
+    private Institut institut;
 }

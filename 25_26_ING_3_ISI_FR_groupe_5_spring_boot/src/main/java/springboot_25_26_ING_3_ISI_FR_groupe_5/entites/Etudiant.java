@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeNiveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
+
+import java.util.Collection;
 import java.util.Date;
 
 @Data
@@ -31,12 +34,14 @@ public class Etudiant extends Utilisateur {
 
     @Enumerated(EnumType.STRING)
     private TypeSexe sexe;
-
+    @Temporal(TemporalType.DATE)
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date date_naissance;
      @ManyToOne
     private Parent parent;
      @ManyToOne
     private Filiere filiere;
-     @ManyToOne
-    private Appels appels;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<Appels> appels;
+
 }

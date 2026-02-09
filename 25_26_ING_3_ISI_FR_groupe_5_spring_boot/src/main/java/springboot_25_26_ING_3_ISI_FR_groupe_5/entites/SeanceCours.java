@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,14 @@ public class SeanceCours {
     private  String titre;
     private Long  nb_heure;
     private  Long nb_credit;
+    @ManyToOne
+    private Collection<Justificatif>  justificatifs;
+    @ManyToOne
+    private Collection<UE> ues;
+    @OneToMany(mappedBy = "seancecours")
+    private Collection<Appels> appels;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<Semestre> semestres;
+    @ManyToMany(mappedBy = "seancecours")
+    private Collection<Enseignant> enseignants;
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.Num_semestre;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -21,5 +22,7 @@ public class Annee_academique {
     private  String nom;
     private Date date_debut;
     private Date date_fin;
+    @OneToMany(mappedBy = "annee_academique")
+    private Collection<Semestre> semestres;
 
 }

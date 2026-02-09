@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,4 +20,6 @@ public class Surveillant extends Utilisateur{
         private String nom;
         private String email;
         private  String telephone;
+        @ManyToMany(fetch = FetchType.EAGER)
+        private Collection<Appels> appels;
 }

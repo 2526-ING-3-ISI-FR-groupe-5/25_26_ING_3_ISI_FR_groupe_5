@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -21,4 +22,10 @@ public class  Enseignant extends Utilisateur  {
     private String email;
     private String grade;
     private String specialite;
+    @OneToMany(mappedBy = "enseignant")
+    private Collection<ValidationPresence> validationPresences;
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Collection<SeanceCours> seancecours;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<Appels> appels;
 }

@@ -25,4 +25,6 @@ public class Filiere {
 
     @OneToMany(mappedBy = "filiere")
     private Collection<Etudiant> etudiants;
+    @OneToMany(mappedBy = "filiere")
+    private Collection<Cycle> cycles;
 }

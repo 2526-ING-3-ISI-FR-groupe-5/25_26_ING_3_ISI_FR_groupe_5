@@ -19,4 +19,6 @@ public class Cycle {
     private String  specialite;
     @ManyToOne
     private Ecole ecoles;
+    @ManyToOne
+    private Filiere filiere;
 }

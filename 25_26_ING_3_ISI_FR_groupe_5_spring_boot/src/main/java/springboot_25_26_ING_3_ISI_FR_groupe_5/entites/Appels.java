@@ -22,6 +22,10 @@ public class Appels {
     private Date date_debut;
     private Date date_fin;
     private Long Nbre_heures;
-    @OneToMany(mappedBy ="appels")
+    @ManyToOne
+    private SeanceCours seanceCours;
+    @ManyToMany(mappedBy = "appels")
     private Collection<Etudiant> etudiants;
+    private Collection<Enseignant> enseignants;
+    private Collection<Surveillant> surveillants;
 }

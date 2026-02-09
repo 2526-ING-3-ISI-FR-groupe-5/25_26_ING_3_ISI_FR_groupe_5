@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeJustificatif;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -22,4 +24,6 @@ public class UE {
     private Long nb_heure;
     private Long  credit;
     private Date dateCreation;
+    @ManyToOne
+    private Justificatif justificatif;
 }

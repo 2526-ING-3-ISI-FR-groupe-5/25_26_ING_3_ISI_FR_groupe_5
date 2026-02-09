@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
 
+import java.util.Collection;
 import java.util.Date;
 @Data
 @NoArgsConstructor
@@ -29,5 +30,8 @@ public abstract class Utilisateur {
     protected TypeSexe sexe;
     protected Boolean active;
     protected Date dateCreation;
-
+    @OneToOne
+    private Localisation localisation;
+    @ManyToMany(mappedBy = "utilisateurs")
+    private Collection<Role> roles;
 }

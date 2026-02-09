@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -21,4 +22,6 @@ public class Institut {
     private  String email;
     private  String telephone;
     private  String localite;
+    @OneToMany(mappedBy = "institut")
+    private Collection<Ecole> ecoles;
 }
