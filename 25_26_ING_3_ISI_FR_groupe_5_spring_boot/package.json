@@ -1,0 +1,25 @@
+{
+  "name": "25_26_ing_3_isi_fr_groupe_5_spring_boot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "tailwind:watch": " tailwindcss -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --watch",
+    "tailwind:minify": " tailwindcss -i ./src/main/resources/static/css/input.css -o ./src/main/resources/static/css/output.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2526-ING-3-ISI-FR-groupe-5/25_26_ING_3_ISI_FR_groupe_5.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/2526-ING-3-ISI-FR-groupe-5/25_26_ING_3_ISI_FR_groupe_5/issues"
+  },
+  "homepage": "https://github.com/2526-ING-3-ISI-FR-groupe-5/25_26_ING_3_ISI_FR_groupe_5#readme",
+  "description": "",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "daisyui": "^5.5.18",
+    "tailwindcss": "^4.1.18"
+  }
+}
