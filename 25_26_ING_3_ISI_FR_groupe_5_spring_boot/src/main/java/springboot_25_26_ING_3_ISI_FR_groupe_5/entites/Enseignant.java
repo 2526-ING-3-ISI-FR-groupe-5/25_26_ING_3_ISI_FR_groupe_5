@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,8 +24,8 @@ public class  Enseignant extends Utilisateur  {
     private String specialite;
     @OneToMany(mappedBy = "enseignant")
     private Collection<ValidationPresence> validationPresences;
-    @ManyToMany(fetch = FetchType.LAZY)
-    private Collection<SeanceCours> seancecours;
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Appels> appels;
+    @ManyToMany(mappedBy = "enseignant")
+    private Collection<SeanceCours> seancecours =new ArrayList<>();
+    @ManyToMany(mappedBy = "enseignant")
+    private Collection<Appels> appels = new ArrayList<>();
 }

@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,4 +26,8 @@ public class Ecole {
     private Collection<AssistantPedagogique> assistantPedagogiques;
     @ManyToOne
     private Institut institut;
+    @OneToMany(mappedBy = "ecoles")
+    private  Collection<Cycle> cycle;
+    @ManyToMany
+    private Collection<Administrateur> administrateurs= new ArrayList<>();
 }

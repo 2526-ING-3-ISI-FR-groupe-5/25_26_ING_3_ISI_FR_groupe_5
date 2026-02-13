@@ -24,6 +24,7 @@ public class UE {
     private Long nb_heure;
     private Long  credit;
     private Date dateCreation;
+    //***** Arevoir
     @ManyToOne
     private Justificatif justificatif;
 }

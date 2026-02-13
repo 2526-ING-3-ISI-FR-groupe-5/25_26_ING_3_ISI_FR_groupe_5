@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 @Getter
@@ -19,14 +20,14 @@ public class SeanceCours {
     private  String titre;
     private Long  nb_heure;
     private  Long nb_credit;
-    @ManyToOne
-    private Collection<Justificatif>  justificatifs;
-    @ManyToOne
-    private Collection<UE> ues;
-    @OneToMany(mappedBy = "seancecours")
-    private Collection<Appels> appels;
     @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Semestre> semestres;
-    @ManyToMany(mappedBy = "seancecours")
-    private Collection<Enseignant> enseignants;
+    private Collection<Semestre> semestre=new ArrayList<>();
+    @ManyToOne
+    private Appels appels;
+    @ManyToMany
+    private Collection<Enseignant> enseignant= new ArrayList<>();
+    @ManyToOne
+    private Justificatif justificatif;
+    @ManyToOne
+    private UE ue;
 }

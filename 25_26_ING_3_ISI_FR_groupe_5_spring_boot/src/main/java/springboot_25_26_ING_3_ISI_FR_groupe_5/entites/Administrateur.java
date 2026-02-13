@@ -17,5 +17,13 @@ public class Administrateur extends Utilisateur{
     private String nom;
     private String email;
     private  String telephone;
+    @ManyToMany(mappedBy = "administrateurs")
+    private Collection<Ecole> ecoles= new ArrayList<>();
+    @ManyToMany(mappedBy = "administrateur")
+    private  Collection<Institut> instituts= new ArrayList<>();
+    @ManyToMany(mappedBy = "administrateurs")
+    private  Collection<Filiere> filieres= new ArrayList<>();
+    @ManyToMany(mappedBy = "admin")
+    private  Collection<Utilisateur> utilisateurs= new ArrayList<>();
 
 }

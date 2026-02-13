@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,5 +22,5 @@ public class Permission {
     private  String description;
     private Date dateCreation;
    @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Role> roles;
+   private Set<Role> roles = new HashSet<>();
 }

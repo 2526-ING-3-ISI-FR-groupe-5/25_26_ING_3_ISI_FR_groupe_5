@@ -3,8 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 @Getter
 @Setter
@@ -23,6 +22,8 @@ public class Role {
     @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     private Collection<Permission> permissions;
     @ManyToMany(fetch = FetchType.LAZY)
-    private Collection<Role> roles;
+    private Set<Permission> permission= new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    private  Collection<Utilisateur> utilisateur=new ArrayList<>();
 
 }

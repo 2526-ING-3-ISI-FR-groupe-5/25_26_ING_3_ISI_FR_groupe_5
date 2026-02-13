@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.Num_semestre;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Semestre {
     private Date date_fin;
     @ManyToOne
     private Annee_academique annee_academique;
-    @ManyToMany(mappedBy = "semestres")
-    private Collection<SeanceCours> seancecours;
+    @ManyToMany(mappedBy = "semestre")
+    private Collection<SeanceCours> seancecours= new ArrayList<>();
 }
 //1FQCOMJH9J8@2025

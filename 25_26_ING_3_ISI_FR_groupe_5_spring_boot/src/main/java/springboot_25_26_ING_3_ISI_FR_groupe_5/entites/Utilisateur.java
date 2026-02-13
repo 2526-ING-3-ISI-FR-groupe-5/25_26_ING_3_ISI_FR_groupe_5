@@ -5,8 +5,8 @@ import jdk.jfr.DataAmount;
 import lombok.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
 
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
+
 @Getter
 @Setter
 @Builder
@@ -32,6 +32,13 @@ public abstract class Utilisateur {
     protected Date dateCreation;
     @OneToOne
     private Localisation localisation;
+    @ManyToMany(mappedBy = "utilisateur")
+    private Set<Role> roles= new HashSet<>();
     @ManyToMany(mappedBy = "utilisateurs")
-    private Collection<Role> roles;
+    private  Collection<Institut> institutCollection= new ArrayList<>();
+
+    @OneToMany(mappedBy = "utilisateur")
+    private Collection<Localisation> localisations;
+    @ManyToMany
+    private Collection<Administrateur> admin=new ArrayList<>();
 }

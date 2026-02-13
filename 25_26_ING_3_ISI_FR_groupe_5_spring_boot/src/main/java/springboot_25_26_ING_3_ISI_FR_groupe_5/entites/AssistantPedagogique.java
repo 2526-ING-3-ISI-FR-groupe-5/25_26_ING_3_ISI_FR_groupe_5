@@ -21,6 +21,9 @@ public class AssistantPedagogique extends Utilisateur {
     private String email;
     @ManyToOne
     private Ecole ecoles;
+
     @OneToMany(mappedBy = "assistantPedagogique")
-    private Collection<Justificatif> justificatifs;
+    private Collection<Appels> appels;
+    @OneToMany(mappedBy = "assistantPedagogique")
+    private Collection<Justificatif> justificatif;
 }

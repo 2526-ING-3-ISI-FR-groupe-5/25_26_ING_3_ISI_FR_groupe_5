@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import java.util.List;
@@ -23,4 +24,8 @@ public class Institut {
     private  String localite;
     @OneToMany(mappedBy = "institut")
     private Collection<Ecole> ecoles;
+    @ManyToMany
+    private Collection<Utilisateur> utilisateurs= new ArrayList<>();
+    @ManyToMany
+    private  Collection<Administrateur> administrateur= new ArrayList<>();
 }
