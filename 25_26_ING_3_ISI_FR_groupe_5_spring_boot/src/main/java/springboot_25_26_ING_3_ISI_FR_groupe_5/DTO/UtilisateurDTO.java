@@ -26,13 +26,5 @@ public abstract class UtilisateurDTO {
     private LocalDateTime derniereConnexion;
 
 
-    public UtilisateurDTO(Long id, String nom, String email, String role) {
-        this.id = id;
-        this.nom = nom;
-        this.email = email;
-        this.role = role;
-        this.status = "ACTIF";
-        this.dateCreation = LocalDateTime.now();
-    }
 }
 

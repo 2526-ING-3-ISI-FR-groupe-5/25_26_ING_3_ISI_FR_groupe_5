@@ -1,9 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
 import jakarta.persistence.*;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeNiveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
@@ -11,7 +9,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.enums.TypeSexe;
 import java.util.Collection;
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -41,7 +40,7 @@ public class Etudiant extends Utilisateur {
     private Parent parent;
      @ManyToOne
     private Filiere filiere;
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany
     private Collection<Appels> appels;
 
 }

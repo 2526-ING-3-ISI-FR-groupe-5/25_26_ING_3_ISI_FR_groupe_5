@@ -30,12 +30,7 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
-            <scope>provided</scope>
-        </dependency>
+
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -46,7 +41,8 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version> <!-- ou 2.8.0 si dispo et testé stable -->
+            <version>2.6.0</version>
+            <!-- ou 2.8.0 si dispo et testé stable -->
         </dependency>
         <dependency>
             <groupId>io.github.wimdeblauwe</groupId>
