@@ -1,4 +1,4 @@
-package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.Entites;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,7 +11,6 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,11 +18,13 @@ public class Role {
     private String nom;
     private  String description;
     private Date dateCreation;
+    private  Boolean active;
     @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     private Collection<Permission> permissions;
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<Permission> permission= new HashSet<>();
     @ManyToMany(fetch = FetchType.EAGER)
     private  Collection<Utilisateur> utilisateur=new ArrayList<>();
+
 
 }

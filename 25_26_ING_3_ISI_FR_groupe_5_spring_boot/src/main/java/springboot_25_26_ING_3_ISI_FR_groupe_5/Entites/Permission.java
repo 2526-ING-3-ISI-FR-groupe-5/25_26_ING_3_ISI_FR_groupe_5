@@ -1,9 +1,8 @@
-package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.Entites;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,8 +18,11 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String nom;
+    private  Boolean active;
     private  String description;
     private Date dateCreation;
    @ManyToMany(fetch = FetchType.EAGER)
    private Set<Role> roles = new HashSet<>();
+
+
 }

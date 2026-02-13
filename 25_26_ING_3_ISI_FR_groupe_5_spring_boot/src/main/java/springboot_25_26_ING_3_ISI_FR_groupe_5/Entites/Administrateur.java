@@ -1,8 +1,7 @@
-package springboot_25_26_ING_3_ISI_FR_groupe_5.entites;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.Entites;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 @Getter
 @Setter
 @Builder
