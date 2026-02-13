@@ -15,12 +15,7 @@ import java.util.Collection;
 @DiscriminatorValue("SRV")
 
 public class Surveillant extends Utilisateur{
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private  Long id;
-        private String nom;
-        private String email;
-        private  String telephone;
+
         @ManyToMany(mappedBy = "surveillant")
         private Collection<Appels> appels= new ArrayList<>();
 }

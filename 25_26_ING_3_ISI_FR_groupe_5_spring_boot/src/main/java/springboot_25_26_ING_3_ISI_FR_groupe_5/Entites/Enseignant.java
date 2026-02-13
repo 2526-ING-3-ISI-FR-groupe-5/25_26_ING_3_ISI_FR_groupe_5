@@ -14,11 +14,8 @@ import java.util.Collection;
 @DiscriminatorValue("ENS")
 
 public class  Enseignant extends Utilisateur  {
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
-    private String nom;
-    private String email;
+
+
     private String grade;
     private String specialite;
     @OneToMany(mappedBy = "enseignant")

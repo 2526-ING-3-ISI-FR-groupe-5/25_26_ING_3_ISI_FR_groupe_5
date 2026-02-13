@@ -22,8 +22,8 @@ public class Justificatif {
     private TypeJustificatif  justificatif ;
     @ManyToOne
     private AssistantPedagogique assistantPedagogique;
-    @OneToMany(mappedBy = "justificatif")
+    @OneToMany(mappedBy = "justificatifs")
     private Collection<SeanceCours> seance;
-    @ManyToMany(mappedBy = "justificatif")
+    @ManyToMany(mappedBy = "justificatifs")
     private  Collection<Fichier> fichier= new ArrayList<>();
 }

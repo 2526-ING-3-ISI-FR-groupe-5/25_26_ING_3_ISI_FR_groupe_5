@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.aspectj.bridge.IMessage;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,7 +18,6 @@ import java.util.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -30,10 +30,13 @@ public abstract class Utilisateur  implements UserDetails {
     @GeneratedValue(strategy = GenerationType.TABLE)
     protected Long id;
 
-
     @NotBlank(message = "Le nom ne peut pas être vide.")
     @Size(min = 1, max = 100, message = "Le nom doit contenir entre 1 et 100 caractères.")
     protected String nom;
+    @NotBlank(message = "Le nom ne peut pas être vide.")
+    @Size(min = 1, max = 100, message = "Le nom doit contenir entre 1 et 100 caractères.")
+    protected String prenom;
+    protected String adresse;
 
     @Column(unique = true)
     @NotBlank(message = "L'email ne peut pas être vide.")
@@ -45,7 +48,8 @@ public abstract class Utilisateur  implements UserDetails {
 
     @NotBlank(message = "Le mot de passe ne peut pas être vide.")
     @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères.")
-    protected String motDePasse;
+    private String password;
+
 
     @Enumerated(EnumType.STRING)
     @NotBlank(message = "Le sexe ne peut pas être nul.")
@@ -57,6 +61,7 @@ public abstract class Utilisateur  implements UserDetails {
     @NotNull(message = "La date de création ne peut pas être nulle.")
     @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @NotBlank(message=" La Date est requise est sous la forme  yyyy-MM-dd ")
     protected Date dateCreation;
     @OneToOne
     private Localisation localisation;
@@ -70,11 +75,8 @@ public abstract class Utilisateur  implements UserDetails {
     @ManyToMany
     private Collection<Administrateur> admin=new ArrayList<>();
 
-   @Column(nullable = false)
-   private String password;
 
-   // 🔐 Etat du compte
-   private boolean enabled = false;          // email confirmé ?
+   private boolean enabled = false;
    private boolean accountLocked = false;
 
 
@@ -82,7 +84,6 @@ public abstract class Utilisateur  implements UserDetails {
    private String otpCode;
    private LocalDateTime otpExpiration;
 
-   // 🔐 Sécurité
    private int loginAttempts = 0;
    private LocalDateTime lastLogin;
 

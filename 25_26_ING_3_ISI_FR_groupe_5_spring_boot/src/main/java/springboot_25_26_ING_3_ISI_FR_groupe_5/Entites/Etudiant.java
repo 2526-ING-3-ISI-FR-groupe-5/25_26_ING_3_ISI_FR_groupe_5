@@ -16,25 +16,13 @@ import java.util.Date;
 @DiscriminatorValue("ETD")
 public class Etudiant extends Utilisateur {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    private String nom;
-    private String prenom;
-    private String email;
-    private String adresse;
-    private String telephone;
     private String matricule;
-
     @Enumerated(EnumType.STRING)
     private TypeNiveau niveau;
-
-    @Enumerated(EnumType.STRING)
-    private TypeSexe sexe;
     @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date_naissance;
+    private Date dateNaissance;
      @ManyToOne
     private Parent parent;
      @ManyToOne

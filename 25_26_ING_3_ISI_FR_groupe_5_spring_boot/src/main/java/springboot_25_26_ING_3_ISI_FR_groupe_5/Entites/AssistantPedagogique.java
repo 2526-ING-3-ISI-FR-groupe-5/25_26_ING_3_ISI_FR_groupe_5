@@ -14,11 +14,7 @@ import java.util.Collection;
 @DiscriminatorValue("ASP")
 
 public class AssistantPedagogique extends Utilisateur {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
-    private String nom;
-    private String email;
+
     @ManyToOne
     private Ecole ecoles;
 

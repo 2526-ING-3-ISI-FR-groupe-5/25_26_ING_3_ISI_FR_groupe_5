@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entites;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 @Getter
@@ -16,6 +17,8 @@ public class Localisation {
     private  Long id;
     private  Double Longitude ;
     private  Double Latitude;
+    @Temporal(TemporalType.DATE)
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date date;
     @OneToOne
     private Utilisateur utilisateur;

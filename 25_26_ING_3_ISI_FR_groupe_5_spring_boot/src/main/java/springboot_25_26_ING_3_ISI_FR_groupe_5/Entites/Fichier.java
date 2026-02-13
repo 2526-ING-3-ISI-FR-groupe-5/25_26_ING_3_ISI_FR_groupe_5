@@ -17,6 +17,6 @@ public class Fichier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
     private  String nomFichier;
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany
     private Collection<Justificatif> justificatifs;
 }

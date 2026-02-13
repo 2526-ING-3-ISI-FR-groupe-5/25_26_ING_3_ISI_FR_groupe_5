@@ -27,7 +27,7 @@ public class SeanceCours {
     @ManyToMany
     private Collection<Enseignant> enseignant= new ArrayList<>();
     @ManyToOne
-    private Justificatif justificatif;
+    private Justificatif justificatifs;
     @ManyToOne
     private UE ue;
 }
