@@ -6,13 +6,11 @@ import lombok.*;
 import java.util.List;
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class AdministrateurDTO extends UtilisateurDTO{
-    private  Long id;
-    private String nom;
-    private String email;
-    private  String telephone;
+    private List<Long> ecoleIds;
+    private List<Long> institutIds;
+    private List<Long> filiereIds;
+
 }
 

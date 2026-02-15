@@ -23,8 +23,6 @@ public class Permission {
     @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date dateCreation;
-   @ManyToMany(fetch = FetchType.EAGER)
-   private Set<Role> roles = new HashSet<>();
-
-
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Set<Role> roles = new HashSet<>();
 }

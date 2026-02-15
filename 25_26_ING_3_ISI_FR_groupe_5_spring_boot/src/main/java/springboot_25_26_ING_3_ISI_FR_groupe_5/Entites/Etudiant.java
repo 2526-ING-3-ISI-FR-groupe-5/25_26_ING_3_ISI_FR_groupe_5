@@ -15,8 +15,6 @@ import java.util.Date;
 @Entity
 @DiscriminatorValue("ETD")
 public class Etudiant extends Utilisateur {
-
-
     private String matricule;
     @Enumerated(EnumType.STRING)
     private TypeNiveau niveau;
