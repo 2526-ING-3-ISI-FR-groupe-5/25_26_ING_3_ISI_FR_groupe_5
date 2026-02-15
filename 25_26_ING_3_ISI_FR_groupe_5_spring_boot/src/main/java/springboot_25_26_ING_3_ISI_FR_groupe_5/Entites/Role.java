@@ -32,6 +32,4 @@ public class Role {
     private Set<Permission> permission= new HashSet<>();
     @ManyToMany(fetch = FetchType.EAGER)
     private  Collection<Utilisateur> utilisateur=new ArrayList<>();
-
-
 }

@@ -30,4 +30,8 @@ public class Etudiant extends Utilisateur {
     @ManyToMany
     private Collection<Appels> appels;
 
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

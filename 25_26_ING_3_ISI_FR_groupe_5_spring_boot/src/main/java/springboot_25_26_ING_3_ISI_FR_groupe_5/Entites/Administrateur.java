@@ -24,4 +24,8 @@ public class Administrateur extends Utilisateur{
     @ManyToMany(mappedBy = "admin")
     private  Collection<Utilisateur> utilisateurs= new ArrayList<>();
 
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

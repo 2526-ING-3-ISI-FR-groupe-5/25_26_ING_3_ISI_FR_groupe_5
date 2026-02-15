@@ -22,6 +22,7 @@ import java.util.*;
 @AllArgsConstructor
 @Entity
 @Inheritance
+@Table(name="utilisateur")
 @DiscriminatorColumn(name="Type", length = 3)
 //Administrateur=ADM, AssPeda= ASP, Enseignant=ENS, Etudiant=ETD, Parent=PRT, Surveillant=SRV
 
@@ -55,7 +56,7 @@ public abstract class Utilisateur  implements UserDetails {
     @NotBlank(message = "Le sexe ne peut pas être nul.")
     protected TypeSexe sexe;
 
-    protected Boolean active;
+    protected Boolean active = false;
     private boolean firstLogin = true;
 
     @NotNull(message = "La date de création ne peut pas être nulle.")
@@ -107,6 +108,13 @@ public abstract class Utilisateur  implements UserDetails {
     return authorities;
    }
 
+   @OneToOne(cascade = CascadeType.ALL)
+   private Role role;
+
+   public Collection<? extends GrantedAuthority> getAuthoritiesRole() {
+       return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + this.role.getNom()));
+   }
+
    @Override
    public String getUsername() {
     return email;
@@ -131,4 +139,6 @@ public abstract class Utilisateur  implements UserDetails {
    public boolean isEnabled() {
     return enabled;
    }
+
+    public abstract boolean isPresent();
 }

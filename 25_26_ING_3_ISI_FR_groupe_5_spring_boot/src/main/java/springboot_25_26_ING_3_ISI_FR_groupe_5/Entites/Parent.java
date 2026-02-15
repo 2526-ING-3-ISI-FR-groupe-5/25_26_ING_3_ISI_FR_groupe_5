@@ -14,4 +14,9 @@ import java.util.Collection;
 public class Parent extends Utilisateur{
     @OneToMany(mappedBy ="parent")
     private Collection <Etudiant> etudiants;
+
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

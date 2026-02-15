@@ -24,4 +24,9 @@ public class  Enseignant extends Utilisateur  {
     private Collection<SeanceCours> seancecours =new ArrayList<>();
     @ManyToMany(mappedBy = "enseignant")
     private Collection<Appels> appels = new ArrayList<>();
+
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

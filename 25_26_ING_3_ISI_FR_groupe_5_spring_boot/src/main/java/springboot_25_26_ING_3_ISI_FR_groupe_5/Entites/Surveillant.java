@@ -18,4 +18,9 @@ public class Surveillant extends Utilisateur{
 
         @ManyToMany(mappedBy = "surveillant")
         private Collection<Appels> appels= new ArrayList<>();
+
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }

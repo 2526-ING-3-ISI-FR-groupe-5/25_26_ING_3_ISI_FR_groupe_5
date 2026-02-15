@@ -24,6 +24,17 @@ services:
       - db
     networks:
       - app-network
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    restart: on-failure
+    ports:
+      # Change the number before : to the port the web interface should be accessible on
+      # Add 127.0.0.1: prefix for localhost-only access (recommended for security)
+      - '8081:80'
+      # Change the number before : to the port the SMTP server should be accessible on
+      # Add 127.0.0.1: prefix for localhost-only access (recommended for security)
+      - '25:25'
+
 
   app:
     build:

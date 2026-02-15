@@ -22,4 +22,9 @@ public class AssistantPedagogique extends Utilisateur {
     private Collection<Appels> appels;
     @OneToMany(mappedBy = "assistantPedagogique")
     private Collection<Justificatif> justificatif;
+
+    @Override
+    public boolean isPresent() {
+        return false;
+    }
 }
