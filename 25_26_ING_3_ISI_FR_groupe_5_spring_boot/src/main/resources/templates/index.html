@@ -55,19 +55,27 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+        /* Scrollbar spécifique pour le tableau */
+        .table-scrollbar::-webkit-scrollbar { height: 6px; }
+        .table-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-scrollbar::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body class="bg-base-200 text-slate-900 h-screen overflow-hidden font-sans">
 
-<div class="flex h-full">
+<div class="flex h-full relative">
 
-    <aside class="w-[280px] bg-white border-r border-base-300 flex flex-col justify-between shrink-0 z-20">
+    <aside id="sidebar" class="w-[280px] bg-white border-r border-base-300 hidden md:flex flex-col justify-between shrink-0 z-50 h-full absolute md:relative shadow-2xl md:shadow-none">
         <div>
             <div class="p-8 flex items-center gap-3">
                 <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
                     <span class="material-symbols-outlined text-2xl">school</span>
                 </div>
                 <h1 class="text-2xl font-black text-primary tracking-tight">EduPikin</h1>
+                <button class="md:hidden ml-auto text-slate-400" onclick="toggleMobileMenu()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
 
             <ul class="menu menu-lg px-4 gap-2 w-full">
@@ -84,7 +92,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="text-slate-500 hover:text-primary font-bold text-[15px]">
+                    <a href="#" onclick="switchPage('users', this)" class="text-slate-500 hover:text-primary font-bold text-[15px]">
                         <span class="material-symbols-outlined">person</span>
                         Utilisateurs
                     </a>
@@ -106,21 +114,28 @@
         </div>
     </aside>
 
+    <div id="sidebar-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden glass"></div>
+
     <main class="flex-1 flex flex-col min-w-0">
 
-        <div class="navbar bg-white h-24 border-b border-base-300 px-10 shrink-0">
-            <div class="flex-1 flex-col items-start justify-center">
-                <h2 id="header-title" class="text-2xl font-black text-slate-900">Administrateur Tableau de bord</h2>
-                <p id="header-subtitle" class="text-sm text-slate-500 font-medium mt-1">Bienvenue, Admin. Voici l'état actuel de votre réseau universitaire.</p>
+        <div class="navbar bg-white h-24 border-b border-base-300 px-4 md:px-10 shrink-0 gap-4">
+
+            <button class="btn btn-square btn-ghost md:hidden text-slate-500" onclick="toggleMobileMenu()">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+
+            <div class="flex-1 flex-col items-start justify-center overflow-hidden">
+                <h2 id="header-title" class="text-xl md:text-2xl font-black text-slate-900 truncate w-full">Administrateur Tableau de bord</h2>
+                <p id="header-subtitle" class="text-xs md:text-sm text-slate-500 font-medium mt-1 truncate w-full">Bienvenue, Admin. Voici l'état actuel de votre réseau universitaire.</p>
             </div>
-            <div class="flex-none gap-8">
+            <div class="flex-none gap-4 md:gap-8">
                 <button class="btn btn-circle btn-ghost btn-sm relative text-slate-400 hover:text-slate-600">
                     <span class="material-symbols-outlined text-2xl">notifications</span>
                     <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
                 </button>
 
                 <div class="flex items-center gap-4 bg-slate-50 pl-4 pr-2 py-2 rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition">
-                    <div class="text-right">
+                    <div class="text-right hidden md:block">
                         <p class="text-[13px] font-black text-slate-900">Administrateur</p>
                         <p class="text-[11px] text-slate-400 font-bold">admin@ecole.com</p>
                     </div>
@@ -134,7 +149,7 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-10 custom-scrollbar space-y-10 relative">
+        <div class="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar space-y-10 relative">
 
             <div id="dashboard-view">
 
@@ -170,9 +185,9 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-12 gap-10 items-start pb-10 mt-10">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-10 items-start pb-10 mt-10">
 
-                    <section class="col-span-4 space-y-8">
+                    <section class="col-span-1 md:col-span-4 space-y-8">
                         <div class="flex justify-between items-end mb-2">
                             <div>
                                 <h3 class="text-base font-black text-slate-900 uppercase tracking-tight">ÉTABLISSEMENTS</h3>
@@ -212,7 +227,7 @@
                                     <span class="material-symbols-outlined">account_balance</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-black text-[15px] text-slate-900 leading-tight">Saint-Jean School of Mngt</h4>
+                                    <h4 class="font-black text-[15px] text-slate-900 leading-tight">Saint-Jean School of Managment</h4>
                                     <p class="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-tight">Yaoundé, Cameroun</p>
                                 </div>
                             </div>
@@ -229,7 +244,7 @@
                         </div>
                     </section>
 
-                    <section class="col-span-4">
+                    <section class="col-span-1 md:col-span-4">
                         <div class="mb-6">
                             <h3 class="text-base font-black text-slate-900 uppercase tracking-tight">LISTE DES COMPTES</h3>
                             <p class="text-xs font-bold text-slate-400 mt-1 uppercase">RÉCENT</p>
@@ -241,11 +256,11 @@
                                     <div class="flex items-center gap-4">
                                         <div class="avatar placeholder">
                                             <div class="bg-blue-600 text-white rounded-full w-12">
-                                                <span class="text-xs font-black">JD</span>
+                                                <span class="text-xs font-black">JT</span>
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="text-[15px] font-black text-slate-900">Jean Dupont</p>
+                                            <p class="text-[15px] font-black text-slate-900">Jean Tagne</p>
                                             <p class="text-xs text-slate-500 font-medium">Administrateur</p>
                                         </div>
                                     </div>
@@ -265,7 +280,7 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="text-[15px] font-black text-slate-900">Sarah Martin</p>
+                                            <p class="text-[15px] font-black text-slate-900">Sarah Moukouri</p>
                                             <p class="text-xs text-slate-500 font-medium">Assistante Pédagogique</p>
                                         </div>
                                     </div>
@@ -285,7 +300,7 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="text-[15px] font-black text-slate-900">Pierre Bernard</p>
+                                            <p class="text-[15px] font-black text-slate-900">Pierre Bessala</p>
                                             <p class="text-xs text-slate-500 font-medium">Direction</p>
                                         </div>
                                     </div>
@@ -301,11 +316,11 @@
                                     <div class="flex items-center gap-4">
                                         <div class="avatar placeholder">
                                             <div class="bg-orange-500 text-white rounded-full w-12">
-                                                <span class="text-xs font-black">MR</span>
+                                                <span class="text-xs font-black"> JN </span>
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="text-[15px] font-black text-slate-900">Marie Rousseau</p>
+                                            <p class="text-[15px] font-black text-slate-900">Junior Noumedem</p>
                                             <p class="text-xs text-slate-500 font-medium">Surveillant</p>
                                         </div>
                                     </div>
@@ -320,7 +335,7 @@
                         </div>
                     </section>
 
-                    <section class="col-span-4">
+                    <section class="col-span-1 md:col-span-4">
                         <div class="mb-6 flex justify-between items-center">
                             <h3 class="text-base font-black text-slate-900 uppercase tracking-tight">ACTIVITÉS RÉCENTES</h3>
                             <a class="link link-primary no-underline text-[13px] font-bold" href="#">Voir tout</a>
@@ -367,170 +382,420 @@
                         </div>
                     </section>
                 </div>
-            </div> <div id="institutions-view" style="display: none;"> <div class="flex items-center justify-between gap-4 mb-8">
-            <div class="relative w-full max-w-2xl">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                <input type="text" placeholder="Rechercher un établissement..."
-                       class="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 transition-colors shadow-sm text-slate-600">
             </div>
 
-            <button class="bg-primary hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95">
-                <span class="material-symbols-outlined text-xl">add</span>
-                Nouvel Établissement
-            </button>
-        </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="institutions-view" style="display: none;">
+                <div class="flex items-center justify-between gap-4 mb-8">
+                    <div class="relative w-full max-w-2xl">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <input type="text" placeholder="Rechercher un établissement..." class="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 transition-colors shadow-sm text-slate-600">
+                    </div>
 
-                <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
-                    <div class="flex gap-4 mb-6">
-                        <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[28px]">apartment</span>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Institut Saint-Jean<br>Ingénieur</h3>
-                            <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
-                        </div>
-                    </div>
-                    <div class="space-y-4 mb-6">
-                        <div class="flex items-center gap-2 text-slate-500 text-sm">
-                            <span class="material-symbols-outlined">location_on</span>
-                            <span>Quartier Bastos, Yaoundé</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
-                                <p class="text-xl font-black text-slate-900">1850</p>
-                            </div>
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
-                                <p class="text-xl font-black text-slate-900">15</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
-                            <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
-                        </button>
-                        <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
+                    <button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
+                        <span class="material-symbols-outlined text-xl"> add </span> Nouvel Établissement
+                    </button>
                 </div>
 
-                <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
-                    <div class="flex gap-4 mb-6">
-                        <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[28px]">domain</span>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Saint-Jean School of<br>Management</h3>
-                            <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
-                        </div>
-                    </div>
-                    <div class="space-y-4 mb-6">
-                        <div class="flex items-center gap-2 text-slate-500 text-sm">
-                            <span class="material-symbols-outlined">location_on</span>
-                            <span>Avenue Kennedy, Yaoundé</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
-                                <p class="text-xl font-black text-slate-900">920</p>
-                            </div>
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
-                                <p class="text-xl font-black text-slate-900">10</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
-                            <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
-                        </button>
-                        <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
-                    <div class="flex gap-4 mb-6">
-                        <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[28px]">school</span>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Prépa Vogt<br>&nbsp;</h3>
-                            <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
-                        </div>
-                    </div>
-                    <div class="space-y-4 mb-6">
-                        <div class="flex items-center gap-2 text-slate-500 text-sm">
-                            <span class="material-symbols-outlined">location_on</span>
-                            <span>Rue de Nachtigal, Yaoundé</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
-                            <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
-                                <p class="text-xl font-black text-slate-900">680</p>
+                    <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
+                        <div class="flex gap-4 mb-6">
+                            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[28px]">apartment</span>
                             </div>
                             <div>
-                                <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
-                                <p class="text-xl font-black text-slate-900">20</p>
+                                <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Institut Saint-Jean<br>Ingénieur</h3>
+                                <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
                             </div>
                         </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center gap-2 text-slate-500 text-sm">
+                                <span class="material-symbols-outlined">location_on</span>
+                                <span> Eyang </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
+                                    <p class="text-xl font-black text-slate-900">1850</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
+                                    <p class="text-xl font-black text-slate-900">15</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
+                                <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
+                            </button>
+                            <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex gap-3">
-                        <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
-                            <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
-                        </button>
-                        <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
-                </div>
 
+                    <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
+                        <div class="flex gap-4 mb-6">
+                            <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[28px]">domain</span>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Saint-Jean School of<br>Management</h3>
+                                <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center gap-2 text-slate-500 text-sm">
+                                <span class="material-symbols-outlined">location_on</span>
+                                <span> Eyang </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
+                                    <p class="text-xl font-black text-slate-900">920</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
+                                    <p class="text-xl font-black text-slate-900">10</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
+                                <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
+                            </button>
+                            <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[24px] p-6 border border-slate-100 card-shadow hover:shadow-lg transition-all">
+                        <div class="flex gap-4 mb-6">
+                            <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[28px]">school</span>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-[16px] text-slate-900 leading-tight mb-1">Prépa Vogt<br>&nbsp;</h3>
+                                <span class="inline-block px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-lg uppercase">Institut Universitaire</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="flex items-center gap-2 text-slate-500 text-sm">
+                                <span class="material-symbols-outlined">location_on</span>
+                                <span> Eyang </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 py-4 border-t border-b border-slate-50">
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Étudiants</p>
+                                    <p class="text-xl font-black text-slate-900">680</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] text-slate-400 uppercase font-bold">Classes</p>
+                                    <p class="text-xl font-black text-slate-900">20</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="flex-1 btn btn-outline border-slate-200 h-11 min-h-0 rounded-xl normal-case font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800">
+                                <span class="material-symbols-outlined mr-2">edit_square</span> Modifier
+                            </button>
+                            <button class="btn btn-square btn-outline border-red-50 text-red-500 h-11 min-h-0 rounded-xl hover:bg-red-50 hover:border-red-50 hover:text-red-600">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-        </div> </div>
+
+            <div id="users-view" style="display: none;">
+
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+                    <div class="relative w-full max-w-xl">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <input type="text" placeholder="Rechercher par nom, email..." class="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 shadow-sm text-slate-600">
+                    </div>
+
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button class="btn btn-outline bg-white border-slate-200 text-slate-600 h-[50px] rounded-xl normal-case font-bold">
+                            <span class="material-symbols-outlined">filter_list</span> Filtres
+                        </button>
+                        <button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
+                            <span class="material-symbols-outlined text-xl">person_add</span> Nouvel Utilisateur
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card bg-white card-shadow rounded-[32px] border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto p-2 table-scrollbar">
+                        <table class="table w-full">
+                            <thead>
+                            <tr class="text-left border-b border-slate-100">
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Utilisateur</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Contact</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Établissement</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Rôle</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Statut</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Date de création</th>
+                                <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody class="text-sm">
+
+                            <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="avatar placeholder">
+                                            <div class="bg-blue-600 text-white rounded-full w-10"><span class="text-xs font-black">JT</span></div>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-900">Jean Tagne</p>
+                                            <p class="text-xs text-slate-500">jean.tagne@ecole.com</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    +237 699 00 11 22
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-slate-400 text-lg">school</span>
+                                        <span class="font-bold text-slate-700">Institut Saint-Jean</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="badge bg-blue-50 text-blue-700 border-none font-bold text-[10px] p-3 rounded-lg">ADMINISTRATEUR</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <span class="font-bold text-slate-600 text-xs">Actif</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    12 Jan 2026
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                                        <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="avatar placeholder">
+                                            <div class="bg-purple-600 text-white rounded-full w-10"><span class="text-xs font-black">SM</span></div>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-900">Sarah Moukouri</p>
+                                            <p class="text-xs text-slate-500">sarah.moukouri@ecole.com</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    +237 677 55 44 33
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-slate-400 text-lg">school</span>
+                                        <span class="font-bold text-slate-700">Institut Saint-Jean</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="badge bg-purple-50 text-purple-700 border-none font-bold text-[10px] p-3 rounded-lg"> Direction </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <span class="font-bold text-slate-600 text-xs">Actif</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    05 Fév 2026
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                                        <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+
+                            <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="avatar placeholder">
+                                            <div class="bg-teal-500 text-white rounded-full w-10"><span class="text-xs font-black">JN</span></div>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-900">Junior Noumedem</p>
+                                            <p class="text-xs text-slate-500">junior.noumedem@ecole.com</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    +237 698 50 44 33
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-slate-400 text-lg">domain</span>
+                                        <span class="font-bold text-slate-700">School of Managment</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="badge badge-lg bg-teal-50 text-teal-700 border-none font-bold text-[11px] p-3 rounded-lg"> Pédagogique</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                                        <span class="font-bold text-slate-400 text-xs"> Inactif </span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    16 Fév 2026
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                                        <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+
+
+                            <tr class="hover:bg-slate-50 transition-colors group border-b border-slate-50">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="avatar placeholder">
+                                            <div class="bg-orange-500 text-white rounded-full w-10">
+                                                <span class="text-xs font-black">PB</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-slate-900">Pierre Bessala</p>
+                                            <p class="text-xs text-slate-500">pierre.bessala@ecole.com</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+
+                                <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                                    +237 698 50 44 33
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-slate-400 text-lg">domain</span>
+                                        <span class="font-bold text-slate-700">School of Managment</span>
+                                    </div>
+                                </td>
+
+                                <td class="py-4 px-6">
+                                    <span class="badge badge-lg bg-orange-50 text-orange-700 border-none font-bold text-[11px] p-3 rounded-lg">Surveillant</span>
+
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                                        <span class="font-bold text-slate-400 text-xs"> Inactif </span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-500 font-medium">
+                                    15 Fév 2026
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="btn btn-square btn-sm btn-ghost hover:bg-slate-100 text-slate-500">
+                                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                                        </button>
+                                        <button class="btn btn-square btn-sm btn-ghost hover:bg-red-50 text-red-500">
+                                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-100 flex items-center justify-between">
+                        <p class="text-xs text-slate-500 font-medium">4 sur 12 utilisateurs</p>
+
+                    </div>
+                </div>
+            </div> </div>
     </main>
 </div>
 
 <script>
     function switchPage(pageId, clickedElement) {
-
+        // 1. Cacher TOUTES les vues
         document.getElementById('dashboard-view').style.display = 'none';
         document.getElementById('institutions-view').style.display = 'none';
+        document.getElementById('users-view').style.display = 'none';
 
-
+        // 2. Afficher celle qu'on veut
         if (pageId === 'dashboard') {
             document.getElementById('dashboard-view').style.display = 'block';
-
-
             document.getElementById('header-title').innerText = "Administrateur Tableau de bord";
             document.getElementById('header-subtitle').innerText = "Bienvenue, Admin. Voici l'état actuel de votre réseau universitaire.";
         }
         else if (pageId === 'institutions') {
             document.getElementById('institutions-view').style.display = 'block';
-
-
             document.getElementById('header-title').innerText = "Gestion des Établissements";
             document.getElementById('header-subtitle').innerText = "Gérez vos établissements, ajoutez-en de nouveaux et configurez les accès.";
         }
+        else if (pageId === 'users') {
+            document.getElementById('users-view').style.display = 'block';
+            document.getElementById('header-title').innerText = "Gestion des Utilisateurs";
+            document.getElementById('header-subtitle').innerText = "Gérez les accès, les rôles et consultez la liste complète du personnel.";
+        }
 
+        // 3. Fermer le menu si on est sur mobile
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (!sidebar.classList.contains('hidden') && window.innerWidth < 768) {
+            toggleMobileMenu();
+        }
 
+        // 4. Gérer la couleur bleue du menu
         const allLinks = document.querySelectorAll('.menu a');
         allLinks.forEach(link => {
             link.classList.remove('active-nav');
-            link.classList.remove('text-slate-900');
-            link.classList.add('text-slate-500');
+            link.classList.remove('text-slate-900'); // Enlever couleur foncée
+            link.classList.add('text-slate-500'); // Remettre gris
         });
 
-
+        // Mettre le bouton cliqué en bleu
         if (clickedElement) {
             clickedElement.classList.remove('text-slate-500');
             clickedElement.classList.add('active-nav');
         }
     }
+
+    // Fonction pour ouvrir/fermer le menu sur mobile
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        sidebar.classList.toggle('hidden');
+        overlay.classList.toggle('hidden');
+    }
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
