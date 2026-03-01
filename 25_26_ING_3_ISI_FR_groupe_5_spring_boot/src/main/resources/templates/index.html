@@ -395,21 +395,74 @@
                         <span class="material-symbols-outlined text-xl"> add </span> Nouvel Établissement
                     </button> -->
                     <!-- Open the modal using ID.showModal() method -->
-                    <button class="btn btn-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 " onclick="my_modal.showModal()">
-                        <span class="material-symbols-outlined text-xl"> add </span>    Nouvel Établissement
+                    <button class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none" onclick="modal_etablissement.showModal()">
+                        <span class="material-symbols-outlined text-xl"> add </span> Nouvel Établissement
                     </button>
-                    <dialog id="my_modal" class="modal">
-                        <div class="modal-box">
-                            <h3 class="text-lg font-bold">Hello!</h3>
-                            <p class="py-4">Press ESC key or click the button below to close</p>
-                            <div class="modal-action">
-                                <form method="dialog">
-                                    <!-- if there is a button in form, it will close the modal -->
-                                    <button class="btn">Close</button>
-                                </form>
-                            </div>
+
+                    <dialog id="modal_etablissement" class="modal">
+                        <div class="modal-box max-w-3xl bg-white p-8 rounded-2xl shadow-2xl">
+
+                            <form method="dialog">
+                                <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-gray-500">✕</button>
+                            </form>
+
+                            <h3 class="text-2xl font-bold text-gray-900">Nouvel Établissement</h3>
+                            <p class="text-sm text-gray-500 mb-6 mt-1">Ajoutez un nouvel établissement.</p>
+
+                            <form action="votre-traitement-servlet" method="POST">
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Nom de l'établissement</span></label>
+                                        <input type="text" name="nom" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" required />
+                                    </div>
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Type</span></label>
+                                        <input type="text" name="type"  class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" required />
+                                    </div>
+
+                                    <div class="form-control w-full md:col-span-2">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Adresse</span></label>
+                                        <input type="text" name="adresse" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Ville</span></label>
+                                        <input type="text" name="ville" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Téléphone</span></label>
+                                        <input type="tel" name="telephone" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                    <div class="form-control w-full md:col-span-2">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Email</span></label>
+                                        <input type="email" name="email" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Nombre d'étudiants</span></label>
+                                        <input type="number" name="etudiants" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                    <div class="form-control w-full">
+                                        <label class="label pb-1"><span class="label-text font-semibold text-gray-800">Nombre de classes</span></label>
+                                        <input type="number" name="classes" class="input w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-800 rounded-lg" />
+                                    </div>
+
+                                </div>
+
+                                <div class="modal-action mt-8 flex justify-end gap-4">
+                                    <button type="button" class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 rounded-xl font-semibold" onclick="modal_etablissement.close()">Annuler</button>
+                                    <button type="submit" class="btn btn-primary bg-blue-600 hover:bg-blue-700 border-none text-white px-8 rounded-xl font-semibold">Créer</button>
+                                </div>
+                            </form>
                         </div>
                     </dialog>
+
 
 
 
