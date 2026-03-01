@@ -391,9 +391,28 @@
                         <input type="text" placeholder="Rechercher un établissement..." class="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 transition-colors shadow-sm text-slate-600">
                     </div>
 
-                    <button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
+                   <!-- <button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
                         <span class="material-symbols-outlined text-xl"> add </span> Nouvel Établissement
+                    </button> -->
+                    <!-- Open the modal using ID.showModal() method -->
+                    <button class="btn btn-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 " onclick="my_modal.showModal()">
+                        <span class="material-symbols-outlined text-xl"> add </span>    Nouvel Établissement
                     </button>
+                    <dialog id="my_modal" class="modal">
+                        <div class="modal-box">
+                            <h3 class="text-lg font-bold">Hello!</h3>
+                            <p class="py-4">Press ESC key or click the button below to close</p>
+                            <div class="modal-action">
+                                <form method="dialog">
+                                    <!-- if there is a button in form, it will close the modal -->
+                                    <button class="btn">Close</button>
+                                </form>
+                            </div>
+                        </div>
+                    </dialog>
+
+
+
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -521,9 +540,26 @@
                         <button class="btn btn-outline bg-white border-slate-200 text-slate-600 h-[50px] rounded-xl normal-case font-bold">
                             <span class="material-symbols-outlined">filter_list</span> Filtres
                         </button>
-                        <button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
+                        <!--<button class="bg-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none">
                             <span class="material-symbols-outlined text-xl">person_add</span> Nouvel Utilisateur
+                        </button>-->
+                        <button class="btn btn-primary hover:bg-blue-700 text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-95 flex-1 md:flex-none " onclick="my_modal_1.showModal()">
+                            <span class="material-symbols-outlined text-xl"> person_add </span> Nouvel Utilisateur
                         </button>
+                        <dialog id="my_modal_1" class="modal">
+                            <div class="modal-box">
+                                <h3 class="text-lg font-bold">Hello!</h3>
+                                <p class="py-4">Press ESC key or click the button below to close</p>
+                                <div class="modal-action">
+                                    <form method="dialog">
+                                        <!-- if there is a button in form, it will close the modal -->
+                                        <button class="btn">Close</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </dialog>
+
+
                     </div>
                 </div>
 
