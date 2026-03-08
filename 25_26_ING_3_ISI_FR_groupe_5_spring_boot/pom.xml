@@ -21,6 +21,8 @@
 
     <properties>
         <java.version>17</java.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>
@@ -29,6 +31,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+
 
 
 
@@ -50,6 +53,28 @@
             <version>4.0.2</version>
         </dependency>
 
+        <!-- ✅ MapStruct — dans <dependencies> -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+
+        <!-- ✅ MapStruct processor — dans <dependencies> -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>${mapstruct.version}</version>
+            <scope>provided</scope>  <!-- provided car uniquement à la compilation -->
+        </dependency>
+
+        <!-- ✅ Lombok MapStruct binding -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok-mapstruct-binding</artifactId>
+            <version>0.2.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.thymeleaf.extras</groupId>
