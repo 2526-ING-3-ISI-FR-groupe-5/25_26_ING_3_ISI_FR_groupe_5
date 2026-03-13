@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPikin Admin - Rôles</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/output.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#2563eb',
+                        base: { 100: '#ffffff', 200: '#f4f7fa', 300: '#e2e8f0' },
+                        slate: { 400: '#94a3b8', 500: '#64748b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-base-200 text-slate-900 h-screen overflow-hidden font-sans">
+<div class="flex h-full relative">
+    <aside class="w-[280px] bg-white border-r border-base-300 hidden md:flex flex-col justify-between shrink-0 h-full">
+        <div>
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg"><span class="material-symbols-outlined text-2xl">school</span></div>
+                <h1 class="text-2xl font-black text-primary tracking-tight">EduPikin</h1>
+            </div>
+            <ul class="menu menu-lg px-4 gap-2 w-full">
+                <li><a href="AdminDashboard.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">grid_view</span>Tableau de bord</a></li>
+                <li><a href="AdminInstitut.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">apartment</span>Institutions</a></li>
+                <li><a href="AdminUtilisateur.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">person</span>Utilisateurs</a></li>
+                <li><a href="AdminRole.html" class="active-nav font-bold text-[15px]"><span class="material-symbols-outlined">shield_person</span>Rôles & Permissions</a></li>
+            </ul>
+        </div>
+        <div class="p-6 border-t border-base-300">
+            <button class="btn btn-ghost btn-block justify-start gap-3 text-slate-500 hover:text-slate-900 normal-case px-4">
+                <span class="material-symbols-outlined">dark_mode</span>
+                <span class="font-bold text-[15px]">Dark Mode</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0">
+        <div class="navbar bg-white h-24 border-b border-base-300 px-10 shrink-0">
+            <div class="flex-1 flex-col items-start">
+                <h2 class="text-2xl font-black text-slate-900">Rôles & Permissions</h2>
+                <p class="text-sm text-slate-500 font-medium">Définissez les niveaux d'accès pour chaque profil.</p>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card bg-white card-shadow rounded-[32px] border border-slate-100 p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-black text-slate-900">Administrateur</h3>
+                        <span class="badge badge-primary text-white font-bold">Accès Total</span>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">Peut gérer les établissements, les utilisateurs et les paramètres système.</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs"><span class="material-symbols-outlined text-sm">check_circle</span> Gestion Institutions</div>
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs"><span class="material-symbols-outlined text-sm">check_circle</span> Gestion Utilisateurs</div>
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs"><span class="material-symbols-outlined text-sm">check_circle</span> Rapports Financiers</div>
+                    </div>
+                </div>
+                <div class="card bg-white card-shadow rounded-[32px] border border-slate-100 p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-black text-slate-900">Direction</h3>
+                        <span class="badge badge-ghost font-bold">Accès Limité</span>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-6">Peut consulter les statistiques et gérer le personnel de son établissement.</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-green-600 font-bold text-xs"><span class="material-symbols-outlined text-sm">check_circle</span> Consultation Stats</div>
+                        <div class="flex items-center gap-2 text-slate-400 font-bold text-xs"><span class="material-symbols-outlined text-sm">cancel</span> Paramètres Système</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

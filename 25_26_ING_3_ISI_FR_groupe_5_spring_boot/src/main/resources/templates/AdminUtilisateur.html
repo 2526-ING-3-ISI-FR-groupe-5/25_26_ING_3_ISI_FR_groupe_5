@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPikin Admin - Utilisateurs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/output.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#2563eb',
+                        base: { 100: '#ffffff', 200: '#f4f7fa', 300: '#e2e8f0' },
+                        slate: { 400: '#94a3b8', 500: '#64748b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-base-200 text-slate-900 h-screen overflow-hidden font-sans">
+<div class="flex h-full relative">
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-white border-r border-base-300 hidden md:flex flex-col justify-between shrink-0 h-full">
+        <div>
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg"><span class="material-symbols-outlined text-2xl">school</span></div>
+                <h1 class="text-2xl font-black text-primary tracking-tight">EduPikin</h1>
+            </div>
+            <ul class="menu menu-lg px-4 gap-2 w-full">
+                <li><a href="AdminDashboard.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">grid_view</span>Tableau de bord</a></li>
+                <li><a href="AdminInstitut.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">apartment</span>Institutions</a></li>
+                <li><a href="AdminUtilisateur.html" class="active-nav font-bold text-[15px]"><span class="material-symbols-outlined">person</span>Utilisateurs</a></li>
+                <li><a href="AdminRole.html" class="text-slate-500 hover:text-primary font-bold text-[15px]"><span class="material-symbols-outlined">shield_person</span>Rôles & Permissions</a></li>
+            </ul>
+        </div>
+        <div class="p-6 border-t border-base-300">
+            <button class="btn btn-ghost btn-block justify-start gap-3 text-slate-500 hover:text-slate-900 normal-case px-4">
+                <span class="material-symbols-outlined">dark_mode</span>
+                <span class="font-bold text-[15px]">Dark Mode</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0">
+       <div class="navbar bg-white h-24 border-b border-base-300 px-10 shrink-0">
+           <div class="flex-1 flex-col items-start">
+               <h2 class="text-2xl font-black text-slate-900">Gestion des Utilisateurs</h2>
+               <p class="text-sm text-slate-500 font-medium">Gérez les accès et les rôles du personnel.</p>
+           </div>
+       </div>
+
+       <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
+           <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+               <div class="relative w-full max-w-xl">
+                   <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                   <input type="text" placeholder="Rechercher par nom, email..." class="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 shadow-sm text-slate-600">
+               </div>
+               <button class="btn btn-outline bg-white border-slate-200 text-slate-600 h-[50px] rounded-xl normal-case font-bold">
+
+                   <span class="material-symbols-outlined">filter_list</span> Filtres
+
+               </button>
+
+               <button class="btn btn-primary text-white px-6 h-[50px] rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-200" onclick="modal_nouvel_utilisateur.showModal()">
+                   <span class="material-symbols-outlined text-xl"> person_add </span> Nouvel Utilisateur
+               </button>
+           </div>
+
+           <div class="card bg-white card-shadow rounded-[32px] border border-slate-100 overflow-hidden">
+               <div class="overflow-x-auto p-2 table-scrollbar">
+                   <table class="table w-full">
+                       <thead>
+                       <tr class="text-left border-b border-slate-100">
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Utilisateur</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Contact</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Établissement</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Rôle</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Statut</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider">Date de création</th>
+                           <th class="py-5 px-6 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Actions</th>
+
+                       </tr>
+                       </thead>
+                       <tbody class="text-sm">
+
+                       <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-4">
+                                   <div class="avatar placeholder">
+                                       <div class="bg-blue-600 text-white rounded-full w-10"><span class="text-xs font-black">JT</span></div>
+                                   </div>
+                                   <div>
+                                       <p class="font-bold text-slate-900">Jean Tagne</p>
+                                       <p class="text-xs text-slate-500">jean.tagne@ecole.com</p>
+                                   </div>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                               +237 699 00 11 22
+                           </td>
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-2">
+                                   <span class="material-symbols-outlined text-slate-400 text-lg">school</span>
+                                   <span class="font-bold text-slate-700">Institut Saint-Jean</span>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6">
+                               <span class="badge bg-blue-50 text-blue-700 border-none font-bold text-[10px] p-3 rounded-lg">ADMINISTRATEUR</span>
+                           </td>
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-2">
+                                   <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                   <span class="font-bold text-slate-600 text-xs">Actif</span>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                               12 Jan 2026
+                           </td>
+                           <td class="py-4 px-6 text-right">
+                               <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+                                   <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+                               </div>
+                           </td>
+                       </tr>
+
+                       <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-4">
+
+                                   <div class="avatar placeholder">
+
+                                       <div class="bg-purple-600 text-white rounded-full w-10"><span class="text-xs font-black">SM</span></div>
+
+                                   </div>
+
+                                   <div>
+
+                                       <p class="font-bold text-slate-900">Sarah Moukouri</p>
+
+                                       <p class="text-xs text-slate-500">sarah.moukouri@ecole.com</p>
+
+                                   </div>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+
+                               +237 677 55 44 33
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-2">
+
+                                   <span class="material-symbols-outlined text-slate-400 text-lg">school</span>
+
+                                   <span class="font-bold text-slate-700">Institut Saint-Jean</span>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <span class="badge bg-purple-50 text-purple-700 border-none font-bold text-[10px] p-3 rounded-lg"> Direction </span>
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-2">
+
+                                   <div class="w-2 h-2 rounded-full bg-green-500"></div>
+
+                                   <span class="font-bold text-slate-600 text-xs">Actif</span>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+
+                               05 Fév 2026
+
+                           </td>
+
+                           <td class="py-4 px-6 text-right">
+
+                               <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                   <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+
+                                   <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+
+                               </div>
+
+                           </td>
+
+                       </tr>
+
+
+
+
+
+                       <tr class="hover:bg-slate-50 border-b border-slate-50 group transition-colors">
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-4">
+
+                                   <div class="avatar placeholder">
+
+                                       <div class="bg-teal-500 text-white rounded-full w-10"><span class="text-xs font-black">JN</span></div>
+
+                                   </div>
+
+                                   <div>
+
+                                       <p class="font-bold text-slate-900">Junior Noumedem</p>
+
+                                       <p class="text-xs text-slate-500">junior.noumedem@ecole.com</p>
+
+                                   </div>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+
+                               +237 698 50 44 33
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-2">
+
+                                   <span class="material-symbols-outlined text-slate-400 text-lg">domain</span>
+
+                                   <span class="font-bold text-slate-700">School of Managment</span>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <span class="badge badge-lg bg-teal-50 text-teal-700 border-none font-bold text-[11px] p-3 rounded-lg"> Pédagogique</span>
+
+                           </td>
+
+                           <td class="py-4 px-6">
+
+                               <div class="flex items-center gap-2">
+
+                                   <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+
+                                   <span class="font-bold text-slate-400 text-xs"> Inactif </span>
+
+                               </div>
+
+                           </td>
+
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+
+                               16 Fév 2026
+
+                           </td>
+
+                           <td class="py-4 px-6 text-right">
+
+                               <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                                   <button class="btn btn-square btn-sm btn-ghost text-slate-400 hover:bg-slate-100"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+
+                                   <button class="btn btn-square btn-sm btn-ghost text-red-400 hover:bg-red-50"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+
+                               </div>
+
+                           </td>
+
+                       </tr>
+
+
+
+                       <tr class="hover:bg-slate-50 transition-colors group border-b border-slate-50">
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-4">
+                                   <div class="avatar placeholder">
+                                       <div class="bg-orange-500 text-white rounded-full w-10">
+                                           <span class="text-xs font-black">PB</span>
+                                       </div>
+                                   </div>
+                                   <div>
+                                       <p class="font-bold text-slate-900">Pierre Bessala</p>
+                                       <p class="text-xs text-slate-500">pierre.bessala@ecole.com</p>
+                                   </div>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">
+                               +237 698 50 44 33
+                           </td>
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-2">
+                                   <span class="material-symbols-outlined text-slate-400 text-lg">domain</span>
+                                   <span class="font-bold text-slate-700">School of Managment</span>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6">
+                               <span class="badge badge-lg bg-orange-50 text-orange-700 border-none font-bold text-[11px] p-3 rounded-lg">Surveillant</span>
+                           </td>
+                           <td class="py-4 px-6">
+                               <div class="flex items-center gap-2">
+                                   <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                                   <span class="font-bold text-slate-400 text-xs"> Inactif </span>
+                               </div>
+                           </td>
+                           <td class="py-4 px-6 text-slate-500 font-medium">
+                               15 Fév 2026
+                           </td>
+                           <td class="py-4 px-6 text-right">
+                               <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button class="btn btn-square btn-sm btn-ghost hover:bg-slate-100 text-slate-500">
+                                       <span class="material-symbols-outlined text-[18px]">edit</span>
+                                   </button>
+                                   <button class="btn btn-square btn-sm btn-ghost hover:bg-red-50 text-red-500">
+                                       <span class="material-symbols-outlined text-[18px]">delete</span>
+                                   </button>
+                               </div>
+                           </td>
+                       </tr>
+
+
+
+                       </tbody>
+                   </table>
+               </div>
+               <div class="p-4 border-t border-slate-100 flex items-center justify-between">
+                   <p class="text-xs text-slate-500 font-medium">4 sur 12 utilisateurs</p>
+               </div>
+
+           </div>
+       </div>
+   </main>
+</div>
+
+<dialog id="modal_nouvel_utilisateur" class="modal">
+
+    <div class="modal-box max-w-3xl bg-white p-6 rounded-2xl">
+
+
+
+        <form method="dialog">
+
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-gray-500">✕</button>
+
+        </form>
+
+
+
+        <h3 class="text-xl font-bold text-gray-800">Nouvel Utilisateur</h3>
+
+        <p class="text-sm text-gray-500 mb-6 mt-1">Ajoutez les informations du nouvel utilisateur.</p>
+
+
+
+        <form action="votre-page-de-traitement" method="POST">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+
+
+
+                <div class="form-control w-full">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Prénom</span></label>
+
+                    <input type="text" name="prenom" class="input input-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800" required />
+
+                </div>
+
+
+
+                <div class="form-control w-full">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Nom</span></label>
+
+                    <input type="text" name="nom" class="input input-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800" required />
+
+                </div>
+
+
+
+                <div class="form-control w-full md:col-span-2">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Email</span></label>
+
+                    <input type="email" name="email" class="input input-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800" required />
+
+                </div>
+
+
+
+                <div class="form-control w-full">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Téléphone</span></label>
+
+                    <input type="tel" name="telephone" class="input input-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800" />
+
+                </div>
+
+
+
+                <div class="form-control w-full">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Rôle</span></label>
+
+                    <select name="role" class="select select-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800">
+
+                        <option value="assistant">Assistant Pédagogique</option>
+                        <option value="admin">Surveillant</option>
+                        <option value="prof"> Enseignant </option>
+                        <option value="prof">Direction</option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="form-control w-full md:col-span-2">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Établissement</span></label>
+
+                    <select name="etablissement" class="select select-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800">
+
+                        <option value="saint-jean">Institut Saint-Jean Ingénieur</option>
+
+                        <option value="prepa-vogt">Prépa Vogt</option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="form-control w-full">
+
+                    <label class="label pb-1"><span class="label-text font-medium text-gray-700">Statut</span></label>
+
+                    <select name="statut" class="select select-bordered w-full bg-gray-50 border-gray-200 focus:bg-white text-gray-800">
+
+                        <option value="actif">Actif</option>
+
+                        <option value="inactif">Inactif</option>
+
+                    </select>
+
+                </div>
+
+
+
+            </div>
+
+
+
+            <div class="modal-action mt-8 flex justify-end gap-3">
+
+                <button type="button" class="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 px-6 rounded-lg" onclick="modal_nouvel_utilisateur.close()">Annuler</button>
+
+                <button type="submit" class="btn btn-primary bg-blue-600 hover:bg-blue-700 border-none text-white px-6 rounded-lg">Enregistrer</button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+  </dialog>
+
+ </div>
+
+ </body>
+ </html>
