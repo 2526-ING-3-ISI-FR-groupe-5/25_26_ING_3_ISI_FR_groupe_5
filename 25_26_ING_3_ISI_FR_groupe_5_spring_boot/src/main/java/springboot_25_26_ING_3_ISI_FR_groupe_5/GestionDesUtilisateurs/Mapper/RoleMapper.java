@@ -8,6 +8,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Respons
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Resquest.RoleUpdateDescriptionRequestDTO;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring", uses = {PermissionMapper.class},
         unmappedSourcePolicy = ReportingPolicy.IGNORE,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -20,4 +22,8 @@ public interface RoleMapper {
     @Mapping(target = "active", ignore = true)
     Role updateDescritiontoEntity(RoleUpdateDescriptionRequestDTO roleUpdateDescriptionRequestDTO,
                                   @MappingTarget Role role);
+
+    default List<RoleResponseDTO> toDTORole(List<Role> roles) {
+        return roles.stream().map(this::toDTO).toList();
+    }
 }

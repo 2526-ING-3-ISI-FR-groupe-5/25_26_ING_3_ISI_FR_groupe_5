@@ -16,6 +16,7 @@ import java.util.Collection;
 @DiscriminatorValue("SRV")
 
 public class Surveillant extends Utilisateur {
+        private String fonction;
 
         @ManyToMany(mappedBy = "surveillant")
         private Collection<Appels> appels= new ArrayList<>();

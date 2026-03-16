@@ -11,7 +11,6 @@ import java.util.Set;
 @Data
 public class RoleResponseDTO {
      private Long id;
-    @NotBlank(message = "Le nom du rôle est requis")
     private String nom;
     private String description;
     private Boolean active;

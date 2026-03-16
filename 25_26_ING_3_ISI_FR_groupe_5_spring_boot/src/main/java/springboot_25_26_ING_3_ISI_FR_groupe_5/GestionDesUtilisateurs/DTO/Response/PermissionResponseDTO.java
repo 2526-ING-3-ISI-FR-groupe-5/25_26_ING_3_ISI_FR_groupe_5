@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -14,6 +15,7 @@ import java.util.List;
 public class PermissionResponseDTO {
     private Long id;
     private String nom;
+    private String description;
     private Boolean active;
-    private List<String> roles; // Noms des rôles qui ont cette permission
+    private Date dateCreation;
 }

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emploie du temps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root { --cell-height: 80px; }
+        .grid-row-height { height: var(--cell-height); }
+        .slot { min-height: var(--cell-height); position: relative; border-bottom: 1px solid #d1d5db; border-right: 1px solid #d1d5db; }
+        
+        .resizer { 
+            height: 12px; cursor: ns-resize; width: 100%; position: absolute; bottom: 0; left: 0; z-index: 100;
+            background: rgba(0,0,0,0.03); display: flex; justify-content: center; align-items: center;
+        }
+        .resizer::after { content: ""; width: 25px; height: 4px; background: rgba(255,255,255,0.6); border-radius: 10px; }
+        
+        .drag-over { background-color: #f8fafc !important; border: 2px dashed #000 !important; }
+        .placed-block { cursor: move; user-select: none; transition: box-shadow 0.2s; }
+        
+        .color-picker-custom {
+            -webkit-appearance: none; appearance: none; background-color: white; border: 2px solid white;
+            width: 22px; height: 22px; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .color-picker-custom::-webkit-color-swatch { border-radius: 50%; border: none; }
+        .no-export { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 font-sans text-black">
+
+    <div class="max-w-7xl mx-auto space-y-4">
+        
+        <!-- HEADER -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-black tracking-tighter">Planning<span class="text-blue-600"> Maker</span></h1>
+                <!-- Bouton Exporter en Vert Foncé -->
+                <button onclick="exportToPDF()" class="bg-green-800 hover:bg-green-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                    </svg>
+                    Exporter PDF
+                </button>
+            </div>
+            
+            <div class="flex flex-wrap gap-5 items-end">
+                <div class="w-40">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Lundi de début</label>
+                    <input type="date" id="weekStart" class="w-full border p-2 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="w-48">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Jours</label>
+                    <select id="dayRange" onchange="renderGrid()" class="w-full border p-2 rounded-xl text-sm cursor-pointer outline-none">
+                        <option value="1">Lundi seul</option>
+                        <option value="2">Lundi et Mardi</option>
+                        <option value="3">Lundi à Mercredi</option>
+                        <option value="4">Lundi à Jeudi</option>
+                        <option value="5">Lundi à Vendredi</option>
+                        <option value="6" selected>Lundi à Samedi</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block tracking-widest">Matières disponibles</label>
+                    <div id="sourceBlocks" class="flex flex-wrap gap-2 p-2 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 min-h-[58px]"></div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="customSubjectName" placeholder="Nom..." class="border p-2 rounded-xl text-sm w-32 outline-none focus:border-blue-500">
+                    <!-- Bouton + en Bleu -->
+                    <button onclick="addCustomBlock()" class="bg-blue-600 text-white px-5 rounded-xl font-black hover:bg-blue-700 shadow-md transition-all active:scale-90">+</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- GRILLE (Fond Blanc, Texte Noir) + Nom du pdf -->
+        <div id="capture-zone" class="bg-white rounded-3xl shadow-xl border border-slate-300 overflow-hidden p-6">
+            <h2 id="pdf-title" class="hidden text-2xl font-black text-center mb-6 uppercase text-black border-b-2 border-black pb-4">Planning - Semaine du <span id="display-date"></span></h2>
+            <div id="timetableGrid" class="grid border-l-2 border-t-2 border-black/10 rounded-lg overflow-hidden">
+                <!-- Injecté par JS -->
+            </div>
+        </div>
+
+        <footer class="text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] py-6 flex justify-center gap-12">
+            <span>🖱️ Glisser pour Cloner/Déplacer</span>
+            <span>↕️ Bordure bas pour Étirer</span>
+        </footer>
+    </div>
+
+<script>
+    //LISTE DES MATIERES
+    const subjects = ['Maths', 'Physique', 'Chimie'];
+    //LISTE DES ENSEIGNANTS
+    const teachers = ['M. Martin', 'Mme Durand', 'M. Petit', 'Mme Kouamé', 'M. N\'Guyen'];
+    const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const hours = Array.from({length: 10}, (_, i) => i + 8);
+
+    let dragData = null;
+
+    function init() {
+        const d = new Date();
+        d.setDate(d.getDate() + (1 + 7 - d.getDay()) % 7);
+        document.getElementById('weekStart').value = d.toISOString().split('T')[0];
+        renderSourceBlocks();
+        renderGrid();
+    }
+
+    function renderSourceBlocks() {
+        const container = document.getElementById('sourceBlocks');
+        container.innerHTML = '';
+        subjects.forEach(s => {
+            const div = document.createElement('div');
+            div.className = "bg-slate-800 text-white px-4 py-1.5 rounded-full cursor-grab font-bold text-xs shadow hover:bg-black transition-all";
+            div.draggable = true;
+            div.innerText = s;
+            div.ondragstart = () => dragData = { type: 'new', name: s };
+            container.appendChild(div);
+        });
+    }
+
+    function addCustomBlock() {
+        const input = document.getElementById('customSubjectName');
+        if(input.value.trim()) {
+            subjects.push(input.value.trim());
+            renderSourceBlocks();
+            input.value = '';
+        }
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('timetableGrid');
+        const range = parseInt(document.getElementById('dayRange').value);
+        grid.style.gridTemplateColumns = `80px repeat(${range}, 1fr)`;
+        grid.innerHTML = '';
+
+        // Jours en NOIR sur BLANC
+        grid.appendChild(createHeaderCell('Heures'));
+        for(let i=0; i < range; i++) grid.appendChild(createHeaderCell(days[i]));
+
+        // Heures en NOIR sur BLANC
+        hours.forEach(hour => {
+            const timeCell = document.createElement('div');
+            timeCell.className = "bg-white flex items-center justify-center font-black text-black text-[12px] grid-row-height border-r border-b border-slate-200";
+            timeCell.innerText = `${hour}h- ${hour+1}h`;
+            grid.appendChild(timeCell);
+
+            for(let d=0; d < range; d++) {
+                const slot = document.createElement('div');
+                slot.className = "slot bg-white hover:bg-slate-50";
+                slot.dataset.day = d; slot.dataset.hour = hour;
+                slot.ondragover = (e) => { e.preventDefault(); slot.classList.add('drag-over'); };
+                slot.ondragleave = () => slot.classList.remove('drag-over');
+                slot.ondrop = (e) => {
+                    e.preventDefault(); slot.classList.remove('drag-over');
+                    if(dragData) handleDrop(slot);
+                };
+                grid.appendChild(slot);
+            }
+        });
+    }
+
+    function createHeaderCell(text) {
+        const div = document.createElement('div');
+        div.className = "bg-white text-black p-4 text-center font-black uppercase text-[12px] tracking-widest border-r border-b border-slate-300";
+        div.innerText = text;
+        return div;
+    }
+
+    function handleDrop(slot) {
+        const targetDay = parseInt(slot.dataset.day);
+        if(dragData.type === 'existing') {
+            if(dragData.sourceDay === targetDay) {
+                const old = document.getElementById(dragData.id);
+                if(old) old.remove();
+            }
+            createNewBlock(slot, dragData.name, dragData.span, dragData.color, dragData.teacher);
+        } else {
+            createNewBlock(slot, dragData.name);
+        }
+        dragData = null;
+    }
+
+    //AJOUT D UN BLOC A L EMPLOIE DU TEMPS
+
+    function createNewBlock(slot, name, span = 1, color = '#2563eb', teacher = "") {
+        const id = "b" + Math.random().toString(36).substring(2, 7);
+        const block = document.createElement('div');
+        block.id = id; block.draggable = true;
+        block.className = "placed-block absolute inset-1.5 rounded-xl shadow-lg flex flex-col items-center justify-center text-center p-2 text-white z-10 border border-black/10 overflow-hidden group";
+        block.style.backgroundColor = color;
+        block.style.height = `calc((${span} * var(--cell-height)) - 12px)`;
+        block.dataset.span = span;
+
+        block.innerHTML = `
+            <input type="color" value="${color}" class="export-hide color-picker-custom absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="text-[12px] font-black uppercase leading-none drop-shadow-md pointer-events-none">${name}</div>
+            <select class="export-hide bg-slate-200 text-slate-800 text-[9px] mt-2 rounded-lg font-bold border-none outline-none cursor-pointer">
+                <option value="">Prof ?</option>
+                ${teachers.map(t => `<option value="${t}" ${t === teacher ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+            <div class="t-name text-[9px] font-black italic mt-1.5 pointer-events-none ${teacher ? '' : 'hidden'}">${teacher}</div>
+            <div class="resizer export-hide"></div>
+        `;
+
+        const colorInp = block.querySelector('input');
+        const select = block.querySelector('select');
+        const tName = block.querySelector('.t-name');
+        const resizer = block.querySelector('.resizer');
+
+        colorInp.oninput = (e) => block.style.backgroundColor = e.target.value;
+        select.onchange = () => { tName.innerText = select.value; tName.classList.toggle('hidden', !select.value); };
+        block.ondblclick = () => block.remove();
+
+        resizer.onmouseenter = () => block.draggable = false;
+        resizer.onmouseleave = () => block.draggable = true;
+
+        block.ondragstart = () => {
+            dragData = {
+                type: 'existing', id: id, name: name, span: block.dataset.span,
+                color: block.style.backgroundColor, teacher: select.value,
+                sourceDay: parseInt(slot.dataset.day)
+            };
+        };
+
+        resizer.onmousedown = (e) => {
+            e.stopPropagation();
+            const startY = e.pageY, startH = block.offsetHeight;
+            const onMove = (m) => {
+                const newSpan = Math.max(1, Math.round((startH + (m.pageY - startY)) / 80));
+                block.dataset.span = newSpan;
+                block.style.height = `calc((${newSpan} * var(--cell-height)) - 12px)`;
+            };
+            const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+            window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp);
+        };
+
+        slot.appendChild(block);
+    }
+
+    async function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const capture = document.getElementById('capture-zone');
+        document.querySelectorAll('.export-hide').forEach(el => el.style.display = 'none');
+        document.getElementById('pdf-title').classList.remove('hidden');
+        document.getElementById('display-date').innerText = document.getElementById('weekStart').value;
+
+        try {
+            const canvas = await html2canvas(capture, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const w = pdf.internal.pageSize.getWidth() - 20;
+            const h = (canvas.height * w) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 10, 10, w, h);
+            pdf.save(`EDT_PRO.pdf`);
+        } finally {
+            document.querySelectorAll('.export-hide').forEach(el => el.style.display = '');
+            document.getElementById('pdf-title').classList.add('hidden');
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>

@@ -4,6 +4,5 @@ import jakarta.validation.constraints.NotBlank;
 
 public class SurveillantChangePassword {
     private  Long id;
-    @NotBlank(message = "La confirmation est requise")
     private String password;
 }
