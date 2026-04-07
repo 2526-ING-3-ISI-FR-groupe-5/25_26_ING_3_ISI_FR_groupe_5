@@ -8,25 +8,46 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Util
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 public class Institut {
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
-    private  String nom;
-    private  String ville;
-    private  String adresse;
-    private  String email;
-    private  String telephone;
-    private  String localite;
-    @OneToMany(mappedBy = "institut")
-    private Collection<Ecole> ecoles;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String nom;
+    private String ville;
+    private String adresse;
+    private String email;
+    private String telephone;
+    private String localite;
+
+    // ✅ Un institut peut avoir plusieurs écoles
+    @OneToMany(mappedBy = "institut", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Collection<Ecole> ecoles = new ArrayList<>();
+
     @ManyToMany
-    private Collection<Utilisateur> utilisateurs= new ArrayList<>();
+    @Builder.Default
+    private Collection<Utilisateur> utilisateurs = new ArrayList<>();
+
     @ManyToMany
-    private  Collection<Administrateur> administrateur= new ArrayList<>();
+    @Builder.Default
+    private Collection<Administrateur> administrateur = new ArrayList<>();
+
+    // Helper
+    public void addEcole(Ecole ecole) {
+        ecoles.add(ecole);
+        ecole.setInstitut(this);
+    }
+
+    public void removeEcole(Ecole ecole) {
+        ecoles.remove(ecole);
+        ecole.setInstitut(null);
+    }
 }

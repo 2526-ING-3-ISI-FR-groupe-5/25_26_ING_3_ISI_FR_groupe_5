@@ -34,8 +34,9 @@ public class Appels {
     private Collection<Surveillant> surveillant=new ArrayList<>();
     @ManyToMany
     private Collection<Enseignant> enseignant= new ArrayList<>();
-    @OneToMany(mappedBy = "appels")
-    private Collection<Etudiant> etudiant;
+    @ManyToOne
+    @JoinColumn(name = "etudiant_id")
+    private Etudiant etudiant;  // ✅ Pas de mappedBy ici
     @ManyToOne
     private AssistantPedagogique assistantPedagogique;
     @OneToMany(mappedBy = "appels")

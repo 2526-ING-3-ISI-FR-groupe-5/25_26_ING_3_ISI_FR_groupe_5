@@ -2,33 +2,48 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Administrateur;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 public class Ecole {
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
-    private  String nom;
-    private  String adresse;
-    private  String email;
-    private  String telephone;
-    @OneToMany(mappedBy = "ecoles")
-    private Collection<Cycle> cycles;
-    @OneToMany(mappedBy = "ecoles")
-    private Collection<AssistantPedagogique> assistantPedagogiques;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String nom;
+    private String adresse;
+    private String email;
+    private String telephone;
+
+    @CreatedDate
+    @Column(updatable = false, nullable = false)
+    private LocalDateTime createAt;
+
+    @LastModifiedDate
+    private LocalDateTime updateAt;
+
     @ManyToOne
+    @JoinColumn(name = "institut_id", nullable = false)
     private Institut institut;
-    @OneToMany(mappedBy = "ecoles")
-    private  Collection<Cycle> cycle;
-    @ManyToMany
-    private Collection<Administrateur> administrateurs= new ArrayList<>();
+
+    @OneToMany(mappedBy = "ecole", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Set<Filiere> filieres = new HashSet<>();
+
+    // ❌ Supprimer cette relation (gérée par Administrateur)
+    // @ManyToMany(mappedBy = "ecoles")
+    // private Collection<Administrateur> administrateurs;
 }

@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,109 +17,129 @@ import org.springframework.security.core.userdetails.UserDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enums.TypeSexe;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-
+@SuperBuilder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class) // ✅ Ajouter
+
 @Inheritance
 @DiscriminatorColumn(name="Type", length = 3)
 //Administrateur=ADM, AssPeda= ASP, Enseignant=ENS, Etudiant=ETD, Parent=PRT, Surveillant=SRV
 
 public abstract class Utilisateur  implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
-    @NotBlank(message = "Le nom ne peut pas être vide.")
-    @Size(min = 1, max = 100, message = "Le nom doit contenir entre 1 et 100 caractères.")
+    @Column(nullable = false)
     protected String nom;
-    @NotBlank(message = "Le nom ne peut pas être vide.")
-    @Size(min = 1, max = 100, message = "Le nom doit contenir entre 1 et 100 caractères.")
-    protected String prenom;
-    protected String adresse;
 
-    @Column(unique = true)
-    @NotBlank(message = "L'email ne peut pas être vide.")
-    @Email(message = "L'email doit être un format valide.")
-    @Size(max = 255, message = "L'email ne peut pas dépasser 255 caractères.")
+    @Column(nullable = false)
+    protected String prenom;
+
+    @Column(unique = true, nullable = false)
     protected String email;
 
+    @Column(nullable = false)
+    protected String password;
+
+    @Column(nullable = false)
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    protected LocalDate dateNaissance;
+
+    @Column(nullable = false)
     protected String telephone;
 
-    @NotBlank(message = "Le mot de passe ne peut pas être vide.")
-    @Size(min = 8, message = "Le mot de passe doit contenir au moins 8 caractères.")
-    private String password;
+    @Column(nullable = false)
+    @Builder.Default
+    protected boolean active = true;
 
+    protected boolean firstLogin = true;
 
-    @Enumerated(EnumType.STRING)
-    @NotBlank(message = "Le sexe ne peut pas être nul.")
-    protected TypeSexe sexe;
+    @Column(nullable = false)
+    protected boolean locked = false;
 
-    protected Boolean active;
-    private boolean firstLogin = true;
+    @Column(nullable = false)
+    protected boolean expired = false;
 
-    @NotNull(message = "La date de création ne peut pas être nulle.")
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @NotBlank(message=" La Date est requise est sous la forme  yyyy-MM-dd ")
-    protected Date dateCreation;
-    @OneToOne
-    private Localisation localisation;
-    @ManyToMany(mappedBy = "utilisateur", fetch = FetchType.EAGER)
-    private Set<Role> roles= new HashSet<>();
-    @ManyToMany(mappedBy = "utilisateurs")
-    private  Collection<Institut> institutCollection= new ArrayList<>();
-    @ManyToMany
-    private Collection<Administrateur> admin=new ArrayList<>();
+    @CreatedDate
+    @Column(updatable = false, nullable = false)
+    protected LocalDateTime createdAt;
 
+    @LastModifiedDate
+    protected LocalDateTime updatedAt;
+    @Builder.Default
+    protected Boolean emailVerified = false;
+    protected Boolean phoneVerified = false;
 
-   private boolean enabled = false;
-   private boolean accountLocked = false;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "utilisateurs_role",  // Nom exact de la table de jointure
+            joinColumns = @JoinColumn(name = "utilisateur_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    protected Set<Role> roles = new HashSet<>();
 
+    // ────────────────────────────────────────────────
+    // Implémentation de UserDetails
+    // ────────────────────────────────────────────────
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (roles.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-   private String otpCode;
-   private LocalDateTime otpExpiration;
+        Set<GrantedAuthority> authorities = new HashSet<>();
 
-   private int loginAttempts = 0;
-   private LocalDateTime lastLogin;
+        for (Role role : roles) {
+            if (Boolean.TRUE.equals(role.getActive())) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getNom()));
+            }
 
+            for (Permission perm : role.getPermissions()) {
+                if (Boolean.TRUE.equals(perm.getActive())) {
+                    authorities.add(new SimpleGrantedAuthority(perm.getNom()));
+                }
+            }
+        }
 
-
-   @Override
-   public Collection<? extends GrantedAuthority> getAuthorities() {
-    Set<GrantedAuthority> authorities = new HashSet<>();
-
-    for (Role role : roles) {
-     if (role.getActive()) {
-      authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getNom()));
-     }
-
-     for (Permission perm : role.getPermission()) {
-      if (perm.getActive()) {
-       authorities.add(new SimpleGrantedAuthority(perm.getNom()));
-      }
-     }
+        return authorities;
     }
-    return authorities;
-   }
-
-   @Override
-   public String getUsername() {
-    return email;
-   }
 
     @Override
-   public boolean isAccountNonLocked() {
-    return !accountLocked;
-   }
+    public boolean isEnabled() {
+        return active;
+    }
 
     @Override
-   public boolean isEnabled() {
-    return enabled;
-   }
+    public boolean isAccountNonExpired() {
+        return !expired;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
 }

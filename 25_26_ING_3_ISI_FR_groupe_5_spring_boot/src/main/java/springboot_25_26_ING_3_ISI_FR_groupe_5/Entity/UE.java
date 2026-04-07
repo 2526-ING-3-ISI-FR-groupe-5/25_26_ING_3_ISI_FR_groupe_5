@@ -2,36 +2,46 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.ProgrammationUE;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
+@Entity
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
+@AllArgsConstructor @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 
 public class UE {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private  String nom;
+
+    private String nom;
     private String code;
-    private Long nb_heure;
-    private Long  credit;
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date dateCreation;
-    //***** Arevoir
-    @ManyToOne
-    private Justificatif justificatif;
-    @ManyToMany
-    private Collection<Specialite> specialiteCollection = new ArrayList<>();
-    @ManyToMany
-    private Collection<Enseignant> enseignantCollection = new ArrayList<>();
+    private String libelle;
+    private String libelleAnglais;
+    @CreatedDate
+    @Column(updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "specialite_id")
+    private Specialite specialite;
+
+
+
+    @OneToMany(mappedBy = "ue")
+    @Builder.Default
+    private Set<ProgrammationUE> programmations = new HashSet<>();
 }

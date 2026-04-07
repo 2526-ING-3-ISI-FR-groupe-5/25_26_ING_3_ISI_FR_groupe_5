@@ -2,17 +2,21 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Administrateur;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
-@Setter
-@Getter
 @Builder
-@NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Filiere {
 
     @Id
@@ -23,14 +27,26 @@ public class Filiere {
     private String code;
     private String description;
 
-    @OneToMany(mappedBy = "filiere")
-    private Collection<Etudiant> etudiants;
-    @OneToMany(mappedBy = "filiere")
-    private Collection<Cycle> cycles;
-    @ManyToMany
-    private Collection<Administrateur> administrateurs= new ArrayList<>();
-    @ManyToOne
-    private Niveau niveau;
-    @OneToMany
-    private Collection<Specialite> specialites;
+    @CreatedDate
+    @Column(updatable = false, nullable = false)
+    private LocalDateTime createAt;
+
+    @LastModifiedDate
+    private LocalDateTime updateAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cycle_id")
+    private Cycle cycle;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ecole_id")
+    private Ecole ecole;
+
+    @OneToMany(mappedBy = "filiere", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Collection<Specialite> specialites = new ArrayList<>();
+
+    @OneToMany(mappedBy = "filiere", fetch = FetchType.LAZY)
+    @Builder.Default
+    private Collection<Niveau> niveaux = new ArrayList<>();
 }
