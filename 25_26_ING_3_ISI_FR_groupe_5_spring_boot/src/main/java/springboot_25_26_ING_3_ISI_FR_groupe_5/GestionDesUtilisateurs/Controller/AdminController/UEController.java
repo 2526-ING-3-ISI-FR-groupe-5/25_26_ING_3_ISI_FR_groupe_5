@@ -20,7 +20,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.util.List;
 
 @Controller
-@RequestMapping("/ues")
+@RequestMapping("/admin/ues")
 @RequiredArgsConstructor
 public class UEController {
 
@@ -50,21 +50,17 @@ public class UEController {
         if (recherche != null && !recherche.isEmpty()) {
             ues = ueService.rechercher(recherche);
         } else {
-            // ✅ Récupérer TOUTES les UE
             ues = ueService.getAll();
         }
 
-        // ✅ Debug
-        System.out.println("Nombre d'UE trouvées : " + ues.size());
-
         model.addAttribute("ues", ueMapper.toResponseList(ues));
-        model.addAttribute("specialites",
-                specialiteMapper.toResponseList(specialiteService.getAll()));
+        model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
         model.addAttribute("annees", anneeService.getAll());
         model.addAttribute("anneeActive", annee);
         model.addAttribute("recherche", recherche);
         model.addAttribute("form", new UERequest());
-        return "ues/liste";
+
+        return "ue/liste";
     }
 
     @PostMapping("/creer")
@@ -76,28 +72,20 @@ public class UEController {
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("ues",
-                    ueMapper.toResponseList(
-                            ueService.getByAnnee(anneeService.getAnneeActive().getId())));
-            model.addAttribute("specialites",
-                    specialiteMapper.toResponseList(specialiteService.getAll()));
-            return "ues/liste";
+            model.addAttribute("ues", ueMapper.toResponseList(ueService.getAll()));
+            model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
+            return "ue/liste";
         }
 
         try {
-            UE ue = new UE();
-            ue.setNom(request.getNom());
-            ue.setCode(request.getCode());
-            ue.setLibelle(request.getLibelle());
-            ue.setLibelleAnglais(request.getLibelleAnglais()); // ⚠️ AJOUTER CETTE LIGNE
+            UE ue = ueMapper.toEntity(request);
             ueService.creer(ue, request.getSpecialiteId());
-            redirectAttributes.addFlashAttribute("succes",
-                    "UE créée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "UE créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/ues";
+        return "redirect:/admin/ues";
     }
 
     @GetMapping("/{id}/modifier")
@@ -108,14 +96,16 @@ public class UEController {
         form.setNom(ue.getNom());
         form.setCode(ue.getCode());
         form.setLibelle(ue.getLibelle());
-
-        form.setSpecialiteId(ue.getSpecialite().getId());
+        form.setLibelleAnglais(ue.getLibelleAnglais());
+        if (ue.getSpecialite() != null) {
+            form.setSpecialiteId(ue.getSpecialite().getId());
+        }
 
         model.addAttribute("ue", ueMapper.toResponse(ue));
-        model.addAttribute("specialites",
-                specialiteMapper.toResponseList(specialiteService.getAll()));
+        model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
         model.addAttribute("form", form);
-        return "ues/modifier";
+
+        return "ue/modifier";
     }
 
     @PostMapping("/{id}/modifier")
@@ -129,25 +119,19 @@ public class UEController {
     ) {
         if (result.hasErrors()) {
             model.addAttribute("ue", ueMapper.toResponse(ueService.findById(id)));
-            model.addAttribute("specialites",
-                    specialiteMapper.toResponseList(specialiteService.getAll()));
-            return "ues/modifier";
+            model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
+            return "ue/modifier";
         }
 
         try {
-            UE data = new UE();
-            data.setNom(request.getNom());
-            data.setCode(request.getCode());
-            data.setLibelle(request.getLibelle());
-            data.setLibelleAnglais(request.getLibelleAnglais());
+            UE data = ueMapper.toEntity(request);
             ueService.modifier(id, data);
-            redirectAttributes.addFlashAttribute("succes",
-                    "UE modifiée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "UE modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/ues";
+        return "redirect:/admin/ues";
     }
 
     @PostMapping("/{id}/supprimer")
@@ -158,11 +142,27 @@ public class UEController {
     ) {
         try {
             ueService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "UE supprimée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "UE supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/ues";
+        return "redirect:/admin/ues";
+    }
+
+    // ✅ Endpoint JSON pour la modale d'édition
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
+    public UERequest getUeJson(@PathVariable Long id) {
+        UE ue = ueService.findById(id);
+        UERequest request = new UERequest();
+        request.setNom(ue.getNom());
+        request.setCode(ue.getCode());
+        request.setLibelle(ue.getLibelle());
+        request.setLibelleAnglais(ue.getLibelleAnglais());
+        if (ue.getSpecialite() != null) {
+            request.setSpecialiteId(ue.getSpecialite().getId());
+        }
+        return request;
     }
 }

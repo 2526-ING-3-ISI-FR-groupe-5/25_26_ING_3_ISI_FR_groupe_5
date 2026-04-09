@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @Controller
-@RequestMapping("/programmations")
+@RequestMapping("/admin/programmations")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class ProgrammationUEController {
@@ -99,7 +99,7 @@ public class ProgrammationUEController {
         model.addAttribute("pageTitle", "Programmation des UE");
         model.addAttribute("currentPage", "programmations");
 
-        return "programmations/liste";
+        return "programmation/liste";
     }
 
     @GetMapping("/creer")
@@ -126,7 +126,7 @@ public class ProgrammationUEController {
                                 anneeActive.getId(), null, PageRequest.of(0, 100)
                         ).getContent()));
         model.addAttribute("classeIdSelectionne", classeId);
-        return "programmations/form";
+        return "programmation/form";
     }
 
     @PostMapping("/creer")
@@ -153,7 +153,7 @@ public class ProgrammationUEController {
                             enseignantService.rechercher(
                                     anneeActive.getId(), null, PageRequest.of(0, 100)
                             ).getContent()));
-            return "programmations/form";
+            return "programmation/form";
         }
 
         try {
@@ -171,7 +171,7 @@ public class ProgrammationUEController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/programmations?classeId=" + request.getClasseId();
+        return "redirect:/admin/programmations?classeId=" + request.getClasseId();
     }
 
     @PostMapping("/{id}/modifier")
@@ -180,23 +180,23 @@ public class ProgrammationUEController {
             @RequestParam Long dheure,
             @RequestParam Long nbrCredit,
             @RequestParam Set<Long> enseignantIds,
-            @RequestParam(required = false) String libelle,           // ✅ Ajout du libellé FR
-            @RequestParam(required = false) String libelleAnglais,    // ✅ Ajout du libellé EN
+            @RequestParam(required = false) String libelle,
+            @RequestParam(required = false) String libelleAnglais,
             RedirectAttributes redirectAttributes
     ) {
         try {
-            // ✅ On passe les nouveaux paramètres au service
             ProgrammationUE p = programmationService.modifier(
                     id, dheure, nbrCredit, enseignantIds, libelle, libelleAnglais
             );
             redirectAttributes.addFlashAttribute("succes",
                     "Programmation modifiée avec succès");
-            return "redirect:/programmations?classeId=" + p.getClasse().getId();
+            return "redirect:/admin/programmations?classeId=" + p.getClasse().getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
-            return "redirect:/programmations";
+            return "redirect:/admin/programmations";
         }
     }
+
     @PostMapping("/{id}/supprimer")
     public String supprimer(
             @PathVariable Long id,
@@ -208,14 +208,13 @@ public class ProgrammationUEController {
             programmationService.supprimer(id);
             redirectAttributes.addFlashAttribute("succes",
                     "Programmation supprimée avec succès");
-            return "redirect:/programmations?classeId=" + classeId;
+            return "redirect:/admin/programmations?classeId=" + classeId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
-            return "redirect:/programmations";
+            return "redirect:/admin/programmations";
         }
     }
 
-    // Ajoute cette méthode dans ProgrammationUEController
     @GetMapping("/annee/{anneeId}")
     @PreAuthorize("hasRole('ADMIN')")
     public String getByAnnee(@PathVariable Long anneeId, Model model) {
@@ -224,6 +223,24 @@ public class ProgrammationUEController {
 
         model.addAttribute("programmations", programmationMapper.toResponseList(programmations));
         model.addAttribute("anneeActive", annee);
-        return "programmations/liste";
+        return "programmation/liste";
+    }
+
+    // ✅ Endpoint JSON pour la modale d'édition
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProgrammationRequest getProgrammationJson(@PathVariable Long id) {
+        ProgrammationUE p = programmationService.findById(id);
+        ProgrammationRequest request = new ProgrammationRequest();
+        request.setUeId(p.getUe().getId());
+        request.setSemestreId(p.getSemestre().getId());
+        request.setClasseId(p.getClasse().getId());
+        request.setDheure(p.getDheure());
+        request.setNbrCredit(p.getNbrCredit());
+        request.setEnseignantIds(p.getEnseignants().stream()
+                .map(e -> e.getId())
+                .collect(java.util.stream.Collectors.toSet()));
+        return request;
     }
 }

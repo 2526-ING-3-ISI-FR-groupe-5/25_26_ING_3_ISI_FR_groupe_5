@@ -12,6 +12,11 @@ import java.util.List;
 public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE, Long> {
 
     // Programmations d'une classe pour une année
+
+    @Query("SELECT p FROM ProgrammationUE p WHERE p.semestre.anneeAcademique.id = :anneeId")
+    List<ProgrammationUE> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
+
+
     @Query("""
         SELECT p FROM ProgrammationUE p
         WHERE p.classe.id = :classeId

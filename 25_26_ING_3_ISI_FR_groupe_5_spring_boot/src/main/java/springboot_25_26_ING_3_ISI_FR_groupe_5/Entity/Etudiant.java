@@ -8,10 +8,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeNiveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @SuperBuilder
 @Getter
@@ -35,17 +32,22 @@ public class Etudiant extends Utilisateur {
     @ManyToOne(fetch = FetchType.LAZY)
     private Classe classe;
 
-    // ✅ Relation vers Parent (un étudiant peut avoir un parent)
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Parent parent;
 
     @OneToMany(mappedBy = "etudiant")
+    @Builder.Default
     private Set<Inscription> inscriptions = new HashSet<>();
 
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Appels> appels = new HashSet<>();
+
+    // ✅ Correction : mappedBy = "etudiant" (et non "utilisateur")
+    @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
+    @Builder.Default
+    private Collection<Justificatif> justificatifs = new ArrayList<>();
 
     // ==================== Méthodes ====================
 

@@ -15,6 +15,10 @@ public class UEResponse {
     private String libelle;
     private String libelleAnglais;
 
+    // Spécialité associée (optionnelle)
     private Long specialiteId;
     private String specialiteNom;
+    private String specialiteCode;
+
+    private int nombreProgrammations;
 }

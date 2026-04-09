@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Specialite;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.UE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exceptions.DuplicateResourceException;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exceptions.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UERepository;
 
 import java.util.List;
@@ -15,14 +17,13 @@ public class UEService {
 
     private final UERepository ueRepo;
     private final SpecialiteService specialiteService;
-    private final AnneeAcademiqueService anneeService;
 
     @Transactional
     public UE creer(UE ue, Long specialiteId) {
         Specialite specialite = specialiteService.findById(specialiteId);
 
         if (ueRepo.findByCode(ue.getCode()).isPresent()) {
-            throw new RuntimeException("Une UE avec ce code existe déjà");
+            throw new DuplicateResourceException("UE", ue.getCode());
         }
 
         ue.setSpecialite(specialite);
@@ -41,25 +42,22 @@ public class UEService {
 
     public UE findById(Long id) {
         return ueRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("UE introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("UE", "id", id));
     }
 
-    // ✅ CORRECTION : Retourner TOUTES les UE
-    public List<UE> getByAnnee(Long anneeId) {
-        // Vérifier que l'année existe (optionnel)
-        if (anneeId != null) {
-            try {
-                anneeService.findById(anneeId);
-            } catch (Exception e) {
-                // Année non trouvée
-            }
-        }
-        // Retourner TOUTES les UE
+    public List<UE> getAll() {
         return ueRepo.findAllUes();
     }
 
-    public List<UE> getByClasseAndAnnee(Long classeId, Long anneeId) {
-        return ueRepo.findByClasseAndAnnee(classeId, anneeId);
+    // ✅ Méthode ajoutée pour résoudre l'erreur
+    public List<UE> getByAnnee(Long anneeId) {
+        // Retourne toutes les UE (indépendamment de l'année)
+        // Tu peux adapter selon ton besoin
+        return ueRepo.findAllUes();
+    }
+
+    public List<UE> getBySpecialite(Long specialiteId) {
+        return ueRepo.findBySpecialiteId(specialiteId);
     }
 
     public List<UE> rechercher(String nom) {
@@ -70,18 +68,9 @@ public class UEService {
     public void supprimer(Long id) {
         UE ue = findById(id);
         if (!ue.getProgrammations().isEmpty()) {
-            throw new RuntimeException(
-                    "Impossible de supprimer : cette UE est programmée dans une ou plusieurs années"
-            );
+            throw new RuntimeException("Impossible de supprimer : cette UE est programmée dans " +
+                    ue.getProgrammations().size() + " programme(s)");
         }
         ueRepo.delete(ue);
-    }
-
-    public List<UE> getAll() {
-        return ueRepo.findAllUes();
-    }
-
-    public List<UE> getBySpecialite(Long specialiteId) {
-        return ueRepo.findBySpecialiteId(specialiteId);
     }
 }

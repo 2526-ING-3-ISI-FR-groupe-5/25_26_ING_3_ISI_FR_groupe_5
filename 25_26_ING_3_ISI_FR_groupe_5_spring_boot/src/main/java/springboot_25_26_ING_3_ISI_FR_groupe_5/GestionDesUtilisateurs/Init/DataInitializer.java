@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeContrat;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.PermissionRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.RoleRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
@@ -50,8 +51,8 @@ public class DataInitializer implements ApplicationRunner {
         Role roleEtudiant   = createOrUpdateRole("ETUDIANT",   "Étudiant",                              true, Set.of(nRead));
         Role roleAssistant  = createOrUpdateRole("ASSISTANT",  "Assistant administratif / pédagogique", true, Set.of(eRead, nRead));
 
-        // 3. UTILISATEURS de base
-        createAdmin(roleAdmin);
+        // 3. UTILISATEURS de base (admin dans Utilisateur avec rôle ADMIN)
+        createAdminUser(roleAdmin);
         createEnseignant(roleEnseignant);
         createEtudiant(roleEtudiant);
 
@@ -72,7 +73,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .nom(nom)
                                 .description(description)
                                 .active(true)
-                                .creatAt(LocalDateTime.now()) // ✅ corrigé — un seul creatAt
+                                .creatAt(LocalDateTime.now())
                                 .build()
                 ));
     }
@@ -95,21 +96,27 @@ public class DataInitializer implements ApplicationRunner {
                 ));
     }
 
-    private void createAdmin(Role role) {
+    // ✅ MODIFIÉ : Utilisateur normal avec rôle ADMIN (plus de Administrateur)
+    private void createAdminUser(Role role) {
         if (utilisateurRepository.findByEmail("admin@carnetrouge.com").isEmpty()) {
-            utilisateurRepository.save(
-                    Administrateur.builder()
-                            .nom("Dupont")
-                            .prenom("Jean")
-                            .email("admin@carnetrouge.com")
-                            .password(passwordEncoder.encode("Admin123!"))
-                            .telephone("0600000001")
-                            .dateNaissance(LocalDate.of(1990, 9, 17))
-                            .active(true)
-                            .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
-                            .roles(new HashSet<>(Set.of(role)))
-                            .build()
-            );
+            // Créer un utilisateur de type Enseignant ou Etudiant ?
+            // Ou simplement utiliser la classe Utilisateur ?
+            // Puisque Utilisateur est abstract, on doit utiliser une sous-classe
+            // Option : créer un utilisateur de type Enseignant avec rôle ADMIN
+            Enseignant adminUser = Enseignant.builder()
+                    .nom("Dupont")
+                    .prenom("Jean")
+                    .email("admin@carnetrouge.com")
+                    .password(passwordEncoder.encode("Admin123!"))
+                    .telephone("0600000001")
+                    .dateNaissance(LocalDate.of(1990, 9, 17))
+                    .active(true)
+                    .grade("Administrateur")
+                    .typeEnseignant("Permanent")
+                    .createdAt(LocalDateTime.now())
+                    .roles(new HashSet<>(Set.of(role)))
+                    .build();
+            utilisateurRepository.save(adminUser);
         }
     }
 
@@ -126,7 +133,7 @@ public class DataInitializer implements ApplicationRunner {
                             .active(true)
                             .grade("Maître de conférences")
                             .typeEnseignant("Permanent")
-                            .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
+                            .createdAt(LocalDateTime.now())
                             .roles(new HashSet<>(Set.of(role)))
                             .build()
             );
@@ -144,7 +151,7 @@ public class DataInitializer implements ApplicationRunner {
                             .telephone("0600000003")
                             .dateNaissance(LocalDate.of(2003, 11, 28))
                             .active(true)
-                            .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
+                            .createdAt(LocalDateTime.now())
                             .roles(new HashSet<>(Set.of(role)))
                             .build()
             );
@@ -153,7 +160,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private void createFakeUsers(Role roleEnseignant, Role roleAssistant) {
 
-        // ✅ Enseignants fictifs — ceux utilisés dans DataInitializer1
+        // ✅ Enseignants fictifs
         record EnseignantData(String nom, String prenom, String email, String grade, String type) {}
         List<EnseignantData> enseignants = List.of(
                 new EnseignantData("Kamga",  "Paul",   "kamga@carnetrouge.com",   "Professeur",            "Permanent"),
@@ -161,7 +168,6 @@ public class DataInitializer implements ApplicationRunner {
                 new EnseignantData("Biya",   "Marc",   "biya@carnetrouge.com",    "Docteur",               "Permanent"),
                 new EnseignantData("Fouda",  "Claire", "fouda@carnetrouge.com",   "Maître assistant",      "Permanent"),
                 new EnseignantData("Mbarga", "Samuel", "mbarga@carnetrouge.com",  "Professeur agrégé",     "Vacataire"),
-                // ✅ Enseignants utilisés dans DataInitializer1 pour les UEs
                 new EnseignantData("Billong", "Jean",  "billong@carnetrouge.com", "Docteur",               "Permanent"),
                 new EnseignantData("Pessa",   "Marie", "pessa@carnetrouge.com",   "Maître assistant",      "Permanent"),
                 new EnseignantData("Mballa",  "Paul",  "mballa@carnetrouge.com",  "Professeur",            "Permanent"),
@@ -181,16 +187,15 @@ public class DataInitializer implements ApplicationRunner {
 
         record SurveillantData(String nom, String prenom, String email, String secteur, String typeContrat) {}
         List<SurveillantData> surveillants = List.of(
-                new SurveillantData("Essama", "Julie", "xxxxx@carnetrouge.com", "CPGE", "CDI"),
-
+                new SurveillantData("Essama", "Julie", "essama2@carnetrouge.com", "CPGE", "CDI"),
                 new SurveillantData("Dupont", "Marie", "marie.dupont@carnetrouge.com", "CPGE", "CDI"),
                 new SurveillantData("Ndiaye", "Amadou", "amadou.ndiaye@carnetrouge.com", "Terminale", "CDD"),
                 new SurveillantData("Kamdem", "Paul", "paul.kamdem@carnetrouge.com", "Seconde", "CDI")
         );
 
-        surveillants.forEach(data->{
-            if (utilisateurRepository.findByEmail(data.email()).isEmpty()){
-                String tel= "05658498"+(10+(int)(Math.random()*90));
+        surveillants.forEach(data -> {
+            if (utilisateurRepository.findByEmail(data.email()).isEmpty()) {
+                String tel = "05658498" + (10 + (int)(Math.random() * 90));
                 utilisateurRepository.save(
                         Surveillant.builder()
                                 .nom(data.nom())
@@ -200,12 +205,12 @@ public class DataInitializer implements ApplicationRunner {
                                 .telephone(tel)
                                 .dateNaissance(LocalDate.of(2000, 10, 17))
                                 .active(true)
-                                .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
-
+                                .createdAt(LocalDateTime.now())
+                                .secteur(data.secteur())
+                                .typeContrat(TypeContrat.valueOf(data.typeContrat()))
                                 .roles(new HashSet<>(Set.of(roleEnseignant)))
                                 .build()
                 );
-
             }
         });
 
@@ -223,7 +228,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .active(true)
                                 .grade(data.grade())
                                 .typeEnseignant(data.type())
-                                .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
+                                .createdAt(LocalDateTime.now())
                                 .roles(new HashSet<>(Set.of(roleEnseignant)))
                                 .build()
                 );
@@ -243,7 +248,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .dateNaissance(LocalDate.of(1988, 9, 17))
                                 .active(true)
                                 .fonction(data.fonction())
-                                .createdAt(LocalDate.from(LocalDateTime.now()).atStartOfDay())
+                                .createdAt(LocalDateTime.now())
                                 .roles(new HashSet<>(Set.of(roleAssistant)))
                                 .build()
                 );

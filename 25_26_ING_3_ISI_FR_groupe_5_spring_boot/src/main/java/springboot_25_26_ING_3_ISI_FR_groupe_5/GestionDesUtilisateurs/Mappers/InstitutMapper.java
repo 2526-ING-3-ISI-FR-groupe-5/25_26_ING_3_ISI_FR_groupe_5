@@ -21,7 +21,6 @@ public interface InstitutMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ecoles", ignore = true)
     @Mapping(target = "utilisateurs", ignore = true)
-    @Mapping(target = "administrateur", ignore = true)
     Institut toEntity(InstitutRequest request);
 
     @Named("countEcoles")

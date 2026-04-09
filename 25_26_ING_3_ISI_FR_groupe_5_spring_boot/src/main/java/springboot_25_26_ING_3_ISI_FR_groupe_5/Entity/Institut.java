@@ -2,7 +2,6 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Administrateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.util.ArrayList;
@@ -36,9 +35,7 @@ public class Institut {
     @Builder.Default
     private Collection<Utilisateur> utilisateurs = new ArrayList<>();
 
-    @ManyToMany
-    @Builder.Default
-    private Collection<Administrateur> administrateur = new ArrayList<>();
+
 
     // Helper
     public void addEcole(Ecole ecole) {

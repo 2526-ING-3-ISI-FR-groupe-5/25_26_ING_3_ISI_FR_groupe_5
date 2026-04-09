@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assist
 
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -18,5 +19,5 @@ public class AssistantResponse {
     private String telephone;
     private String fonction;
     private boolean active;
-    private List<String> classesNoms;
+    private List<String> classesNoms= new ArrayList<>();
 }
