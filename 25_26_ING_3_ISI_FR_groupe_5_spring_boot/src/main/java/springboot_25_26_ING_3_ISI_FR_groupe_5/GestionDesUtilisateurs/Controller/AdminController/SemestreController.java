@@ -13,7 +13,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.time.LocalDate;
 
 @Controller
-@RequestMapping("/semestres")
+@RequestMapping("/admin/semestres")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class SemestreController {
@@ -31,22 +31,24 @@ public class SemestreController {
     ) {
         try {
             semestreService.creer(typeSemestre, anneeAcademiqueId, dateDebut, dateFin, actif);
-            redirectAttributes.addFlashAttribute("succes", "Semestre " + typeSemestre.getLibelle() + " créé avec succès");
+            redirectAttributes.addFlashAttribute("succes",
+                    "✅ " + typeSemestre.getLibelle() + " créé avec succès pour l'année");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
+            redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
         }
-        return "redirect:/annees/" + anneeAcademiqueId;
+        return "redirect:/admin/annees/" + anneeAcademiqueId;
     }
 
     @PostMapping("/{id}/activer")
     public String activer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Semestre semestre = semestreService.activerSemestre(id);
-            redirectAttributes.addFlashAttribute("succes", "Semestre activé avec succès");
-            return "redirect:/annees/" + semestre.getAnneeAcademique().getId();
+            redirectAttributes.addFlashAttribute("succes",
+                    "✅ " + semestre.getTypeSemestre().getLibelle() + " activé avec succès");
+            return "redirect:/admin/annees/" + semestre.getAnneeAcademique().getId();
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
-            return "redirect:/annees";
+            redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
+            return "redirect:/admin/annees";
         }
     }
 
@@ -54,11 +56,12 @@ public class SemestreController {
     public String desactiver(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Semestre semestre = semestreService.desactiverSemestre(id);
-            redirectAttributes.addFlashAttribute("succes", "Semestre désactivé avec succès");
-            return "redirect:/annees/" + semestre.getAnneeAcademique().getId();
+            redirectAttributes.addFlashAttribute("succes",
+                    "ℹ️ " + semestre.getTypeSemestre().getLibelle() + " désactivé avec succès");
+            return "redirect:/admin/annees/" + semestre.getAnneeAcademique().getId();
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
-            return "redirect:/annees";
+            redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
+            return "redirect:/admin/annees";
         }
     }
 
@@ -68,11 +71,12 @@ public class SemestreController {
             Semestre semestre = semestreService.findById(id);
             Long anneeId = semestre.getAnneeAcademique().getId();
             semestreService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes", "Semestre supprimé avec succès");
-            return "redirect:/annees/" + anneeId;
+            redirectAttributes.addFlashAttribute("succes",
+                    "🗑️ " + semestre.getTypeSemestre().getLibelle() + " supprimé avec succès");
+            return "redirect:/admin/annees/" + anneeId;
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
-            return "redirect:/annees";
+            redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
+            return "redirect:/admin/annees";
         }
     }
 }

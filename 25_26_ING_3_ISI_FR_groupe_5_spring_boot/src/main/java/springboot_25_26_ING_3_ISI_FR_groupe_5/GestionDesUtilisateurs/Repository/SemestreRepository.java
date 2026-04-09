@@ -20,4 +20,6 @@ public interface SemestreRepository extends JpaRepository<Semestre, Long> {
     Optional<Semestre> findByAnneeAcademiqueIdAndTypeSemestre(Long anneeAcademiqueId, TypeSemestre typeSemestre);
 
     boolean existsByAnneeAcademiqueIdAndTypeSemestre(Long anneeAcademiqueId, TypeSemestre typeSemestre);
+
+    long countByAnneeAcademiqueId(Long anneeId);
 }

@@ -14,4 +14,6 @@ public class EcoleResponse {
     private String adresse;
     private String email;
     private String telephone;
+    private Long institutId;
+    private String institutNom;
 }

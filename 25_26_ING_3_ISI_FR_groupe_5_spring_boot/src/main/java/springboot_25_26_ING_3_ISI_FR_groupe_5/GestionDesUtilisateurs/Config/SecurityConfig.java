@@ -31,21 +31,22 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
 
-    // Mise à jour de la liste publique pour inclure les ressources PWA et Statiques
     private static final String[] PUBLIC_URL = {
             "/login",
             "/refresh-token",
             "/notFound",
+            "/accessDenied",
+            "/sessionExpired",
             "/error",
             "/api/v1/auth/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/css/**",           // Indispensable pour tes styles
-            "/js/**",            // Indispensable pour tes scripts
-            "/images/**",        // Indispensable pour tes icônes
-            "/manifest.json",    // Fichier manifest PWA
-            "/sw.js",            // Service Worker
-            "/icon-512.png",         // Si ton icône est à la racine
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/manifest.json",
+            "/sw.js",
+            "/icon-512.png",
             "/favicon.ico",
             "/"
     };

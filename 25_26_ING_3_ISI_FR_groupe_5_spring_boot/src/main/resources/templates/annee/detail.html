@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title th:text="'Année ' + ${annee.nom} + ' — CarnetRouge'">Détail année — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- Navigation retour -->
+        <div class="mb-6">
+            <a th:href="@{/admin/annees}" class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-2 flex-wrap">
+                        <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100">
+                            Année <span class="text-primary italic" th:text="${annee.nom}">2024-2025</span>
+                        </h1>
+                        <span th:if="${annee.active}" class="badge badge-success gap-1">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            Active
+                        </span>
+                        <span th:unless="${annee.active}" class="badge badge-ghost text-gray-500">Inactive</span>
+                    </div>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Du <span th:text="${#temporals.format(annee.dateDebut, 'dd MMMM yyyy')}"></span>
+                        au <span th:text="${#temporals.format(annee.dateFin, 'dd MMMM yyyy')}"></span>
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <!-- Bouton Ajouter un semestre - Désactivé si 2 semestres déjà -->
+                    <button onclick="document.getElementById('semestre-modal').showModal()"
+                            th:classappend="${#lists.size(semestres) >= 2} ? 'btn-disabled opacity-50 cursor-not-allowed' : ''"
+                            th:disabled="${#lists.size(semestres) >= 2}"
+                            class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Ajouter un semestre
+                    </button>
+
+                    <form th:action="@{/admin/annees/{id}/activer(id=${annee.id})}" method="post" th:if="${!annee.active}">
+                        <button type="submit" class="btn btn-outline btn-success gap-2" onclick="return confirm('Activer cette année académique ?')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Activer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Avertissement si max semestres atteint -->
+        <div th:if="${#lists.size(semestres) >= 2}"
+             class="mb-6 alert alert-warning bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+                <span class="font-medium">Limite atteinte</span>
+                <span class="text-sm">Cette année académique a déjà ses 2 semestres. Aucun ajout supplémentaire n'est possible.</span>
+            </div>
+        </div>
+
+        <!-- Cartes des semestres -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Semestres
+                    <span class="badge badge-ghost" th:text="${#lists.size(semestres)} + ' / 2 semestre(s)'"></span>
+                </h2>
+            </div>
+
+            <div th:if="${not #lists.isEmpty(semestres)}"
+                 class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div th:each="semestre : ${semestres}"
+                     class="group bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-5 hover:shadow-lg hover:border-primary/30 transition-all duration-300">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-bold text-lg text-gray-900 dark:text-white" th:text="${semestre.libelle}">Semestre 1</h3>
+                                <span th:if="${semestre.actif}" class="badge badge-sm badge-success">Actif</span>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <span class="font-mono text-xs bg-gray-100 dark:bg-bgsurface px-2 py-0.5 rounded" th:text="${semestre.typeSemestre}">SEMESTRE_1</span>
+                            </p>
+                        </div>
+                        <div class="dropdown dropdown-end">
+                            <button tabindex="0" class="btn btn-ghost btn-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-white dark:bg-bgcard rounded-box w-44 border border-gray-200 dark:border-white/10 flex flex-row">
+                                <li th:if="${!semestre.actif}">
+                                    <form th:action="@{/admin/semestres/{id}/activer(id=${semestre.id})}" method="post">
+                                        <button type="submit" class="text-emerald-600 gap-2 flex flex-row cursor-pointer ">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Activer
+                                        </button>
+                                    </form>
+                                </li>
+                                <li th:if="${semestre.actif}">
+                                    <form th:action="@{/admin/semestres/{id}/desactiver(id=${semestre.id})}" method="post">
+                                        <button type="submit" class="text-amber-600 gap-2 flex flex-row cursor-pointer ">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                            </svg>
+                                            Désactiver
+                                        </button>
+                                    </form>
+                                </li>
+                                <li class="divider my-1"></li>
+                                <li>
+                                    <form th:action="@{/admin/semestres/{id}/supprimer(id=${semestre.id})}" method="post" onsubmit="return confirm('Supprimer ce semestre ? Toutes les données associées seront perdues.')">
+                                        <button type="submit" class="text-red-500 gap-2 flex flex-row cursor-pointer ">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-4 pt-3 border-t border-gray-100 dark:border-white/5">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span th:text="${#temporals.format(semestre.dateDebut, 'dd/MM/yyyy')}"></span>
+                        </span>
+                        <span class="text-gray-400">→</span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span th:text="${#temporals.format(semestre.dateFin, 'dd/MM/yyyy')}"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(semestres)}"
+                 class="text-center py-16 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
+                <svg class="w-20 h-20 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400 font-medium">Aucun semestre pour cette année</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Cliquez sur "Ajouter un semestre" pour commencer</p>
+                <button onclick="document.getElementById('semestre-modal').showModal()"
+                        class="btn btn-primary btn-sm mt-6 text-white gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Ajouter un premier semestre
+                </button>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Informations
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-700 dark:text-gray-300">Période</p>
+                        <p class="text-gray-500 dark:text-gray-400">Du <span th:text="${#temporals.format(annee.dateDebut, 'dd/MM/yyyy')}"></span> au <span th:text="${#temporals.format(annee.dateFin, 'dd/MM/yyyy')}"></span></p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-700 dark:text-gray-300">Statut</p>
+                        <p th:if="${annee.active}" class="text-green-600 dark:text-green-400">Active</p>
+                        <p th:unless="${annee.active}" class="text-gray-500 dark:text-gray-400">Inactive</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        <p>• Une année académique ne peut contenir que <span class="font-bold text-primary">2 semestres</span> maximum</p>
+                        <p>• Les semestres doivent être créés manuellement après la création de l'année</p>
+                        <p>• Une seule année peut être active à la fois</p>
+                        <p>• La suppression d'une année supprime tous les semestres et inscriptions associés</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ajout semestre -->
+    <dialog id="semestre-modal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard max-w-md p-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/20 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+                <h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">
+                    Ajouter un semestre
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Pour l'année <span class="font-semibold text-primary" th:text="${annee.nom}"></span>
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                    Semestre <span th:text="${#lists.size(semestres)}"></span>/2 existants
+                </p>
+            </div>
+
+            <form th:action="@{/admin/semestres/creer}" method="post" class="p-6 space-y-5">
+                <input type="hidden" name="anneeAcademiqueId" th:value="${annee.id}"/>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Type de semestre <span class="text-red-500">*</span></span>
+                    </label>
+                    <select name="typeSemestre"
+                            class="select w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                            required>
+                        <option value="" disabled selected>Sélectionner un semestre</option>
+                        <option th:if="${#lists.size(semestres) < 1}" value="SEMESTRE_1">📗 Semestre 1</option>
+                        <option th:if="${#lists.size(semestres) < 2}" value="SEMESTRE_2">📘 Semestre 2</option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Date de début <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="date"
+                           name="dateDebut"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Date de fin <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="date"
+                           name="dateFin"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label cursor-pointer justify-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-bgsurface/50 hover:bg-gray-100 dark:hover:bg-bgsurface transition-colors">
+                        <input type="checkbox" name="actif" value="true" class="checkbox checkbox-primary checkbox-sm"
+                               th:checked="${#lists.size(semestres) == 0}"/>
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Activer immédiatement</span>
+                    </label>
+                </div>
+
+                <div class="alert bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5 text-blue-600 dark:text-blue-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-sm text-blue-700 dark:text-blue-300">Les dates doivent être cohérentes avec l'année académique (du <span th:text="${#temporals.format(annee.dateDebut, 'dd/MM/yyyy')}"></span> au <span th:text="${#temporals.format(annee.dateFin, 'dd/MM/yyyy')}"></span>)</span>
+                </div>
+
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="document.getElementById('semestre-modal').close()"
+                            class="btn btn-ghost flex-1 hover:bg-gray-100  transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn bg-primary hover:bg-primary/90 text-white border-none flex-1 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Créer le semestre
+                    </button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Fermer</button>
+        </form>
+    </dialog>
+</div>
+</body>
+</html>

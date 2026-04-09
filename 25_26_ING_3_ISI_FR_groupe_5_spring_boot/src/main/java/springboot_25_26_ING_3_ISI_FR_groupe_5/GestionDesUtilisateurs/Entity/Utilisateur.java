@@ -26,7 +26,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@EntityListeners(AuditingEntityListener.class) // ✅ Ajouter
+@EntityListeners(AuditingEntityListener.class)
 
 @Inheritance
 @DiscriminatorColumn(name="Type", length = 3)

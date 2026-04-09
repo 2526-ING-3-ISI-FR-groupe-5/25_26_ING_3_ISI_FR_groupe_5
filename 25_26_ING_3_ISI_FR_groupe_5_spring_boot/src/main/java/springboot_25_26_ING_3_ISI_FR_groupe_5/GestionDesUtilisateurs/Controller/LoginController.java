@@ -9,6 +9,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,6 +22,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.JwtS
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.RefreshTokenService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
+
+import java.util.Collection;
 
 @Slf4j
 @Controller
@@ -95,7 +98,7 @@ public class LoginController {
 
             log.info("✅ Connexion réussie pour : {}", email);
 
-            return "redirect:/dashboard";
+            return determineTargetUrl(utilisateur.getAuthorities());
 
         } catch (BadCredentialsException e) {
             log.warn("❌ Mauvais identifiants pour : {}", email);
@@ -117,6 +120,34 @@ public class LoginController {
         }
     }
 
+    @GetMapping("/admin/utilisateur")
+    public String adminDashboard() {
+        return "utilisateurs";
+    }
+
+    @GetMapping("/enseignant/dashboard")
+    public String enseignantDashboard() {
+        return "dashboard";
+    }
+
+    @GetMapping("/etudiant/dashboard")
+    public String etudiantDashboard() {
+        return "dashboard";
+    }
+    private String determineTargetUrl(Collection<? extends GrantedAuthority> authorities) {
+        String role = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(auth -> auth.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("");
+
+        return switch (role) {
+            case "ROLE_ADMIN"      -> "redirect:/admin/dashboard";
+            case "ROLE_ENSEIGNANT" -> "redirect:/enseignant/dashboard";
+            case "ROLE_ETUDIANT"   -> "redirect:/etudiant/dashboard";
+            default                -> "redirect:/home";
+        };
+    }
     // ══════════════════════════════════════════
     // REFRESH TOKEN
     // ══════════════════════════════════════════

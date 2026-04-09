@@ -18,7 +18,7 @@ public class SpecialiteService {
 
     @Transactional
     public Specialite creer(Specialite specialite) {
-        if (specialiteRepository.existsByCode(specialite.getCode())) {
+        if (specialite.getCode() == null || specialiteRepository.existsByCode(specialite.getCode())) {
             throw new DuplicateResourceException("Spécialité", specialite.getCode());
         }
         return specialiteRepository.save(specialite);
@@ -27,15 +27,23 @@ public class SpecialiteService {
     @Transactional
     public Specialite modifier(Long id, Specialite data) {
         Specialite specialite = findById(id);
+
+        // Vérifier si le nouveau code n'est pas déjà pris
+        if (!specialite.getCode().equals(data.getCode()) &&
+                specialiteRepository.existsByCode(data.getCode())) {
+            throw new DuplicateResourceException("Spécialité", data.getCode());
+        }
+
         specialite.setNom(data.getNom());
         specialite.setCode(data.getCode());
         specialite.setDescription(data.getDescription());
+
         return specialiteRepository.save(specialite);
     }
 
     public Specialite findById(Long id) {
         return specialiteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Spécialité "+ id));
+                .orElseThrow(() -> new ResourceNotFoundException("Spécialité", "id", id));
     }
 
     public List<Specialite> getAll() {
@@ -49,6 +57,13 @@ public class SpecialiteService {
     @Transactional
     public void supprimer(Long id) {
         Specialite specialite = findById(id);
+
+        // Vérifier si la spécialité a des niveaux
+        if (specialite.getNiveaux() != null && !specialite.getNiveaux().isEmpty()) {
+            throw new RuntimeException("Impossible de supprimer la spécialité car elle contient " +
+                    specialite.getNiveaux().size() + " niveau(x). Supprimez d'abord les niveaux.");
+        }
+
         specialiteRepository.delete(specialite);
     }
 }

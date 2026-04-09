@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title layout:title-pattern="$CONTENT_TITLE — CarnetRouge">CarnetRouge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link th:href="@{/css/output.css}" rel="stylesheet" type="text/css" />
+    <style>
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 1px; }
+
+        #sidebar { transition: width 0.25s ease, transform 0.25s ease; }
+        #sidebar.collapsed { width: 68px !important; }
+
+        #sidebar .sidebar-label {
+            transition: opacity 0.15s ease, max-width 0.25s ease;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #sidebar.collapsed .sidebar-label {
+            opacity: 0;
+            max-width: 0;
+            pointer-events: none;
+        }
+
+        #sidebar .sidebar-section-label {
+            transition: opacity 0.15s ease, max-height 0.25s ease;
+            max-height: 40px;
+            overflow: hidden;
+        }
+        #sidebar.collapsed .sidebar-section-label {
+            opacity: 0;
+            max-height: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #sidebar .logo-text {
+            transition: opacity 0.15s ease, max-width 0.25s ease;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #sidebar.collapsed .logo-text {
+            opacity: 0;
+            max-width: 0;
+            overflow: hidden;
+        }
+
+        #sidebar.collapsed .toggle-icon { transform: rotate(180deg); }
+
+        .nav-link { position: relative; }
+        .nav-link .tooltip {
+            display: none;
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1e2230;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .nav-link .tooltip::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-right-color: #1e2230;
+        }
+        #sidebar.collapsed .nav-link:hover .tooltip { display: flex; }
+
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+            z-index: 40;
+            cursor: pointer;
+        }
+        #sidebar-overlay.active { display: block; }
+
+        @media (max-width: 1023px) {
+            #sidebar {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+                width: 280px !important;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+            }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #sidebar.collapsed .sidebar-label { opacity: 1; max-width: 200px; }
+            #sidebar.collapsed .sidebar-section-label { opacity: 1; max-height: 40px; margin: revert !important; padding: revert !important; }
+            #sidebar.collapsed .logo-text { opacity: 1; max-width: 200px; }
+        }
+
+        html[data-theme="light"] .nav-link .tooltip {
+            background: #ffffff;
+            border-color: rgba(0,0,0,0.08);
+            color: #1a1a2e;
+        }
+        html[data-theme="light"] .nav-link .tooltip::before { border-right-color: #ffffff; }
+        html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+
+        @media (max-width: 1023px) {
+            #sidebar-overlay.active { animation: fadeIn 0.2s ease; }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        }
+    </style>
+</head>
+
+<body class="bg-bgdeep dark:bg-bgdeep text-gray-200 dark:text-gray-200 font-sans h-screen flex overflow-hidden selection:bg-primary/30 transition-colors duration-200">
+
+<!-- Overlay mobile -->
+<div id="sidebar-overlay"></div>
+
+<!-- SIDEBAR -->
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+<!-- COLONNE DE DROITE -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 animate-fade-in-up">
+        <div layout:fragment="content"></div>
+    </main>
+</div>
+
+<script>
+    // ===================== FONCTIONS GLOBALES (déclarées immédiatement) =====================
+
+    let sidebar = null;
+    let overlay = null;
+
+    const isDesktop = () => window.innerWidth >= 1024;
+
+    window.toggleSidebar = function() {
+        console.log('toggleSidebar appelé');
+        if (!sidebar) return;
+        if (isDesktop()) {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        } else {
+            window.openMobileSidebar();
+        }
+    };
+
+    window.openMobileSidebar = function() {
+        console.log('openMobileSidebar appelé');
+        if (!sidebar) return;
+        sidebar.classList.add('mobile-open');
+        if (overlay) overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeMobileSidebar = function() {
+        console.log('closeMobileSidebar appelé');
+        if (!sidebar) return;
+        sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    // ===================== INITIALISATION =====================
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOMContentLoaded');
+
+        sidebar = document.getElementById('sidebar');
+        overlay = document.getElementById('sidebar-overlay');
+
+        if (!sidebar) {
+            console.error('Sidebar non trouvée');
+            return;
+        }
+
+        console.log('Sidebar trouvée');
+
+        // Restore état desktop
+        if (isDesktop() && localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+        }
+
+        // Swipe pour fermer sur mobile
+        let touchStartX = 0;
+        sidebar.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        sidebar.addEventListener('touchend', e => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (diff > 60) window.closeMobileSidebar();
+        }, { passive: true });
+
+        // Overlay click
+        if (overlay) {
+            overlay.addEventListener('click', window.closeMobileSidebar);
+        }
+
+        // Resize
+        window.addEventListener('resize', () => {
+            if (isDesktop()) {
+                window.closeMobileSidebar();
+                document.body.style.overflow = '';
+            }
+        });
+
+        // ===================== THEME =====================
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const htmlElement = document.documentElement;
+        htmlElement.setAttribute('data-theme', savedTheme);
+        htmlElement.classList.toggle('dark', savedTheme === 'dark');
+        document.body.classList.toggle('light-mode', savedTheme !== 'dark');
+
+        function updateThemeIcons(theme) {
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+            if (darkIcon && lightIcon) {
+                darkIcon.classList.toggle('hidden', theme !== 'dark');
+                lightIcon.classList.toggle('hidden', theme === 'dark');
+            }
+        }
+
+        updateThemeIcons(savedTheme);
+
+        window.toggleTheme = function() {
+            const newTheme = htmlElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            htmlElement.classList.toggle('dark', newTheme === 'dark');
+            document.body.classList.toggle('light-mode', newTheme !== 'dark');
+            updateThemeIcons(newTheme);
+        };
+
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) themeToggle.addEventListener('click', window.toggleTheme);
+
+        console.log('Initialisation terminée');
+    });
+</script>
+</body>
+</html>

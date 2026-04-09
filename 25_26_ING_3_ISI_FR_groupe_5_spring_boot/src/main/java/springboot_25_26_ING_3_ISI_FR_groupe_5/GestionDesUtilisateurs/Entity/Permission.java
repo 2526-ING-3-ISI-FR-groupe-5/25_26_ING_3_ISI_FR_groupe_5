@@ -43,6 +43,6 @@ public class Permission {
     protected LocalDateTime updateAt;
 
     // Côté inverse de la relation
-    @ManyToMany(mappedBy = "permissions")
+    @ManyToMany(mappedBy = "permissions", fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 }

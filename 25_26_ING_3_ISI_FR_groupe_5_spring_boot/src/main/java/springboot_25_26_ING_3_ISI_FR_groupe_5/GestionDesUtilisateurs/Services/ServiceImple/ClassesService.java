@@ -24,8 +24,8 @@ public class ClassesService {
     public Classe creer(String nom, Long niveauId) {
         Niveau niveau = niveauService.findById(niveauId);
 
-        if (classesRepo.findByNom(nom).isPresent()) {
-            throw new RuntimeException("Une classe avec ce nom existe déjà");
+        if (classesRepo.existsByNomAndNiveauId(nom, niveauId)) {
+            throw new RuntimeException("Une classe avec ce nom existe déjà pour ce niveau");
         }
 
         Classe classe = Classe.builder()
@@ -39,6 +39,11 @@ public class ClassesService {
     @Transactional
     public Classe modifier(Long id, String nom, Long niveauId) {
         Classe classe = findById(id);
+
+        if (!classe.getNom().equals(nom) && classesRepo.existsByNomAndNiveauId(nom, niveauId)) {
+            throw new RuntimeException("Une classe avec ce nom existe déjà pour ce niveau");
+        }
+
         classe.setNom(nom);
         classe.setNiveau(niveauService.findById(niveauId));
         return classesRepo.save(classe);
@@ -58,9 +63,14 @@ public class ClassesService {
         return classesRepo.findByNiveauId(niveauId);
     }
 
+    public List<Classe> getByFiliere(Long filiereId) {
+        return classesRepo.findByNiveau_Filiere_Id(filiereId);
+    }
+
     public Page<Classe> getByAnnee(Long anneeId, String nom, Pageable pageable) {
         if (anneeId == null) {
             if (nom != null && !nom.isEmpty()) {
+                // ✅ Correction : convertir List en Page
                 List<Classe> classes = classesRepo.findByNomContainingIgnoreCase(nom);
                 return new PageImpl<>(classes, pageable, classes.size());
             }
@@ -78,10 +88,12 @@ public class ClassesService {
     public void supprimer(Long id) {
         Classe classe = findById(id);
         if (classe.getInscriptions() != null && !classe.getInscriptions().isEmpty()) {
-            throw new RuntimeException("Impossible de supprimer : cette classe contient des inscriptions");
+            throw new RuntimeException("Impossible de supprimer : cette classe contient " +
+                    classe.getInscriptions().size() + " inscription(s)");
         }
         if (classe.getProgrammations() != null && !classe.getProgrammations().isEmpty()) {
-            throw new RuntimeException("Impossible de supprimer : cette classe contient des programmations");
+            throw new RuntimeException("Impossible de supprimer : cette classe contient " +
+                    classe.getProgrammations().size() + " programmation(s)");
         }
         classesRepo.delete(classe);
     }

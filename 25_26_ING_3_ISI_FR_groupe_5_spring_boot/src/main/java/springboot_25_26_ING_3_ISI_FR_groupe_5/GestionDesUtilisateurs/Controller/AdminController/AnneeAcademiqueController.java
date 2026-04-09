@@ -17,7 +17,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.SemestreService;
 
 @Controller
-@RequestMapping("/annees")
+@RequestMapping("/admin/annees")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AnneeAcademiqueController {
@@ -63,7 +63,7 @@ public class AnneeAcademiqueController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/annees";
+        return "redirect:/admin/annees";
     }
 
     @PostMapping("/{id}/activer")
@@ -74,7 +74,7 @@ public class AnneeAcademiqueController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/annees";
+        return "redirect:/admin/annees";
     }
 
     @GetMapping("/{id}")
@@ -99,6 +99,6 @@ public class AnneeAcademiqueController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/annees";
+        return "redirect:/admin/annees";
     }
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link th:href="@{/css/output.css}" rel="stylesheet" type="text/css" />
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-bgdeep dark:to-gray-900 min-h-screen flex items-center justify-center p-4">
+<div class="text-center max-w-md mx-auto">
+    <div class="mb-8">
+        <div class="text-9xl font-bold text-gray-400">:(</div>
+        <div class="text-6xl mb-4">⚠️</div>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Une erreur est survenue</h1>
+    <p class="text-gray-600 dark:text-gray-400 mb-6" th:text="${error}">
+        Une erreur inattendue s'est produite.
+    </p>
+
+            <a th:href="@{/login}" class="text-primary hover:underline text-sm">
+                Page de connexion
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

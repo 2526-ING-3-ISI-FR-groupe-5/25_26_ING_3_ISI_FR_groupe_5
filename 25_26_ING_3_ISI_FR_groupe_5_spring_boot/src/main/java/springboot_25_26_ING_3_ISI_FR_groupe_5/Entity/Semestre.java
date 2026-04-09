@@ -21,6 +21,9 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"annee_academique_id", "type_semestre"})
+})
 public class Semestre {
 
     @Id

@@ -19,7 +19,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.util.List;
 
 @Controller
-@RequestMapping("/specialites")
+@RequestMapping("/admin/specialites")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class SpecialiteController {
@@ -143,5 +143,17 @@ public class SpecialiteController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
         return "redirect:/specialites";
+    }
+
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    public SpecialiteRequest getSpecialiteJson(@PathVariable Long id) {
+        Specialite specialite = specialiteService.findById(id);
+        SpecialiteRequest request = new SpecialiteRequest();
+        request.setNom(specialite.getNom());
+        request.setCode(specialite.getCode());
+        request.setDescription(specialite.getDescription());
+        request.setFiliereId(specialite.getFiliere().getId());
+        return request;
     }
 }

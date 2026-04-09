@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title th:text="'Modifier ' + ${institut.nom} + ' — CarnetRouge'">Modifier institut — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- Navigation retour -->
+        <div class="mb-6">
+            <a th:href="@{/admin/instituts}" class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                Modifier <span class="text-primary italic" th:text="${institut.nom}">UCAD</span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Modifiez les informations de l'institut
+            </p>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 md:p-8">
+            <form th:action="@{/admin/instituts/{id}/modifier(id=${institut.id})}" th:object="${form}" method="post" class="space-y-6">
+
+                <!-- Nom -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nom de l'institut <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text"
+                           th:field="*{nom}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           required/>
+                    <p th:if="${#fields.hasErrors('nom')}"
+                       th:errors="*{nom}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Ville -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Ville <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text"
+                           th:field="*{ville}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           required/>
+                    <p th:if="${#fields.hasErrors('ville')}"
+                       th:errors="*{ville}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Adresse -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Adresse</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{adresse}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                    <p th:if="${#fields.hasErrors('adresse')}"
+                       th:errors="*{adresse}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Localité -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Localité</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{localite}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                    <p th:if="${#fields.hasErrors('localite')}"
+                       th:errors="*{localite}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Email -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Email <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="email"
+                           th:field="*{email}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           required/>
+                    <p th:if="${#fields.hasErrors('email')}"
+                       th:errors="*{email}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Téléphone -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Téléphone</span>
+                    </label>
+                    <input type="tel"
+                           th:field="*{telephone}"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                    <p th:if="${#fields.hasErrors('telephone')}"
+                       th:errors="*{telephone}"
+                       class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 pt-4">
+                    <a th:href="@{/admin/instituts}" class="btn btn-ghost flex-1">Annuler</a>
+                    <button type="submit" class="btn bg-primary hover:bg-primary/90 text-white border-none flex-1">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

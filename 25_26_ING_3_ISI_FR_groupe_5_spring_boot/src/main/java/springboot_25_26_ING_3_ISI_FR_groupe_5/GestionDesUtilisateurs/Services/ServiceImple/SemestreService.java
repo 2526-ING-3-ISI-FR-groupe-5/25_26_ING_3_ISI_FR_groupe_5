@@ -20,25 +20,44 @@ public class SemestreService {
     private final SemestreRepository semestreRepository;
     private final AnneeAcademiqueService anneeService;
 
+    private static final int MAX_SEMESTRES_PAR_ANNEE = 2;
+
     @Transactional
     public Semestre creer(TypeSemestre typeSemestre, Long anneeAcademiqueId,
                           LocalDate dateDebut, LocalDate dateFin, boolean actif) {
 
         Annee_academique annee = anneeService.findById(anneeAcademiqueId);
 
-        // Vérifier si le semestre existe déjà
+        // 1. Vérifier le nombre maximum de semestres (2 max par année)
+        long nombreSemestresActuels = semestreRepository.countByAnneeAcademiqueId(anneeAcademiqueId);
+        if (nombreSemestresActuels >= MAX_SEMESTRES_PAR_ANNEE) {
+            throw new RuntimeException("Une année académique ne peut avoir que " + MAX_SEMESTRES_PAR_ANNEE + " semestres maximum. " +
+                    "L'année " + annee.getNom() + " a déjà " + nombreSemestresActuels + " semestre(s).");
+        }
+
+        // 2. Vérifier si le semestre existe déjà
         if (semestreRepository.existsByAnneeAcademiqueIdAndTypeSemestre(anneeAcademiqueId, typeSemestre)) {
             throw new DuplicateResourceException("Semestre", typeSemestre.getLibelle() + " pour l'année " + annee.getNom());
         }
 
-        // Contrainte : Les dates du semestre doivent être dans l'année académique
+        // 3. Contrainte : Les dates du semestre doivent être dans l'année académique
         if (dateDebut.isBefore(annee.getDateDebut()) || dateFin.isAfter(annee.getDateFin())) {
-            throw new RuntimeException("Les dates du semestre doivent être comprises dans l'année académique");
+            throw new RuntimeException("Les dates du semestre doivent être comprises dans l'année académique. " +
+                    "L'année va du " + annee.getDateDebut() + " au " + annee.getDateFin());
         }
 
-        // Contrainte : dateDebut < dateFin
+        // 4. Contrainte : dateDebut < dateFin
         if (!dateDebut.isBefore(dateFin)) {
             throw new RuntimeException("La date de début doit être antérieure à la date de fin");
+        }
+
+        // 5. Vérifier que les dates ne chevauchent pas un autre semestre
+        List<Semestre> semestresExistants = semestreRepository.findByAnneeAcademiqueId(anneeAcademiqueId);
+        for (Semestre existing : semestresExistants) {
+            if (dateDebut.isBefore(existing.getDateFin()) && dateFin.isAfter(existing.getDateDebut())) {
+                throw new RuntimeException("Les dates du semestre chevauchent celles du " + existing.getTypeSemestre().getLibelle() +
+                        " (" + existing.getDateDebut() + " au " + existing.getDateFin() + ")");
+            }
         }
 
         Semestre semestre = new Semestre();
@@ -47,6 +66,15 @@ public class SemestreService {
         semestre.setDateDebut(dateDebut);
         semestre.setDateFin(dateFin);
         semestre.setActif(actif);
+
+        // Si c'est le premier semestre et qu'on veut l'activer, on l'active
+        if (actif && nombreSemestresActuels == 0) {
+            semestre.setActif(true);
+        } else if (actif && nombreSemestresActuels > 0) {
+            // Désactiver les autres si on active celui-ci
+            List<Semestre> autresSemestres = semestreRepository.findByAnneeAcademiqueId(anneeAcademiqueId);
+            autresSemestres.forEach(s -> s.setActif(false));
+        }
 
         return semestreRepository.save(semestre);
     }
@@ -89,6 +117,14 @@ public class SemestreService {
     public Semestre getByAnneeAndType(Long anneeId, TypeSemestre type) {
         return semestreRepository.findByAnneeAcademiqueIdAndTypeSemestre(anneeId, type)
                 .orElseThrow(() -> new ResourceNotFoundException("Semestre " + type.getLibelle() + " pour l'année"));
+    }
+
+    public long countByAnnee(Long anneeId) {
+        return semestreRepository.countByAnneeAcademiqueId(anneeId);
+    }
+
+    public boolean isMaxSemestresReached(Long anneeId) {
+        return countByAnnee(anneeId) >= MAX_SEMESTRES_PAR_ANNEE;
     }
 
     @Transactional

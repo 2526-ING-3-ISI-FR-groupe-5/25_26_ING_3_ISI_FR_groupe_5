@@ -16,5 +16,7 @@ public class SpecialiteResponse {
 
     private Long filiereId;
     private String filiereNom;
+    // Ajoute ce champ
+    private int nombreNiveaux;
 
 }

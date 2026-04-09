@@ -25,7 +25,7 @@ public class DashboardController {
     private final InscriptionMapper inscriptionMapper;
     private final SemestreMapper semestreMapper;
 
-    @GetMapping("/dashboard")
+    @GetMapping("/admin/dashboard")
     public String dashboard(
             @AuthenticationPrincipal UserDetails userDetails,
             Model model

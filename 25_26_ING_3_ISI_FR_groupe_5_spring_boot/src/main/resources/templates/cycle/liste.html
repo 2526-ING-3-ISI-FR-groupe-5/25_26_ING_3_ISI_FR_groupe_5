@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Cycles — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-3xl text-gray-900 dark:text-gray-100 mb-2">
+                        Cycles <span class="text-primary italic">d'études</span>
+                    </h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Gérez les cycles (Licence, Master, Doctorat, Ingénieur)
+                    </p>
+                </div>
+                <button onclick="createModal.showModal()"
+                        class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Nouveau cycle
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Cartes des cycles -->
+        <div th:if="${cycles != null and !cycles.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div th:each="cycle : ${cycles}" class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden hover:shadow-xl transition-all">
+                <div class="p-5">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <!-- Gestion null-safe pour l'icône -->
+                                <span class="text-3xl">
+                                    <span th:if="${cycle.typeCycle != null and cycle.typeCycle == 'LICENCE'}">🎓</span>
+                                    <span th:if="${cycle.typeCycle != null and cycle.typeCycle == 'MASTER'}">📚</span>
+                                    <span th:if="${cycle.typeCycle != null and cycle.typeCycle == 'DOCTORAT'}">🔬</span>
+                                    <span th:if="${cycle.typeCycle != null and cycle.typeCycle == 'INGENIEUR'}">🔧</span>
+                                    <span th:if="${cycle.typeCycle == null}">❓</span>
+                                </span>
+                                <!-- Gestion null-safe pour le libellé -->
+                                <h3 class="font-bold text-xl" th:text="${cycle.libelle != null ? cycle.libelle : 'Cycle inconnu'}">Licence</h3>
+                            </div>
+                            <!-- Gestion null-safe pour le type -->
+                            <p class="text-xs text-gray-500 mt-1" th:text="${cycle.typeCycle != null ? cycle.typeCycle : 'NON_DEFINI'}">LICENCE</p>
+                        </div>
+                        <div class="dropdown dropdown-end">
+                            <button class="btn btn-ghost btn-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                            <ul class="dropdown-content z-[1] menu p-2 shadow-lg bg-white dark:bg-bgcard rounded-box w-44">
+                                <li><a th:href="@{/admin/cycles/{id}/modifier(id=${cycle.id})}" class="text-amber-600">Modifier</a></li>
+                                <li>
+                                    <form th:action="@{/admin/cycles/{id}/supprimer(id=${cycle.id})}" method="post">
+                                        <button type="submit" class="text-red-500" onclick="return confirm('Supprimer ce cycle ?')">Supprimer</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center">
+                        <span class="text-sm text-gray-500" th:text="${cycle.nombreFilieres != null ? cycle.nombreFilieres + ' filière(s)' : '0 filière(s)'}"></span>
+                        <a th:href="@{/admin/filieres(cycleId=${cycle.id})}" class="text-xs text-primary hover:underline">Voir les filières →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message si aucun cycle -->
+        <div th:if="${cycles == null or cycles.isEmpty()}" class="text-center py-16 bg-white dark:bg-bgcard rounded-2xl border">
+            <svg class="w-20 h-20 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <p class="text-gray-500">Aucun cycle d'études</p>
+            <button onclick="createModal.showModal()" class="btn btn-primary btn-sm mt-4">Créer un cycle</button>
+        </div>
+    </div>
+
+    <!-- Modal création -->
+
+    <dialog id="createModal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard">
+            <h3 class="font-bold text-lg mb-4">Nouveau cycle</h3>
+            <form th:action="@{/admin/cycles/creer}" th:object="${form}" method="post">
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">Type de cycle</span>
+                    </label>
+                    <select th:field="*{typeCycle}"
+                            class="select select-bordered rounded-xl w-full bg-white dark:bg-bgcard"
+                            required>
+                        <option value="" disabled selected>Sélectionner un cycle</option>
+                        <option value="LICENCE">🎓 Licence</option>
+                        <option value="MASTER">📚 Master</option>
+                        <option value="DOCTORAT">🔬 Doctorat</option>
+                        <option value="INGENIEUR">🔧 Ingénieur</option>
+                    </select>
+                </div>
+                <div class="modal-action">
+                    <!-- ✅ Fix : plus de form imbriqué -->
+                    <button type="button" class="btn btn-ghost"
+                            onclick="createModal.close()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+        <!-- Clic en dehors pour fermer -->
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+</div>
+</body>
+</html>

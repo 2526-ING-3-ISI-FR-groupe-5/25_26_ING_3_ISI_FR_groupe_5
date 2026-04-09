@@ -13,21 +13,40 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeCycle;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Cycle.CycleRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.CycleMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.CycleService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EcoleService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EcoleMapper;
 
 @Controller
-@RequestMapping("/cycles")
+@RequestMapping("/admin/cycles")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class CycleController {
 
     private final CycleService cycleService;
     private final CycleMapper cycleMapper;
+    private final EcoleService ecoleService;
+    private final EcoleMapper ecoleMapper;
 
     @GetMapping
-    public String liste(Model model) {
-        model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
+    public String liste(
+            @RequestParam(required = false) Long ecoleId,
+            Model model
+    ) {
+        java.util.List<Cycle> cycles;
+
+        if (ecoleId != null) {
+            cycles = cycleService.getByEcole(ecoleId);
+            model.addAttribute("ecoleFiltre", ecoleService.findById(ecoleId));
+        } else {
+            cycles = cycleService.getAll();
+        }
+
+        model.addAttribute("cycles", cycleMapper.toResponseList(cycles));
+        model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+        model.addAttribute("ecoleId", ecoleId);
         model.addAttribute("form", new CycleRequest());
-        return "cycles/liste";
+
+        return "cycle/liste";
     }
 
     @PostMapping("/creer")
@@ -39,7 +58,8 @@ public class CycleController {
     ) {
         if (result.hasErrors()) {
             model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
-            return "cycles/liste";
+            model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+            return "cycle/liste";
         }
 
         try {
@@ -50,25 +70,46 @@ public class CycleController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/cycles";
+        return "redirect:/admin/cycles";
+    }
+
+    @GetMapping("/{id}/modifier")
+    public String formulaireModification(@PathVariable Long id, Model model) {
+        Cycle cycle = cycleService.findById(id);
+        CycleRequest request = new CycleRequest();
+        request.setTypeCycle(cycle.getTypeCycle());
+
+        model.addAttribute("cycle", cycleMapper.toResponse(cycle));
+        model.addAttribute("form", request);
+        model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+
+        return "cycle/modifier";
     }
 
     @PostMapping("/{id}/modifier")
     public String modifier(
             @PathVariable Long id,
-            @RequestParam TypeCycle typeCycle,
-            RedirectAttributes redirectAttributes
+            @Valid @ModelAttribute("form") CycleRequest request,
+            BindingResult result,
+            RedirectAttributes redirectAttributes,
+            Model model
     ) {
+        if (result.hasErrors()) {
+            model.addAttribute("cycle", cycleMapper.toResponse(cycleService.findById(id)));
+            model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+            return "cycle/modifier";
+        }
+
         try {
             Cycle data = new Cycle();
-            data.setTypeCycle(typeCycle);
+            data.setTypeCycle(request.getTypeCycle()); // ✅ corrigé
             cycleService.modifier(id, data);
             redirectAttributes.addFlashAttribute("succes", "Cycle modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/cycles";
+        return "redirect:/admin/cycles";
     }
 
     @PostMapping("/{id}/supprimer")
@@ -82,6 +123,6 @@ public class CycleController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/cycles";
+        return "redirect:/admin/cycles";
     }
 }

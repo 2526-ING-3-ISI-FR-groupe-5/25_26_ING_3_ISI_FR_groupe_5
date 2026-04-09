@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <link th:href="@{/css/output.css}" rel="stylesheet" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tableau de bord — CarnetRouge</title>
+</head>
+<body>
+
+<!-- ── CONTENU INJECTÉ DANS LE LAYOUT ── -->
+<div layout:fragment="content">
+
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- ── En-tête de la page ── -->
+        <div class="mb-8 lg:mb-10">
+            <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                Tableau de <span class="text-primary italic">bord</span>
+            </h1>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">Bienvenue sur votre espace d'administration. Voici le résumé de l'activité.</p>
+        </div>
+
+        <!-- ── 1. STATISTIQUES RAPIDES (KPIs) ── -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 lg:mb-10">
+
+            <!-- KPI Étudiants -->
+            <div th:with="stats=${stats != null ? stats : T(springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller.DashboardController.DashboardStats).new(0,0,0,0)}"
+                 class="group bg-white dark:bg-bgcard rounded-2xl p-5 md:p-6 shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 transition-all duration-200 hover:shadow-md dark:hover:shadow-2xl">
+                <div class="flex items-center gap-4 md:gap-5">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 dark:bg-primary/15 text-primary flex items-center justify-center shrink-0 transition-colors group-hover:bg-primary/20 dark:group-hover:bg-primary/20">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[11px] md:text-[12px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Étudiants</div>
+                        <div class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-none">
+                            <span th:text="${stats.totalEtudiants}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Enseignants -->
+            <div class="group bg-white dark:bg-bgcard rounded-2xl p-5 md:p-6 shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 transition-all duration-200 hover:shadow-md dark:hover:shadow-2xl">
+                <div class="flex items-center gap-4 md:gap-5">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-sky-400/10 text-sky-500 dark:text-sky-400 flex items-center justify-center shrink-0 transition-colors group-hover:bg-sky-400/20 dark:group-hover:bg-sky-400/20">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[11px] md:text-[12px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Enseignants</div>
+                        <div class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-none">
+                            <span th:text="${stats.totalEnseignants}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Classes -->
+            <div class="group bg-white dark:bg-bgcard rounded-2xl p-5 md:p-6 shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 transition-all duration-200 hover:shadow-md dark:hover:shadow-2xl">
+                <div class="flex items-center gap-4 md:gap-5">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-400/20 dark:group-hover:bg-emerald-400/20">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[11px] md:text-[12px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Classes actives</div>
+                        <div class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-none">
+                            <span th:text="${stats.totalClasses}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI UE -->
+            <div class="group bg-white dark:bg-bgcard rounded-2xl p-5 md:p-6 shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 transition-all duration-200 hover:shadow-md dark:hover:shadow-2xl">
+                <div class="flex items-center gap-4 md:gap-5">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-amber-400/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 transition-colors group-hover:bg-amber-400/20 dark:group-hover:bg-amber-400/20">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[11px] md:text-[12px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">UE actives</div>
+                        <div class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-none">
+                            <span th:text="${stats.totalUes}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 2. GRILLE PRINCIPALE : Cartes de création ── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8 lg:mb-10">
+
+            <!-- Carte : Créer une École -->
+            <a th:href="@{/admin/ecoles/creation}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Créer une école</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Ajouter un nouvel établissement</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Nouvelle école →</span>
+                </div>
+            </a>
+
+            <!-- Carte : Créer une Filière -->
+            <a th:href="@{/admin/filieres/creation}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-sky-400/20 to-sky-400/5 dark:from-sky-400/20 dark:to-sky-400/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-sky-500 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Créer une filière</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Définir un nouveau parcours</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Nouvelle filière →</span>
+                </div>
+            </a>
+
+            <!-- Carte : Créer une UE -->
+            <a th:href="@{/admin/ues/creation}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-emerald-400/5 dark:from-emerald-400/20 dark:to-emerald-400/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Créer une UE</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Ajouter une unité d'enseignement</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Nouvelle UE →</span>
+                </div>
+            </a>
+
+            <!-- Carte : Créer une Classe -->
+            <a th:href="@{/admin/classes/creation}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-400/5 dark:from-amber-400/20 dark:to-amber-400/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Créer une classe</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Former un nouveau groupe</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Nouvelle classe →</span>
+                </div>
+            </a>
+
+            <!-- Carte : Créer une Année Académique -->
+            <a th:href="@{/admin/annees/creation}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-purple-400/20 to-purple-400/5 dark:from-purple-400/20 dark:to-purple-400/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Année académique</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Démarrer une nouvelle année</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Nouvelle année →</span>
+                </div>
+            </a>
+
+            <!-- Carte : Gérer les Semestres -->
+            <a th:href="@{/admin/semestres}"
+               class="group bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 md:p-8 transition-all duration-300 hover:shadow-lg dark:hover:shadow-2xl hover:border-primary/30 dark:hover:border-primary/30 cursor-pointer block">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-pink-400/20 to-pink-400/5 dark:from-pink-400/20 dark:to-pink-400/10 flex items-center justify-center mb-4 md:mb-5 group-hover:scale-105 transition-transform duration-300">
+                        <svg class="w-8 h-8 md:w-10 md:h-10 text-pink-500 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Gérer les semestres</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Organiser les périodes</p>
+                    <span class="mt-4 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">Gérer →</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- ── 3. SECTION COMPLÉMENTAIRE : Dernières inscriptions & Infos ── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+
+            <!-- Bloc Dernières inscriptions (DYNAMIQUE) -->
+            <div class="bg-white dark:bg-bgcard rounded-2xl lg:rounded-[22px] shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-5 md:p-6">
+                <h2 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 md:mb-5 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Dernières inscriptions
+                </h2>
+
+                <div th:if="${dernieresInscriptions != null and !dernieresInscriptions.isEmpty()}" class="space-y-4">
+                    <div th:each="inscription : ${dernieresInscriptions}" class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-white/5 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-full bg-primary/10 dark:bg-primary/10 border border-primary/20 flex items-center justify-center text-[11px] md:text-[12px] font-bold text-primary shrink-0">
+                                <span th:text="${#strings.substring(inscription.etudiant?.nom,0,1)}${#strings.substring(inscription.etudiant?.prenom,0,1)}">AL</span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-xs md:text-[13px] font-semibold text-gray-700 dark:text-gray-200 truncate" th:text="${inscription.etudiant?.nom} + ' ' + ${inscription.etudiant?.prenom}">Alice Lemaire</div>
+                                <div class="text-[10px] md:text-[11px] text-gray-400 dark:text-gray-500 truncate">
+                                    <span th:text="${inscription.classe?.nom}">ING-1</span> • <span th:text="${inscription.anneeAcademique?.code}">2024-2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[9px] md:text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-bgsubtle px-2 py-1 rounded shrink-0">Récent</span>
+                    </div>
+                </div>
+                <div th:if="${dernieresInscriptions == null or dernieresInscriptions.isEmpty()}" class="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
+                    Aucune inscription récente
+                </div>
+
+                <a th:href="@{/etudiants/liste}" class="block text-center text-[11px] md:text-[12px] font-medium text-primary hover:text-primary/80 dark:hover:text-primaryhover mt-4 md:mt-6 transition-colors">Voir tout l'historique →</a>
+            </div>
+
+            <!-- Bloc Année active & Semestres -->
+            <div class="space-y-6">
+                <!-- Info année active -->
+                <div th:if="${anneeActive != null}" class="bg-gradient-to-r from-primary/5 to-transparent dark:from-primary/10 rounded-2xl p-5 border border-primary/10 dark:border-primary/20">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Année académique active</div>
+                            <div class="text-base md:text-lg font-bold text-gray-800 dark:text-gray-200" th:text="${anneeActive.code}">2024-2025</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semestres actifs -->
+                <div th:if="${semestres != null and !semestres.isEmpty()}" class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-5">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Semestres actifs
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span th:each="sem : ${semestres}" class="px-3 py-1.5 bg-gray-100 dark:bg-bgsurface rounded-lg text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10">
+                            <span th:text="${sem.nom}">Semestre 1</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions rapides supplémentaires -->
+                <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-5">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Actions rapides
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a th:href="@{/admin/utilisateurs/ajout}" class="text-center p-2.5 bg-gray-50 dark:bg-bgsubtle rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all">➕ Ajouter user</a>
+                        <a th:href="@{/admin/export}" class="text-center p-2.5 bg-gray-50 dark:bg-bgsubtle rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all">📥 Exporter données</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Animation fade-in-up -->
+<style>
+    [layout\:fragment="content"] > div > * {
+        animation: fadeInUp 0.4s ease-out forwards;
+        opacity: 0;
+    }
+    [layout\:fragment="content"] > div > :nth-child(1) { animation-delay: 0s; }
+    [layout\:fragment="content"] > div > :nth-child(2) { animation-delay: 0.05s; }
+    [layout\:fragment="content"] > div > :nth-child(3) { animation-delay: 0.1s; }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        [layout\:fragment="content"] > div > * {
+            animation: none;
+            opacity: 1;
+        }
+    }
+</style>
+
+</body>
+</html>

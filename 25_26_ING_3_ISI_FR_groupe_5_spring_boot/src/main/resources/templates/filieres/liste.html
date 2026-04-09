@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Filières — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                        Filières <span class="text-primary italic">d'études</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Gérez les filières par école et cycle
+                    </p>
+                </div>
+                <!-- Bouton ouvre la modale avec ID.showModal() -->
+                <button class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all gap-2"
+                        onclick="create_modal.showModal()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Nouvelle filière
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="mb-6 flex flex-wrap items-center gap-3">
+            <span class="text-sm text-gray-600 dark:text-gray-400">Filtrer par :</span>
+
+            <form th:action="@{/admin/filieres}" method="get" class="flex flex-wrap gap-2">
+                <select name="ecoleId" class="select select-bordered select-sm bg-gray-50 dark:bg-bgsurface">
+                    <option value="">Toutes les écoles</option>
+                    <option th:each="ecole : ${ecoles}"
+                            th:value="${ecole.id}"
+                            th:text="${ecole.nom}"
+                            th:selected="${ecole.id == ecoleIdSelectionne}"></option>
+                </select>
+
+                <select name="cycleId" class="select select-bordered select-sm bg-gray-50 dark:bg-bgsurface">
+                    <option value="">Tous les cycles</option>
+                    <option th:each="cycle : ${cycles}"
+                            th:value="${cycle.id}"
+                            th:text="${cycle.libelle}"
+                            th:selected="${cycle.id == cycleIdSelectionne}"></option>
+                </select>
+
+                <button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
+                <a th:href="@{/admin/filieres}" class="btn btn-sm btn-ghost">Réinitialiser</a>
+            </form>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Tableau des filières -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nom</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Code</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">École</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cycle</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tr th:each="filiere : ${filieres}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-semibold text-gray-900 dark:text-white" th:text="${filiere.nom}">Informatique</span>
+                            <p th:if="${filiere.description}" class="text-xs text-gray-500 dark:text-gray-400 mt-1" th:text="${filiere.description}"></p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="badge badge-ghost font-mono" th:text="${filiere.code}">INF</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400" th:text="${filiere.ecoleNom}">ESI</td>
+                        <td class="px-6 py-4">
+                            <span class="badge badge-sm" th:text="${filiere.cycleLibelle}">Licence</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <!-- Bouton ouvre la modale d'édition -->
+                                <button
+                                        class="btn btn-sm btn-ghost text-amber-600 hover:bg-amber-500/10"
+                                        th:data-id="${filiere.id}"
+                                        onclick="edit_modal.showModal(); loadFiliereData(this.getAttribute('data-id'))"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Modifier
+                                </button>
+
+                                <form th:action="@{/admin/filieres/{id}/supprimer(id=${filiere.id})}" method="post" class="inline">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-ghost text-red-500 hover:bg-red-500/10"
+                                            onclick="return confirm('Supprimer cette filière ?')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${filieres.empty}">
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            Aucune filière
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALE CRÉATION ==================== -->
+    <dialog id="create_modal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard max-w-md p-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/20 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+                <h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">
+                    Nouvelle filière
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Créez une nouvelle filière d'études
+                </p>
+            </div>
+
+            <form th:action="@{/admin/filieres/creer}" th:object="${createForm}" method="post" class="p-6 space-y-5">
+                <!-- Champs du formulaire ici -->
+                <div class="form-control w-full">
+                    <label class="label">École <span class="text-red-500">*</span></label>
+                    <select th:field="*{ecoleId}" class="select w-full bg-gray-50 dark:bg-bgsurface" required>
+                        <option value="" disabled selected>Sélectionner une école</option>
+                        <option th:each="ecole : ${ecoles}" th:value="${ecole.id}" th:text="${ecole.nom}"></option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Cycle <span class="text-red-500">*</span></label>
+                    <select th:field="*{cycleId}" class="select w-full bg-gray-50 dark:bg-bgsurface" required>
+                        <option value="" disabled selected>Sélectionner un cycle</option>
+                        <option th:each="cycle : ${cycles}" th:value="${cycle.id}" th:text="${cycle.libelle}"></option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Nom <span class="text-red-500">*</span></label>
+                    <input type="text" th:field="*{nom}" placeholder="Ex: Génie Informatique" class="input w-full bg-gray-50 dark:bg-bgsurface" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Code <span class="text-red-500">*</span></label>
+                    <input type="text" th:field="*{code}" placeholder="Ex: GI" class="input w-full bg-gray-50 dark:bg-bgsurface" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Description</label>
+                    <textarea th:field="*{description}" rows="3" placeholder="Description de la filière..." class="textarea w-full bg-gray-50 dark:bg-bgsurface"></textarea>
+                </div>
+
+                <!-- Boutons -->
+                <div class="modal-action">
+                    <form method="dialog">
+                        <button class="btn btn-ghost" onclick="document.getElementById('create_modal').close()">Annuler</button>
+                    </form>
+                    <button type="submit" class="btn bg-primary hover:bg-primary/90 text-white border-none">Créer</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- ==================== MODALE ÉDITION ==================== -->
+    <dialog id="edit_modal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard max-w-md p-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500/10 to-transparent dark:from-amber-500/20 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+                <h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">
+                    Modifier la filière
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Modifiez les informations de la filière
+                </p>
+            </div>
+
+            <form th:action="@{/admin/filieres/0/modifier}" method="post" class="p-6 space-y-5" id="editForm">
+                <div class="form-control w-full">
+                    <label class="label">École <span class="text-red-500">*</span></label>
+                    <select name="ecoleId" class="select w-full bg-gray-50 dark:bg-bgsurface" required>
+                        <option value="" disabled>Sélectionner une école</option>
+                        <option th:each="ecole : ${ecoles}" th:value="${ecole.id}" th:text="${ecole.nom}"></option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Cycle <span class="text-red-500">*</span></label>
+                    <select name="cycleId" class="select w-full bg-gray-50 dark:bg-bgsurface" required>
+                        <option value="" disabled>Sélectionner un cycle</option>
+                        <option th:each="cycle : ${cycles}" th:value="${cycle.id}" th:text="${cycle.libelle}"></option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Nom <span class="text-red-500">*</span></label>
+                    <input type="text" name="nom" class="input w-full bg-gray-50 dark:bg-bgsurface" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Code <span class="text-red-500">*</span></label>
+                    <input type="text" name="code" class="input w-full bg-gray-50 dark:bg-bgsurface" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">Description</label>
+                    <textarea name="description" rows="3" class="textarea w-full bg-gray-50 dark:bg-bgsurface"></textarea>
+                </div>
+
+                <div class="modal-action">
+                    <form method="dialog">
+                        <button class="btn btn-ghost">Annuler</button>
+                    </form>
+                    <button type="submit" class="btn bg-amber-600 hover:bg-amber-700 text-white border-none">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+</div>
+
+<script>
+    // Fonction pour charger les données dans la modale d'édition
+    function loadFiliereData(id) {
+        fetch('/admin/filieres/' + id + '/json')
+            .then(response => response.json())
+            .then(data => {
+                const form = document.getElementById('editForm');
+                form.action = '/admin/filieres/' + id + '/modifier';
+                form.querySelector('[name="ecoleId"]').value = data.ecoleId;
+                form.querySelector('[name="cycleId"]').value = data.cycleId;
+                form.querySelector('[name="nom"]').value = data.nom;
+                form.querySelector('[name="code"]').value = data.code;
+                form.querySelector('[name="description"]').value = data.description || '';
+            })
+            .catch(error => console.error('Erreur:', error));
+    }
+</script>
+</body>
+</html>

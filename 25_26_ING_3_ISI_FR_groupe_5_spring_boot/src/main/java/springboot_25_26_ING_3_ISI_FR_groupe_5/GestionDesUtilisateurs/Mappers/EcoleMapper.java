@@ -11,6 +11,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface EcoleMapper {
 
+    @Mapping(target = "institutId", source = "institut.id")
+    @Mapping(target = "institutNom", source = "institut.nom")
     EcoleResponse toResponse(Ecole ecole);
 
     List<EcoleResponse> toResponseList(List<Ecole> ecoles);
@@ -18,6 +20,7 @@ public interface EcoleMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createAt", ignore = true)
     @Mapping(target = "updateAt", ignore = true)
+    @Mapping(target = "institut", ignore = true)
     @Mapping(target = "filieres", ignore = true)
     Ecole toEntity(EcoleRequest request);
 }

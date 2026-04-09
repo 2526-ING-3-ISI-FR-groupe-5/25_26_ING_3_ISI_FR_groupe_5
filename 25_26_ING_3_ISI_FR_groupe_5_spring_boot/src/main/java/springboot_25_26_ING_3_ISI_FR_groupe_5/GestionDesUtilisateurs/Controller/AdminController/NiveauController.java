@@ -19,7 +19,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.util.List;
 
 @Controller
-@RequestMapping("/niveaux")
+@RequestMapping("/admin/niveaux")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class NiveauController {
@@ -28,7 +28,7 @@ public class NiveauController {
     private final NiveauMapper niveauMapper;
     private final FiliereService filiereService;
     private final FiliereMapper filiereMapper;
-    private final SpecialiteService specialiteService;  // ✅ Ajouter
+    private final SpecialiteService specialiteService;
 
     @GetMapping
     public String liste(
@@ -41,11 +41,11 @@ public class NiveauController {
 
         model.addAttribute("niveaux", niveauMapper.toResponseList(niveaux));
         model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
-        model.addAttribute("specialites", specialiteService.getAll());  // ✅ Pour le formulaire
+        model.addAttribute("specialites", specialiteService.getAll());
         model.addAttribute("filiereIdSelectionne", filiereId);
         model.addAttribute("form", new NiveauRequest());
 
-        return "niveaux/liste";
+        return "niveau/liste";
     }
 
     @PostMapping("/creer")
@@ -59,7 +59,7 @@ public class NiveauController {
             model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
             model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
             model.addAttribute("specialites", specialiteService.getAll());
-            return "niveaux/liste";
+            return "niveau/liste";
         }
 
         try {
@@ -70,7 +70,7 @@ public class NiveauController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/niveaux";
+        return "redirect:/admin/niveaux";
     }
 
     @GetMapping("/{id}/modifier")
@@ -89,7 +89,7 @@ public class NiveauController {
         model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
         model.addAttribute("specialites", specialiteService.getAll());
         model.addAttribute("form", form);
-        return "niveaux/modifier";
+        return "niveau/modifier";
     }
 
     @PostMapping("/{id}/modifier")
@@ -104,18 +104,18 @@ public class NiveauController {
             model.addAttribute("niveau", niveauMapper.toResponse(niveauService.findById(id)));
             model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
             model.addAttribute("specialites", specialiteService.getAll());
-            return "niveaux/modifier";
+            return "niveau/modifier";
         }
 
         try {
             Niveau data = niveauMapper.toEntity(request);
-            niveauService.modifier(id, data);
+            niveauService.modifier(id, data, request.getSpecialiteId());
             redirectAttributes.addFlashAttribute("succes", "Niveau modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/niveaux";
+        return "redirect:/admin/niveaux";
     }
 
     @PostMapping("/{id}/supprimer")
@@ -129,6 +129,22 @@ public class NiveauController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/niveaux";
+        return "redirect:/admin/niveaux";
+    }
+
+    // Endpoint JSON pour la modale d'édition
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    public NiveauRequest getNiveauJson(@PathVariable Long id) {
+        Niveau niveau = niveauService.findById(id);
+        NiveauRequest request = new NiveauRequest();
+        request.setNom(niveau.getNom());
+        request.setCode(niveau.getCode());
+        request.setOrdre(niveau.getOrdre());
+        request.setFiliereId(niveau.getFiliere().getId());
+        if (niveau.getSpecialite() != null) {
+            request.setSpecialiteId(niveau.getSpecialite().getId());
+        }
+        return request;
     }
 }

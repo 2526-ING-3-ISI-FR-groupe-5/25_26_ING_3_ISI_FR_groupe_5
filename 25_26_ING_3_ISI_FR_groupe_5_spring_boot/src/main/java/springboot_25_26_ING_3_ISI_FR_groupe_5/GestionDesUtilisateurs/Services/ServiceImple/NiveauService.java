@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Filiere;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Niveau;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Specialite;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.NiveauRepository;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class NiveauService {
 
     private final NiveauRepository niveauRepo;
     private final FiliereService filiereService;
+    private final SpecialiteService specialiteService;
 
     @Transactional
     public Niveau creer(Niveau niveau, Long filiereId, Long specialiteId) {
@@ -26,6 +28,12 @@ public class NiveauService {
         }
 
         niveau.setFiliere(filiere);
+
+        if (specialiteId != null) {
+            Specialite specialite = specialiteService.findById(specialiteId);
+            niveau.setSpecialite(specialite);
+        }
+
         return niveauRepo.save(niveau);
     }
 
@@ -35,11 +43,19 @@ public class NiveauService {
     }
 
     @Transactional
-    public Niveau modifier(Long id, Niveau data) {
+    public Niveau modifier(Long id, Niveau data, Long specialiteId) {
         Niveau niveau = findById(id);
         niveau.setNom(data.getNom());
         niveau.setCode(data.getCode());
         niveau.setOrdre(data.getOrdre());
+
+        if (specialiteId != null) {
+            Specialite specialite = specialiteService.findById(specialiteId);
+            niveau.setSpecialite(specialite);
+        } else {
+            niveau.setSpecialite(null);
+        }
+
         return niveauRepo.save(niveau);
     }
 
@@ -53,7 +69,6 @@ public class NiveauService {
         return niveauRepo.findByFiliereIdOrderByOrdreAsc(filiereId);
     }
 
-    // ✅ NOUVELLE MÉTHODE : Récupérer les niveaux par spécialité
     public List<Niveau> getBySpecialite(Long specialiteId) {
         return niveauRepo.findBySpecialiteId(specialiteId);
     }

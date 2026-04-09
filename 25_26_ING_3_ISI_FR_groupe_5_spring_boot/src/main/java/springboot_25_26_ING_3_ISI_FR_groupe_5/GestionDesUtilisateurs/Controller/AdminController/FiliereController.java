@@ -20,7 +20,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.util.List;
 
 @Controller
-@RequestMapping("/filieres")
+@RequestMapping("/admin/filieres")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class FiliereController {
@@ -50,109 +50,70 @@ public class FiliereController {
             filieres = filiereService.getAll();
         }
 
-        model.addAttribute("filieres",
-                filiereMapper.toResponseList(filieres));
-        model.addAttribute("ecoles",
-                ecoleMapper.toResponseList(ecoleService.getAll()));
-        // ✅ Correction : utiliser toResponseList avec libelle
-        model.addAttribute("cycles",
-                cycleMapper.toResponseList(cycleService.getAll()));
+        model.addAttribute("filieres", filiereMapper.toResponseList(filieres));
+        model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+        model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
         model.addAttribute("ecoleIdSelectionne", ecoleId);
         model.addAttribute("cycleIdSelectionne", cycleId);
-        model.addAttribute("form", new FiliereRequest());
+        model.addAttribute("createForm", new FiliereRequest());  // Pour la modale de création
+        model.addAttribute("editForm", new FiliereRequest());    // Pour la modale d'édition
 
         return "filieres/liste";
     }
 
-    @GetMapping("/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        model.addAttribute("filiere",
-                filiereMapper.toResponse(filiereService.findById(id)));
-        return "filieres/detail";
-    }
-
     @PostMapping("/creer")
     public String creer(
-            @Valid @ModelAttribute("form") FiliereRequest request,
+            @Valid @ModelAttribute("createForm") FiliereRequest request,
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("filieres",
-                    filiereMapper.toResponseList(filiereService.getAll()));
-            model.addAttribute("ecoles",
-                    ecoleMapper.toResponseList(ecoleService.getAll()));
-            model.addAttribute("cycles",
-                    cycleMapper.toResponseList(cycleService.getAll()));
+            model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
+            model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+            model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
+            model.addAttribute("createForm", request);
+            model.addAttribute("editForm", new FiliereRequest());
             return "filieres/liste";
         }
 
         try {
-            Filiere filiere = new Filiere();
-            filiere.setNom(request.getNom());
-            filiere.setCode(request.getCode());
-            filiere.setDescription(request.getDescription());
-            filiereService.creer(filiere, request.getEcoleId(), request.getCycleId());
-            redirectAttributes.addFlashAttribute("succes",
-                    "Filière créée avec succès");
+            filiereService.creer(request);
+            redirectAttributes.addFlashAttribute("succes", "Filière créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/filieres";
-    }
-
-    @GetMapping("/{id}/modifier")
-    public String formulaireModifier(@PathVariable Long id, Model model) {
-        Filiere filiere = filiereService.findById(id);
-        FiliereRequest form = new FiliereRequest();
-        form.setNom(filiere.getNom());
-        form.setCode(filiere.getCode());
-        form.setDescription(filiere.getDescription());
-        form.setEcoleId(filiere.getEcole().getId());
-        form.setCycleId(filiere.getCycle().getId());
-
-        model.addAttribute("filiere", filiereMapper.toResponse(filiere));
-        model.addAttribute("ecoles",
-                ecoleMapper.toResponseList(ecoleService.getAll()));
-        model.addAttribute("cycles",
-                cycleMapper.toResponseList(cycleService.getAll()));
-        model.addAttribute("form", form);
-        return "filieres/modifier";
+        return "redirect:/admin/filieres";
     }
 
     @PostMapping("/{id}/modifier")
     public String modifier(
             @PathVariable Long id,
-            @Valid @ModelAttribute("form") FiliereRequest request,
+            @Valid @ModelAttribute("editForm") FiliereRequest request,
             BindingResult result,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("filiere",
-                    filiereMapper.toResponse(filiereService.findById(id)));
-            model.addAttribute("ecoles",
-                    ecoleMapper.toResponseList(ecoleService.getAll()));
-            model.addAttribute("cycles",
-                    cycleMapper.toResponseList(cycleService.getAll()));
-            return "filieres/modifier";
+            List<Filiere> filieres = filiereService.getAll();
+            model.addAttribute("filieres", filiereMapper.toResponseList(filieres));
+            model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
+            model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
+            model.addAttribute("createForm", new FiliereRequest());
+            model.addAttribute("editForm", request);
+            model.addAttribute("editId", id);
+            return "filieres/liste";
         }
 
         try {
-            Filiere data = new Filiere();
-            data.setNom(request.getNom());
-            data.setCode(request.getCode());
-            data.setDescription(request.getDescription());
-            filiereService.modifier(id, data);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Filière modifiée avec succès");
+            filiereService.modifier(id, request);
+            redirectAttributes.addFlashAttribute("succes", "Filière modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/filieres/" + id;
+        return "redirect:/admin/filieres";
     }
 
     @PostMapping("/{id}/supprimer")
@@ -162,11 +123,24 @@ public class FiliereController {
     ) {
         try {
             filiereService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Filière supprimée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Filière supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/filieres";
+        return "redirect:/admin/filieres";
+    }
+
+    // Endpoint pour récupérer les données d'une filière en JSON (pour pré-remplir la modale)
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    public FiliereRequest getFiliereJson(@PathVariable Long id) {
+        Filiere filiere = filiereService.findById(id);
+        FiliereRequest request = new FiliereRequest();
+        request.setNom(filiere.getNom());
+        request.setCode(filiere.getCode());
+        request.setDescription(filiere.getDescription());
+        request.setEcoleId(filiere.getEcole().getId());
+        request.setCycleId(filiere.getCycle().getId());
+        return request;
     }
 }

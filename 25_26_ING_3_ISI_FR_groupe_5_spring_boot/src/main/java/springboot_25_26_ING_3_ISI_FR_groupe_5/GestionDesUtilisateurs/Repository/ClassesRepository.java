@@ -14,15 +14,18 @@ import java.util.Optional;
 @Repository
 public interface ClassesRepository extends JpaRepository<Classe, Long> {
 
-    // ✅ Trouver toutes les classes d'un niveau
     List<Classe> findByNiveauId(Long niveauId);
 
-    // ✅ Recherche par nom
     List<Classe> findByNomContainingIgnoreCase(String nom);
+
+    Page<Classe> findByNomContainingIgnoreCase(String nom, Pageable pageable);
 
     Optional<Classe> findByNom(String nom);
 
-    // ✅ Recherche par année académique (avec pagination)
+    boolean existsByNom(String nom);
+
+    boolean existsByNomAndNiveauId(String nom, Long niveauId);
+
     @Query("""
         SELECT DISTINCT c FROM Classe c
         JOIN c.inscriptions i
@@ -50,9 +53,18 @@ public interface ClassesRepository extends JpaRepository<Classe, Long> {
     @Query("SELECT c FROM Classe c WHERE c.niveau.filiere.cycle.id = :cycleId")
     List<Classe> findByCycleId(@Param("cycleId") Long cycleId);
 
+    // ✅ Trouver les classes par niveau (alias de findByNiveauId)
     @Query("SELECT c FROM Classe c WHERE c.niveau.id = :niveauId")
     List<Classe> findByNiveau(@Param("niveauId") Long niveauId);
 
-    boolean existsByNom(String nom);
+    // ✅ Trouver les classes par filière via le niveau
+    List<Classe> findByNiveau_Filiere_Id(Long filiereId);
 
+    // ✅ Trouver les classes par année académique (sans filtre nom)
+    @Query("""
+        SELECT DISTINCT c FROM Classe c
+        JOIN c.inscriptions i
+        WHERE i.anneeAcademique.id = :anneeId
+    """)
+    List<Classe> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
 }

@@ -45,7 +45,7 @@ public class Role {
     protected LocalDateTime updateAt;
 
     // ==================== RELATION AVEC PERMISSIONS ====================
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),

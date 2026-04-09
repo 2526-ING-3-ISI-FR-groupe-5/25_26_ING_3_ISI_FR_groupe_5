@@ -17,7 +17,6 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-
 public class UE {
 
     @Id

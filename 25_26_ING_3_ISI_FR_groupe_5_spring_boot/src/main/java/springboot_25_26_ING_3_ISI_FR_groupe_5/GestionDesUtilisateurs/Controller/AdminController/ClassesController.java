@@ -2,7 +2,6 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,10 +19,9 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/classes")
+@RequestMapping("/admin/classes")
 @RequiredArgsConstructor
 public class ClassesController {
 
@@ -59,16 +57,13 @@ public class ClassesController {
         List<Classe> classesList = new ArrayList<>();
 
         if (niveauId != null && niveauId > 0) {
-            // Filtrer par niveau
             classesList = classesService.getByNiveau(niveauId);
         } else if (specialiteId != null && specialiteId > 0) {
-            // ✅ Filtrer par spécialité : récupérer les niveaux puis les classes
             List<Niveau> niveaux = niveauService.getBySpecialite(specialiteId);
             for (Niveau niveau : niveaux) {
                 classesList.addAll(classesService.getByNiveau(niveau.getId()));
             }
         } else {
-            // Toutes les classes
             classesList = classesService.getAll();
         }
 
@@ -78,7 +73,6 @@ public class ClassesController {
         System.out.println("niveauId reçu = " + niveauId);
         System.out.println("Nombre de classes trouvées : " + classesList.size());
 
-        // Charger les niveaux pour le select
         List<Niveau> tousNiveaux = niveauService.getAll();
 
         model.addAttribute("classes", classesMapper.toResponseList(classesList));
@@ -90,7 +84,7 @@ public class ClassesController {
         model.addAttribute("niveauIdSelectionne", niveauId);
         model.addAttribute("form", new ClassesRequest());
 
-        return "classes/liste";
+        return "classe/liste";
     }
 
     @GetMapping("/{id}")
@@ -119,7 +113,7 @@ public class ClassesController {
         model.addAttribute("programmations", programmationMapper.toResponseList(programmations));
         model.addAttribute("totalEtudiants", inscriptions.size());
 
-        return "classes/detail";
+        return "classe/detail";
     }
 
     @PostMapping("/creer")
@@ -133,7 +127,7 @@ public class ClassesController {
         if (result.hasErrors()) {
             model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
             model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
-            return "classes/liste";
+            return "classe/liste";
         }
 
         try {
@@ -143,7 +137,7 @@ public class ClassesController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/classes";
+        return "redirect:/admin/classes";
     }
 
     @GetMapping("/{id}/modifier")
@@ -159,7 +153,7 @@ public class ClassesController {
         model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
         model.addAttribute("form", form);
 
-        return "classes/modifier";
+        return "classe/modifier";
     }
 
     @PostMapping("/{id}/modifier")
@@ -175,7 +169,7 @@ public class ClassesController {
             model.addAttribute("classe", classesMapper.toResponse(classesService.findById(id)));
             model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
             model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
-            return "classes/modifier";
+            return "classe/modifier";
         }
 
         try {
@@ -185,7 +179,7 @@ public class ClassesController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/classes/" + id;
+        return "redirect:/admin/classes/" + id;
     }
 
     @PostMapping("/{id}/supprimer")
@@ -200,6 +194,18 @@ public class ClassesController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/classes";
+        return "redirect:/admin/classes";
+    }
+
+    // ✅ Endpoint JSON pour la modale d'édition
+    @GetMapping("/{id}/json")
+    @ResponseBody
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public ClassesRequest getClasseJson(@PathVariable Long id) {
+        Classe classe = classesService.findById(id);
+        ClassesRequest request = new ClassesRequest();
+        request.setNom(classe.getNom());
+        request.setNiveauId(classe.getNiveau().getId());
+        return request;
     }
 }
