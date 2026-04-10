@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Nouvelle programmation — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                        Nouvelle <span class="text-primary italic">programmation</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Programmez une unité d'enseignement pour une classe et un semestre
+                    </p>
+                </div>
+                <a th:href="@{/admin/programmations(classeId=${classeIdSelectionne})}"
+                   class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 gap-2 py-2 px-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Retour à la liste
+                </a>
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <div class="p-6">
+                <form th:action="@{/admin/programmations/creer}" th:object="${form}" method="post" class="space-y-5">
+
+                    <!-- Classe -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Classe <span class="text-red-500">*</span></span>
+                        </label>
+                        <select th:field="*{classeId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                            <option value="" disabled selected>Sélectionner une classe</option>
+                            <option th:each="classe : ${classes}" th:value="${classe.id}" th:text="${classe.nom}"></option>
+                        </select>
+                        <p th:if="${#fields.hasErrors('classeId')}" th:errors="*{classeId}" class="text-red-500 text-xs mt-1"></p>
+                    </div>
+
+                    <!-- Semestre -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Semestre <span class="text-red-500">*</span></span>
+                        </label>
+                        <select th:field="*{semestreId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                            <option value="" disabled selected>Sélectionner un semestre</option>
+                            <option th:each="semestre : ${semestres}" th:value="${semestre.id}" th:text="${semestre.libelle}"></option>
+                        </select>
+                        <p th:if="${#fields.hasErrors('semestreId')}" th:errors="*{semestreId}" class="text-red-500 text-xs mt-1"></p>
+                    </div>
+
+                    <!-- UE -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Unité d'enseignement <span class="text-red-500">*</span></span>
+                        </label>
+                        <select th:field="*{ueId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                            <option value="" disabled selected>Sélectionner une UE</option>
+                            <option th:each="ue : ${ues}" th:value="${ue.id}" th:text="${ue.nom} + ' (' + ${ue.code} + ')'"></option>
+                        </select>
+                        <p th:if="${#fields.hasErrors('ueId')}" th:errors="*{ueId}" class="text-red-500 text-xs mt-1"></p>
+                    </div>
+
+                    <!-- Quota horaire -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Quota horaire <span class="text-red-500">*</span></span>
+                        </label>
+                        <input type="number" th:field="*{dheure}" placeholder="Ex: 45" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                        <p th:if="${#fields.hasErrors('dheure')}" th:errors="*{dheure}" class="text-red-500 text-xs mt-1"></p>
+                    </div>
+
+                    <!-- Crédits -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nombre de crédits <span class="text-red-500">*</span></span>
+                        </label>
+                        <input type="number" th:field="*{nbrCredit}" placeholder="Ex: 6" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                        <p th:if="${#fields.hasErrors('nbrCredit')}" th:errors="*{nbrCredit}" class="text-red-500 text-xs mt-1"></p>
+                    </div>
+
+                    <!-- Enseignants -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Enseignants</span>
+                        </label>
+                        <select th:field="*{enseignantIds}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" multiple size="5">
+                            <option th:each="enseignant : ${enseignants}" th:value="${enseignant.id}" th:text="${enseignant.prenom} + ' ' + ${enseignant.nom}"></option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs</p>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="alert bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5 text-blue-600 dark:text-blue-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm text-blue-700 dark:text-blue-300">Une UE ne peut être programmée qu'une seule fois par classe et par semestre</span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 pt-4">
+                        <a th:href="@{/admin/programmations(classeId=${classeIdSelectionne})}" class="flex-1 text-center btn bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-none rounded-lg py-2 px-4 transition-all duration-200">
+                            Annuler
+                        </a>
+                        <button type="submit" class="flex-1 btn bg-primary hover:bg-primary/90 text-white border-none rounded-lg py-2 px-4 transition-all duration-200 shadow-lg hover:shadow-xl gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Programmer l'UE
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

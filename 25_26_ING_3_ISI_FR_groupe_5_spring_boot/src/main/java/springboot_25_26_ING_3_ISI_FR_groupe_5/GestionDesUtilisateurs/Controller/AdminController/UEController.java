@@ -33,30 +33,23 @@ public class UEController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
     public String liste(
-            @RequestParam(required = false) Long anneeId,
+            @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) String recherche,
             Model model
     ) {
-        Annee_academique annee = null;
-        try {
-            annee = anneeId != null
-                    ? anneeService.findById(anneeId)
-                    : anneeService.getAnneeActive();
-        } catch (Exception e) {
-            // Pas d'année active
-        }
-
         List<UE> ues;
+
         if (recherche != null && !recherche.isEmpty()) {
             ues = ueService.rechercher(recherche);
+        } else if (specialiteId != null && specialiteId > 0) {
+            ues = ueService.getBySpecialite(specialiteId);
         } else {
             ues = ueService.getAll();
         }
 
         model.addAttribute("ues", ueMapper.toResponseList(ues));
         model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
-        model.addAttribute("annees", anneeService.getAll());
-        model.addAttribute("anneeActive", annee);
+        model.addAttribute("specialiteIdSelectionne", specialiteId);
         model.addAttribute("recherche", recherche);
         model.addAttribute("form", new UERequest());
 
@@ -88,25 +81,9 @@ public class UEController {
         return "redirect:/admin/ues";
     }
 
-    @GetMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String formulaireModifier(@PathVariable Long id, Model model) {
-        UE ue = ueService.findById(id);
-        UERequest form = new UERequest();
-        form.setNom(ue.getNom());
-        form.setCode(ue.getCode());
-        form.setLibelle(ue.getLibelle());
-        form.setLibelleAnglais(ue.getLibelleAnglais());
-        if (ue.getSpecialite() != null) {
-            form.setSpecialiteId(ue.getSpecialite().getId());
-        }
-
-        model.addAttribute("ue", ueMapper.toResponse(ue));
-        model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
-        model.addAttribute("form", form);
-
-        return "ue/modifier";
-    }
+    // ❌ SUPPRIMER cette méthode (plus utilisée)
+    // @GetMapping("/{id}/modifier")
+    // public String formulaireModifier(...) { ... }
 
     @PostMapping("/{id}/modifier")
     @PreAuthorize("hasRole('ADMIN')")
@@ -118,9 +95,8 @@ public class UEController {
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("ue", ueMapper.toResponse(ueService.findById(id)));
-            model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
-            return "ue/modifier";
+            redirectAttributes.addFlashAttribute("erreur", "Erreur de validation");
+            return "redirect:/admin/ues";
         }
 
         try {

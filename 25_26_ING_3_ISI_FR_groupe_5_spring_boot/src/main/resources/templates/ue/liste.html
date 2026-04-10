@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Unités d'enseignement — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                        Unités <span class="text-primary italic">d'enseignement</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Gérez les UE par spécialité
+                    </p>
+                </div>
+                <button onclick="createModal.showModal()"
+                        class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 gap-2 py-2 px-4">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Nouvelle UE
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="mb-6 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
+            <div class="flex flex-wrap items-end gap-3">
+                <!-- Filtre Spécialité -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs text-gray-500 mb-1">Spécialité</label>
+                    <select id="specialiteSelect" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
+                        <option value="">Toutes les spécialités</option>
+                        <option th:each="specialite : ${specialites}"
+                                th:value="${specialite.id}"
+                                th:text="${specialite.nom}"></option>
+                    </select>
+                </div>
+
+                <!-- Recherche -->
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs text-gray-500 mb-1">Recherche</label>
+                    <input type="text" id="searchInput" placeholder="Nom ou code..."
+                           class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex gap-2">
+                    <button id="filtrerBtn" class="bg-primary hover:bg-primary/90 text-white rounded-lg py-2 px-4 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        Filtrer
+                    </button>
+                    <button id="resetBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg py-2 px-3 text-sm transition-colors">
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg p-3 rounded-xl">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg p-3 rounded-xl">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Tableau des UE -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nom</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Code</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Libellé</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Spécialité</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Programmations</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tr th:each="ue : ${ues}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors">
+                        <td class="px-6 py-3">
+                            <span class="font-semibold text-gray-900 dark:text-white" th:text="${ue.nom}">-</span>
+                        </td>
+                        <td class="px-6 py-3">
+                            <span class="badge badge-ghost font-mono py-0.5 px-2 text-xs" th:text="${ue.code}">-</span>
+                        </td>
+                        <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400" th:text="${ue.libelle}">-</td>
+                        <td class="px-6 py-3">
+                            <span class="badge badge-info py-0.5 px-2 text-xs" th:text="${ue.specialiteNom}">-</span>
+                        </td>
+                        <td class="px-6 py-3 text-center">
+                            <span class="font-mono bg-gray-100 dark:bg-bgsurface py-0.5 px-2 rounded text-sm" th:text="${ue.nombreProgrammations}">0</span>
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button th:onclick="'openEditModal(' + ${ue.id} + ')'"
+                                        class="text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 transition-colors p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <form th:action="@{/admin/ues/{id}/supprimer(id=${ue.id})}" method="post" class="inline">
+                                    <button type="submit"
+                                            class="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1"
+                                            onclick="return confirm('Supprimer cette UE ?')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${ues.empty}">
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            <p>Aucune unité d'enseignement</p>
+                            <p class="text-sm mt-1">Cliquez sur "Nouvelle UE" pour commencer</p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALE CRÉATION ==================== -->
+    <dialog id="createModal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard max-w-md p-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary/10 to-transparent dark:from-primary/20 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+                <h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">
+                    Nouvelle UE
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Créez une unité d'enseignement
+                </p>
+            </div>
+
+            <form th:action="@{/admin/ues/creer}" th:object="${form}" method="post" class="p-6 space-y-5">
+                <!-- Spécialité -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Spécialité <span class="text-red-500">*</span></span>
+                    </label>
+                    <select th:field="*{specialiteId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                        <option value="" disabled selected>Sélectionner une spécialité</option>
+                        <option th:each="specialite : ${specialites}" th:value="${specialite.id}" th:text="${specialite.nom}"></option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('specialiteId')}" th:errors="*{specialiteId}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Nom -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nom <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text" th:field="*{nom}" placeholder="Ex: Algorithmique Avancée" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                    <p th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Code -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Code <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text" th:field="*{code}" placeholder="Ex: ALGO401" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                    <p th:if="${#fields.hasErrors('code')}" th:errors="*{code}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Libellé -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Libellé</span>
+                    </label>
+                    <input type="text" th:field="*{libelle}" placeholder="Ex: Algorithmique et structures de données" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <!-- Libellé anglais -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Libellé anglais</span>
+                    </label>
+                    <input type="text" th:field="*{libelleAnglais}" placeholder="Ex: Advanced Algorithms" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <form method="dialog" class="flex-1">
+                        <button class="btn btn-ghost w-full py-2 px-4 rounded-lg">Annuler</button>
+                    </form>
+                    <button type="submit" class="btn bg-primary hover:bg-primary/90 text-white border-none flex-1 py-2 px-4 rounded-lg transition-all duration-200">Créer</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Fermer</button>
+        </form>
+    </dialog>
+
+    <!-- ==================== MODALE ÉDITION ==================== -->
+    <dialog id="editModal" class="modal">
+        <div class="modal-box bg-white dark:bg-bgcard max-w-md p-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-500/10 to-transparent dark:from-amber-500/20 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+                <h3 class="font-serif text-xl font-bold text-gray-900 dark:text-white">
+                    Modifier l'UE
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Modifiez les informations de l'unité d'enseignement
+                </p>
+            </div>
+
+            <form method="post" class="p-6 space-y-5" id="editForm">
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Spécialité <span class="text-red-500">*</span></span>
+                    </label>
+                    <select name="specialiteId" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                        <option value="" disabled>Sélectionner une spécialité</option>
+                        <option th:each="specialite : ${specialites}" th:value="${specialite.id}" th:text="${specialite.nom}"></option>
+                    </select>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nom <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text" name="nom" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Code <span class="text-red-500">*</span></span>
+                    </label>
+                    <input type="text" name="code" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Libellé</span>
+                    </label>
+                    <input type="text" name="libelle" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Libellé anglais</span>
+                    </label>
+                    <input type="text" name="libelleAnglais" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <form method="dialog" class="flex-1">
+                        <button class="btn btn-ghost w-full py-2 px-4 rounded-lg">Annuler</button>
+                    </form>
+                    <button type="submit" class="btn bg-amber-600 hover:bg-amber-700 text-white border-none flex-1 py-2 px-4 rounded-lg transition-all duration-200">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Fermer</button>
+        </form>
+    </dialog>
+</div>
+
+<script>
+    // Filtres
+    const specialiteSelect = document.getElementById('specialiteSelect');
+    const searchInput = document.getElementById('searchInput');
+    const filtrerBtn = document.getElementById('filtrerBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function applyFilters() {
+        const specialiteId = specialiteSelect.value;
+        const search = searchInput.value;
+        let url = '/admin/ues?';
+        if (specialiteId) url += 'specialiteId=' + specialiteId + '&';
+        if (search) url += 'recherche=' + encodeURIComponent(search);
+        window.location.href = url;
+    }
+
+    filtrerBtn.addEventListener('click', applyFilters);
+    resetBtn.addEventListener('click', function() {
+        window.location.href = '/admin/ues';
+    });
+
+    // Modale édition
+    async function openEditModal(id) {
+        if (!id) return;
+        try {
+            const response = await fetch('/admin/ues/' + id + '/json');
+            if (!response.ok) throw new Error('Erreur HTTP');
+            const data = await response.json();
+            const form = document.getElementById('editForm');
+            form.action = '/admin/ues/' + id + '/modifier';
+            form.querySelector('[name="specialiteId"]').value = data.specialiteId;
+            form.querySelector('[name="nom"]').value = data.nom;
+            form.querySelector('[name="code"]').value = data.code;
+            form.querySelector('[name="libelle"]').value = data.libelle || '';
+            form.querySelector('[name="libelleAnglais"]').value = data.libelleAnglais || '';
+            document.getElementById('editModal').showModal();
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Impossible de charger les données');
+        }
+    }
+</script>
+</body>
+</html>
