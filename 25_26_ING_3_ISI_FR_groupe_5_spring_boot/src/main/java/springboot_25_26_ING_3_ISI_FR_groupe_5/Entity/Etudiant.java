@@ -13,8 +13,7 @@ import java.util.*;
 @SuperBuilder
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor@AllArgsConstructor
 @Entity
 @DiscriminatorValue("ETD")
 public class Etudiant extends Utilisateur {
