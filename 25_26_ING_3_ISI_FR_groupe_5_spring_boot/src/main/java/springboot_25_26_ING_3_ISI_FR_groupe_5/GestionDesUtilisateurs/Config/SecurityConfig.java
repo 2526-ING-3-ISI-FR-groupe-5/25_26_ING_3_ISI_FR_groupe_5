@@ -1,7 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config;
 
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,8 +28,10 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+
+    // ✅ @Qualifier pour indiquer quel bean utiliser
+    @Qualifier("customUserDetailsService")
     private final UserDetailsService userDetailsService;
-    private final RefreshTokenService refreshTokenService;
 
     private static final String[] PUBLIC_URL = {
             "/login",
@@ -65,7 +67,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
@@ -73,41 +76,38 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                // Note : On utilise STATELESS car tu as un JwtFilter.
-                // Assure-toi que tes pages Thymeleaf gèrent bien le token.
+
+                // ✅ IF Thymeleaf → IF_REQUIRED au lieu de STATELESS
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendRedirect("/login")
                         )
                         .accessDeniedPage("/notFound")
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_URL).permitAll() // On autorise tout ce qui est dans PUBLIC_URL
+                        .requestMatchers(PUBLIC_URL).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/enseignant/**").hasRole("ENSEIGNANT")
                         .requestMatchers("/etudiant/**").hasRole("ETUDIANT")
+                        .requestMatchers("/surveillant/**").hasRole("SURVEILLANT")
+                        .requestMatchers("/assistant/**").hasRole("ASSISTANT")
+                        .requestMatchers("/journal/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
+                // ✅ Logout sans injecter RefreshTokenService dans SecurityConfig
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .addLogoutHandler((request, response, authentication) -> {
-                            if (request.getCookies() != null) {
-                                Arrays.stream(request.getCookies())
-                                        .filter(c -> "REFRESH_TOKEN".equals(c.getName()))
-                                        .findFirst()
-                                        .ifPresent(c -> {
-                                            try {
-                                                refreshTokenService.deleteByToken(c.getValue());
-                                            } catch (Exception ignored) {}
-                                        });
-                            }
-                        })
                         .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN")
                         .logoutSuccessUrl("/login?logout=true")
                         .permitAll()
                 )
+
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

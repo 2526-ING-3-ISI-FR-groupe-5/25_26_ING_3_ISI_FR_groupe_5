@@ -21,8 +21,7 @@ public interface UEMapper {
     List<UEResponse> toResponseList(List<UE> ues);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     @Mapping(target = "specialite", ignore = true)
     @Mapping(target = "programmations", ignore = true)
     UE toEntity(UERequest request);

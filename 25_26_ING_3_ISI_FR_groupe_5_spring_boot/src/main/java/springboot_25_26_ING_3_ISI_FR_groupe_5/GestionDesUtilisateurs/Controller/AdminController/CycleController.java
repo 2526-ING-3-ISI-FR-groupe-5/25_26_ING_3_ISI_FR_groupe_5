@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,10 +12,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Cycle;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeCycle;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Cycle.CycleRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.CycleMapper;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EcoleMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.CycleService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EcoleService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EcoleMapper;
 
 @Controller
 @RequestMapping("/admin/cycles")
@@ -54,7 +56,8 @@ public class CycleController {
             @Valid @ModelAttribute("form") CycleRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
@@ -64,7 +67,7 @@ public class CycleController {
 
         try {
             Cycle cycle = cycleMapper.toEntity(request);
-            cycleService.creer(cycle);
+            cycleService.creer(cycle, acteur);
             redirectAttributes.addFlashAttribute("succes", "Cycle créé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -92,7 +95,8 @@ public class CycleController {
             @Valid @ModelAttribute("form") CycleRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("cycle", cycleMapper.toResponse(cycleService.findById(id)));
@@ -102,8 +106,8 @@ public class CycleController {
 
         try {
             Cycle data = new Cycle();
-            data.setTypeCycle(request.getTypeCycle()); // ✅ corrigé
-            cycleService.modifier(id, data);
+            data.setTypeCycle(request.getTypeCycle());
+            cycleService.modifier(id, data, acteur);
             redirectAttributes.addFlashAttribute("succes", "Cycle modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -115,10 +119,11 @@ public class CycleController {
     @PostMapping("/{id}/supprimer")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            cycleService.supprimer(id);
+            cycleService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Cycle supprimé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());

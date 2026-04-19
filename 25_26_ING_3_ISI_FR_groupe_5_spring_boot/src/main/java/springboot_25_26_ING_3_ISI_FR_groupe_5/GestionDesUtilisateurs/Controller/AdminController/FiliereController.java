@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Filiere;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.filiere.FiliereRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.CycleMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EcoleMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.FiliereMapper;
@@ -55,8 +57,8 @@ public class FiliereController {
         model.addAttribute("cycles", cycleMapper.toResponseList(cycleService.getAll()));
         model.addAttribute("ecoleIdSelectionne", ecoleId);
         model.addAttribute("cycleIdSelectionne", cycleId);
-        model.addAttribute("createForm", new FiliereRequest());  // Pour la modale de création
-        model.addAttribute("editForm", new FiliereRequest());    // Pour la modale d'édition
+        model.addAttribute("createForm", new FiliereRequest());
+        model.addAttribute("editForm", new FiliereRequest());
 
         return "filieres/liste";
     }
@@ -66,7 +68,8 @@ public class FiliereController {
             @Valid @ModelAttribute("createForm") FiliereRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("filieres", filiereMapper.toResponseList(filiereService.getAll()));
@@ -78,7 +81,7 @@ public class FiliereController {
         }
 
         try {
-            filiereService.creer(request);
+            filiereService.creer(request, acteur);
             redirectAttributes.addFlashAttribute("succes", "Filière créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -93,7 +96,8 @@ public class FiliereController {
             @Valid @ModelAttribute("editForm") FiliereRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             List<Filiere> filieres = filiereService.getAll();
@@ -107,7 +111,7 @@ public class FiliereController {
         }
 
         try {
-            filiereService.modifier(id, request);
+            filiereService.modifier(id, request, acteur);
             redirectAttributes.addFlashAttribute("succes", "Filière modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -119,10 +123,11 @@ public class FiliereController {
     @PostMapping("/{id}/supprimer")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            filiereService.supprimer(id);
+            filiereService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Filière supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -130,7 +135,6 @@ public class FiliereController {
         return "redirect:/admin/filieres";
     }
 
-    // Endpoint pour récupérer les données d'une filière en JSON (pour pré-remplir la modale)
     @GetMapping("/{id}/json")
     @ResponseBody
     public FiliereRequest getFiliereJson(@PathVariable Long id) {

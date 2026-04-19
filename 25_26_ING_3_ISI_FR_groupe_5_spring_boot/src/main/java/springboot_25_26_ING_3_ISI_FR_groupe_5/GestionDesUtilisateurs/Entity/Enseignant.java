@@ -30,8 +30,7 @@ public class  Enseignant extends Utilisateur {
     private Collection<ValidationPresence> validationPresences;
     @ManyToMany(mappedBy = "enseignant")
     private Collection<SeanceCours> seancecours =new ArrayList<>();
-    @ManyToMany(mappedBy = "enseignant")
-    private Collection<Appels> appels = new ArrayList<>();
+
     @ManyToMany
     private Collection<UE> ues = new ArrayList<>();
     @ManyToMany(mappedBy = "enseignants", fetch = FetchType.LAZY)

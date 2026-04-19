@@ -21,8 +21,6 @@ public interface SpecialiteMapper {
     List<SpecialiteResponse> toResponseList(List<Specialite> specialites);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
     @Mapping(target = "filiere", ignore = true)
     @Mapping(target = "niveaux", ignore = true)
     Specialite toEntity(SpecialiteRequest request);

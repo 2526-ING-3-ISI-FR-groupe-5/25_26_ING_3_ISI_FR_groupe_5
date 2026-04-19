@@ -20,8 +20,7 @@ public interface CycleMapper {
     List<CycleResponse> toResponseList(List<Cycle> cycles);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     @Mapping(target = "filieres", ignore = true)
     Cycle toEntity(CycleRequest request);
 

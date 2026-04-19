@@ -30,7 +30,6 @@ public interface InscriptionMapper {
     @Mapping(target = "anneeAcademique", ignore = true)
     @Mapping(target = "statut", ignore = true)
     @Mapping(target = "decisionFinAnnee", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     Inscription toEntity(InscriptionRequest request);
 }

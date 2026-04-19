@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Niveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.niveau.NiveauRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.FiliereMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.NiveauMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.FiliereService;
@@ -53,7 +55,8 @@ public class NiveauController {
             @Valid @ModelAttribute("form") NiveauRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
@@ -64,7 +67,7 @@ public class NiveauController {
 
         try {
             Niveau niveau = niveauMapper.toEntity(request);
-            niveauService.creer(niveau, request.getFiliereId(), request.getSpecialiteId());
+            niveauService.creer(niveau, request.getFiliereId(), request.getSpecialiteId(), acteur);
             redirectAttributes.addFlashAttribute("succes", "Niveau créé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -98,7 +101,8 @@ public class NiveauController {
             @Valid @ModelAttribute("form") NiveauRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("niveau", niveauMapper.toResponse(niveauService.findById(id)));
@@ -109,7 +113,7 @@ public class NiveauController {
 
         try {
             Niveau data = niveauMapper.toEntity(request);
-            niveauService.modifier(id, data, request.getSpecialiteId());
+            niveauService.modifier(id, data, request.getSpecialiteId(), acteur);
             redirectAttributes.addFlashAttribute("succes", "Niveau modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -121,10 +125,11 @@ public class NiveauController {
     @PostMapping("/{id}/supprimer")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            niveauService.supprimer(id);
+            niveauService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Niveau supprimé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -132,7 +137,6 @@ public class NiveauController {
         return "redirect:/admin/niveaux";
     }
 
-    // Endpoint JSON pour la modale d'édition
     @GetMapping("/{id}/json")
     @ResponseBody
     public NiveauRequest getNiveauJson(@PathVariable Long id) {

@@ -22,8 +22,7 @@ public interface FiliereMapper {
     List<FiliereResponse> toResponseList(List<Filiere> filieres);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     @Mapping(target = "ecole", ignore = true)
     @Mapping(target = "cycle", ignore = true)
     @Mapping(target = "specialites", ignore = true)

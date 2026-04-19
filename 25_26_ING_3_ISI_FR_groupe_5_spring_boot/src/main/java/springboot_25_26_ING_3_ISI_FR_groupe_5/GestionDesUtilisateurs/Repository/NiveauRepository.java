@@ -12,6 +12,9 @@ import java.util.Optional;
 @Repository
 public interface NiveauRepository extends JpaRepository<Niveau, Long> {
     // Par filière
+
+
+    Optional<Niveau> findByNomAndFiliereId(String nom, Long filiereId);
     List<Niveau> findByFiliereIdOrderByOrdreAsc(Long filiereId);
 
     List<Niveau> findByFiliereIdAndSpecialiteIsNullOrderByOrdreAsc(Long filiereId);

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Tableau de bord Enseignant — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <div class="mb-8">
+            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                Bienvenue, <span class="text-primary italic" th:text="${enseignant.prenom} + ' ' + ${enseignant.nom}"></span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Voici vos classes et vos enseignements pour l'année en cours
+            </p>
+        </div>
+
+        <!-- Cartes statistiques -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 text-center">
+                <div class="text-3xl font-bold text-primary" th:text="${totalClasses}">0</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Classes</div>
+            </div>
+            <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 text-center">
+                <div class="text-3xl font-bold text-primary" th:text="${totalUE}">0</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">UE à enseigner</div>
+            </div>
+        </div>
+
+        <!-- Mes classes -->
+        <div class="mb-10">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Mes classes
+            </h2>
+
+            <div th:if="${not #lists.isEmpty(classes)}"
+                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div th:each="classe : ${classes}"
+                     class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-5 hover:shadow-lg transition-all">
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white" th:text="${classe.nom}">-</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" th:text="${classe.niveauNom}">-</p>
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Classe</span>
+                        <a th:href="@{/enseignant/classe/{id}(id=${classe.id})}"
+                           class="text-primary hover:text-primary/80 text-sm font-medium">
+                            Voir les étudiants →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(classes)}"
+                 class="text-center py-8 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
+                <p class="text-gray-500">Aucune classe pour cette année</p>
+            </div>
+        </div>
+
+        <!-- Mes UE -->
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                Mes Unités d'Enseignement
+            </h2>
+
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-bgsurface">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">UE</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Classe</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Semestre</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Heures</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Crédits</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                        <tr th:each="prog : ${programmations}">
+                            <td class="px-4 py-3" th:text="${prog.ueNom}">-</td>
+                            <td class="px-4 py-3" th:text="${prog.classeNom}">-</td>
+                            <td class="px-4 py-3" th:text="${prog.semestreNom}">-</td>
+                            <td class="px-4 py-3" th:text="${prog.dheure}">-</td>
+                            <td class="px-4 py-3" th:text="${prog.nbrCredit}">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

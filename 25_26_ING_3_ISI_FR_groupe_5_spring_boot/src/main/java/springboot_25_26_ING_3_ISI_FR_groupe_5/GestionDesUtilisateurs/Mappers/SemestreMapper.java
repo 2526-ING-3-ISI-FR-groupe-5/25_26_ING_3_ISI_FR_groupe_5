@@ -20,8 +20,7 @@ public interface SemestreMapper {
     List<SemestreResponse> toResponseList(List<Semestre> semestres);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     @Mapping(target = "anneeAcademique", ignore = true)
     Semestre toEntity(SemestreRequest request);
 }

@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface FiliereRepository extends JpaRepository<Filiere, Long> {
-
+    Optional<Filiere> findByNomAndEcoleId(String nom, Long ecoleId);
     List<Filiere> findByEcoleId(Long ecoleId);
     List<Filiere> findByCycleId(Long cycleId);
     List<Filiere> findByEcoleIdAndCycleId(Long ecoleId, Long cycleId);

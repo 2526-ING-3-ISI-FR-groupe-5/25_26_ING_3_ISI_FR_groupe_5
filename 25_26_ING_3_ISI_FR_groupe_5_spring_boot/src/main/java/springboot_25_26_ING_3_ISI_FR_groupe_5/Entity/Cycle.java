@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeCycle;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Auditable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,8 +18,7 @@ import java.util.Collection;
 @NoArgsConstructor
 @Builder
 @Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Cycle {
+public class Cycle extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,14 +26,6 @@ public class Cycle {
 
     @Enumerated(EnumType.STRING)
     private TypeCycle typeCycle;
-
-    @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createAt;
-
-    @LastModifiedDate
-    private LocalDateTime updateAt;
-
     @OneToMany(mappedBy = "cycle", fetch = FetchType.LAZY)
     @Builder.Default
     private Collection<Filiere> filieres = new ArrayList<>();

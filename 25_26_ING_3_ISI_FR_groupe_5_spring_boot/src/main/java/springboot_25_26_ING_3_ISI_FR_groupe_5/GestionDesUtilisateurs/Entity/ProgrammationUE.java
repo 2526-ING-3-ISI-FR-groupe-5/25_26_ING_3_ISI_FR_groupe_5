@@ -1,7 +1,6 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity;
 // ... imports ...
 
-import io.jsonwebtoken.lang.Classes;
 import jakarta.persistence.*;
 import lombok.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProgrammationUE {
+public class ProgrammationUE extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

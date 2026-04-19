@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,6 +13,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Migration.MigrationRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Migration.MigrationResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.AnneeAcademiqueMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.InscriptionMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.AnneeAcademiqueService;
@@ -22,7 +24,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import java.util.List;
 
 @Controller
-@RequestMapping("/migration")
+@RequestMapping("/admin/migration")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class MigrationController {
@@ -33,14 +35,10 @@ public class MigrationController {
     private final InscriptionService inscriptionService;
     private final InscriptionMapper inscriptionMapper;
 
-    // ══════════════════════════════════════════
-    // PAGE PRINCIPALE
-    // ══════════════════════════════════════════
     @GetMapping
     public String index(Model model) {
         Annee_academique anneeActive = anneeService.getAnneeActive();
 
-        // Statistiques avant migration
         List<Inscription> inscriptions = inscriptionService
                 .getByClasseAndAnnee(null, anneeActive.getId());
 
@@ -70,26 +68,23 @@ public class MigrationController {
         return "migration/index";
     }
 
-    // ══════════════════════════════════════════
-    // LANCER LA MIGRATION
-    // ══════════════════════════════════════════
     @PostMapping("/lancer")
     public String lancer(
             @Valid @ModelAttribute("form") MigrationRequest request,
             BindingResult result,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("erreur",
                     "Veuillez sélectionner une année cible");
-            return "redirect:/migration";
+            return "redirect:/admin/migration";
         }
 
         try {
             MigrationResultat resultat = migrationService
-                    .migrer(request.getNouvelleAnneeId());
+                    .migrer(request.getNouvelleAnneeId(), acteur);  // ✅ Correction
 
-            // Construire la réponse
             MigrationResponse response = MigrationResponse.builder()
                     .totalTraite(resultat.getTotal())
                     .admis(resultat.getAdmis())
@@ -108,18 +103,16 @@ public class MigrationController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/migration";
+        return "redirect:/admin/migration";
     }
 
-    // ══════════════════════════════════════════
-    // DÉCISION FIN D'ANNÉE (par étudiant)
-    // ══════════════════════════════════════════
     @PostMapping("/decision/{inscriptionId}")
     public String enregistrerDecision(
             @PathVariable Long inscriptionId,
             @RequestParam String decision,
             @RequestParam(required = false) Long classeId,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
             inscriptionService.enregistrerDecision(inscriptionId, decision);
@@ -130,8 +123,7 @@ public class MigrationController {
         }
 
         return classeId != null
-                ? "redirect:/classes/" + classeId + "/inscriptions"
-                : "redirect:/migration";
+                ? "redirect:/admin/classes/" + classeId
+                : "redirect:/admin/migration";
     }
 }
-

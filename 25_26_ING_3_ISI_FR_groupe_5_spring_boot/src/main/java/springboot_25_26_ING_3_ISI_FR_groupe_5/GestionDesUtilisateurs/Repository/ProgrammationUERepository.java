@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.ProgrammationUE;
 
 import java.util.List;
@@ -12,10 +13,8 @@ import java.util.List;
 public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE, Long> {
 
     // Programmations d'une classe pour une année
-
     @Query("SELECT p FROM ProgrammationUE p WHERE p.semestre.anneeAcademique.id = :anneeId")
     List<ProgrammationUE> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
-
 
     @Query("""
         SELECT p FROM ProgrammationUE p
@@ -55,8 +54,25 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
             Long ueId, Long classeId, Long semestreId
     );
 
-    // ✅ Ajouter dans ProgrammationUERepository
     List<ProgrammationUE> findBySemestreId(Long semestreId);
-    // Ajouter cette méthode
+
     List<ProgrammationUE> findBySemestre_AnneeAcademique_Id(Long anneeId);
+
+    // ✅ Version corrigée - SANS ORDER BY
+    @Query("""
+        SELECT DISTINCT p FROM ProgrammationUE p
+        JOIN p.enseignants e
+        WHERE e.id = :enseignantId
+        AND p.semestre.anneeAcademique.active = true
+    """)
+    List<ProgrammationUE> findByEnseignantId(@Param("enseignantId") Long enseignantId);
+
+    // ✅ Trouver les classes où un enseignant intervient
+    @Query("""
+        SELECT DISTINCT p.classe FROM ProgrammationUE p
+        JOIN p.enseignants e
+        WHERE e.id = :enseignantId
+        AND p.semestre.anneeAcademique.active = true
+    """)
+    List<Classe> findClassesByEnseignantId(@Param("enseignantId") Long enseignantId);
 }

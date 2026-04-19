@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface SpecialiteRepository extends JpaRepository<Specialite, Long> {
-
+    Optional<Specialite> findByNomAndFiliereId(String nom, Long filiereId);
     Optional<Specialite> findByCode(String code);
 
     boolean existsByCode(String code);

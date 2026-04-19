@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Sécurité — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <div class="mb-6">
+            <a th:href="@{/admin/journal}" class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour au journal
+            </a>
+        </div>
+
+        <div class="mb-8">
+            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                Sécurité <span class="text-primary italic">IPs suspectes</span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Détection des tentatives de connexion échouées
+            </p>
+        </div>
+
+        <!-- Filtres -->
+        <div class="mb-6 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
+            <form method="get" class="flex flex-wrap items-end gap-3">
+                <div class="w-32">
+                    <label class="block text-xs text-gray-500 mb-1">Seuil</label>
+                    <input type="number" name="seuil" th:value="${seuil}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+                <div class="w-44">
+                    <label class="block text-xs text-gray-500 mb-1">Depuis</label>
+                    <input type="datetime-local" name="depuis" th:value="${#temporals.format(depuis, 'yyyy-MM-dd\'T\'HH:mm')}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+                <div>
+                    <button type="submit" class="bg-primary hover:bg-primary/90 text-white rounded-lg py-2 px-4 text-sm font-medium transition-all duration-200">
+                        Analyser
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- IPs suspectes -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-white/5 bg-red-50 dark:bg-red-500/10">
+                <h2 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    IPs suspectes
+                    <span class="text-xs text-gray-500 font-normal" th:text="'(' + ${seuil} + ' tentatives minimum depuis ' + ${#temporals.format(depuis, 'dd/MM/yyyy HH:mm')} + ')'"></span>
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-bgsurface">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Adresse IP</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider">Tentatives échouées</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tr th:each="ip : ${ipsSuspectes}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-gray-900 dark:text-white" th:text="${ip.adresseIp}"></span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="badge badge-error" th:text="${ip.nombreTentatives}"></span>
+                        </td>
+                    </tr>
+                    <tr th:if="${ipsSuspectes.empty}">
+                        <td colspan="2" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            Aucune IP suspecte détectée
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

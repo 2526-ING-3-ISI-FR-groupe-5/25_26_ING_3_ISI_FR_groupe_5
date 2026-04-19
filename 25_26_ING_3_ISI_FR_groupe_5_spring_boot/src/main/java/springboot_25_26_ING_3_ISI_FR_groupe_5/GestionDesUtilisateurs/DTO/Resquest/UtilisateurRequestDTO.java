@@ -9,8 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enums.TypeSexe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enums.TypeUser;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeSexe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeUser;
 
 import java.util.List;
 

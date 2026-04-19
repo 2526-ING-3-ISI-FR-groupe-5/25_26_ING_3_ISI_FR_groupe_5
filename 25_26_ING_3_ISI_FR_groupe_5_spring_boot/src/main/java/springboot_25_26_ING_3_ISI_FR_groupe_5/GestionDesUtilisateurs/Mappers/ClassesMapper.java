@@ -24,11 +24,9 @@ public interface ClassesMapper {
     List<ClassesResponse> toResponseList(List<Classe> classes);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     @Mapping(target = "niveau", ignore = true)
     @Mapping(target = "plagesHoraires", ignore = true)
-    @Mapping(target = "assistants", ignore = true)
     @Mapping(target = "inscriptions", ignore = true)
     @Mapping(target = "programmations", ignore = true)
     Classe toEntity(ClassesRequest request);

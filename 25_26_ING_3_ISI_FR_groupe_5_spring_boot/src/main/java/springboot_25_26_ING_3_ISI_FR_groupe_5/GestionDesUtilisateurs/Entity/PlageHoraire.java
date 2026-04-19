@@ -11,7 +11,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Semestre;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 
@@ -19,8 +18,7 @@ import java.time.LocalTime;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
-public class PlageHoraire {
+public class PlageHoraire extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,11 +30,7 @@ public class PlageHoraire {
     private String salle;
     private String couleur;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "semestre_id", nullable = false)

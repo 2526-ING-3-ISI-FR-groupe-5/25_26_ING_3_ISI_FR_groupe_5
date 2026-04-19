@@ -18,8 +18,7 @@ public interface EcoleMapper {
     List<EcoleResponse> toResponseList(List<Ecole> ecoles);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
-    @Mapping(target = "updateAt", ignore = true)
+
     @Mapping(target = "institut", ignore = true)
     @Mapping(target = "filieres", ignore = true)
     Ecole toEntity(EcoleRequest request);

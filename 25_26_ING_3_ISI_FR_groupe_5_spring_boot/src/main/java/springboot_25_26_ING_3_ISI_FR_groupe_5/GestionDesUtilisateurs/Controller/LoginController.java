@@ -98,7 +98,8 @@ public class LoginController {
 
             log.info("✅ Connexion réussie pour : {}", email);
 
-            return determineTargetUrl(utilisateur.getAuthorities());
+            // ✅ TOUT LE MONDE VA VERS /dashboard (plus de redirection par rôle)
+            return "redirect:/dashboard";
 
         } catch (BadCredentialsException e) {
             log.warn("❌ Mauvais identifiants pour : {}", email);
@@ -120,34 +121,6 @@ public class LoginController {
         }
     }
 
-    @GetMapping("/admin/utilisateur")
-    public String adminDashboard() {
-        return "utilisateurs";
-    }
-
-    @GetMapping("/enseignant/dashboard")
-    public String enseignantDashboard() {
-        return "dashboard";
-    }
-
-    @GetMapping("/etudiant/dashboard")
-    public String etudiantDashboard() {
-        return "dashboard";
-    }
-    private String determineTargetUrl(Collection<? extends GrantedAuthority> authorities) {
-        String role = authorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(auth -> auth.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("");
-
-        return switch (role) {
-            case "ROLE_ADMIN"      -> "redirect:/admin/dashboard";
-            case "ROLE_ENSEIGNANT" -> "redirect:/enseignant/dashboard";
-            case "ROLE_ETUDIANT"   -> "redirect:/etudiant/dashboard";
-            default                -> "redirect:/home";
-        };
-    }
     // ══════════════════════════════════════════
     // REFRESH TOKEN
     // ══════════════════════════════════════════

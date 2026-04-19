@@ -25,7 +25,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enums.TypeSexe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeSexe;
 
 import java.time.LocalDateTime;
 import java.util.*;

@@ -23,8 +23,6 @@ public class Surveillant extends Utilisateur {
         private TypeContrat typeContrat;
         private String secteur;
 
-        @ManyToMany(mappedBy = "surveillant")
-        private Collection<Appels> appels= new ArrayList<>();
 
 
 }

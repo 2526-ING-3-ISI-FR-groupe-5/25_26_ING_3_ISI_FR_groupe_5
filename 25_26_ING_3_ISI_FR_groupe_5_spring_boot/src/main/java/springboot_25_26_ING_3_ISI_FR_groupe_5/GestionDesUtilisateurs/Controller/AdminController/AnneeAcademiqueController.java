@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.annee.AnneeRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.semestre.SemestreRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.AnneeAcademiqueMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.SemestreMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.AnneeAcademiqueService;
@@ -44,7 +46,8 @@ public class AnneeAcademiqueController {
             @Valid @ModelAttribute("form") AnneeRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("annees", anneeMapper.toResponseList(anneeService.getAll()));
@@ -57,7 +60,7 @@ public class AnneeAcademiqueController {
         }
 
         try {
-            anneeService.creer(request.getNom(), request.getDateDebut(), request.getDateFin(), request.isActive());
+            anneeService.creer(request.getNom(), request.getDateDebut(), request.getDateFin(), request.isActive(), acteur);
             redirectAttributes.addFlashAttribute("succes", "Année académique créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -67,9 +70,13 @@ public class AnneeAcademiqueController {
     }
 
     @PostMapping("/{id}/activer")
-    public String activer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String activer(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
+    ) {
         try {
-            anneeService.activer(id);
+            anneeService.activer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Année activée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -92,9 +99,13 @@ public class AnneeAcademiqueController {
     }
 
     @PostMapping("/{id}/supprimer")
-    public String supprimer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String supprimer(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
+    ) {
         try {
-            anneeService.supprimer(id);
+            anneeService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Année supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());

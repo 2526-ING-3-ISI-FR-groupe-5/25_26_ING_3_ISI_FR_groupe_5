@@ -12,7 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface SemestreRepository extends JpaRepository<Semestre, Long> {
-
     List<Semestre> findByAnneeAcademiqueId(Long anneeAcademiqueId);
 
     Optional<Semestre> findByAnneeAcademiqueIdAndActifTrue(Long anneeAcademiqueId);

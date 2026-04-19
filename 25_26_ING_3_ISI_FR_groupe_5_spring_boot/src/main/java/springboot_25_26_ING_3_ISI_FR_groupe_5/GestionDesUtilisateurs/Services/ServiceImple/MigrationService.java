@@ -1,6 +1,5 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple;
 
-import io.jsonwebtoken.lang.Classes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +8,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Niveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InscriptionRepository;
 
@@ -31,12 +31,11 @@ public class MigrationService {
     // MIGRER vers une nouvelle année académique
     // ══════════════════════════════════════════
     @Transactional
-    public MigrationResultat migrer(Long nouvelleAnneeId) {
+    public MigrationResultat migrer(Long nouvelleAnneeId, Utilisateur acteur) {
 
         Annee_academique ancienneAnnee = anneeService.getAnneeActive();
         Annee_academique nouvelleAnnee = anneeService.findById(nouvelleAnneeId);
 
-        // Vérifier que la nouvelle année n'est pas déjà active
         if (nouvelleAnnee.isActive()) {
             throw new RuntimeException("Cette année est déjà active");
         }
@@ -52,8 +51,8 @@ public class MigrationService {
                 nouvelleAnnee.getId()
         );
 
-        // ── ÉTAPE 3 : Activer la nouvelle année ──
-        anneeService.activer(nouvelleAnneeId);
+        // ── ÉTAPE 3 : Activer la nouvelle année (avec l'acteur)
+        anneeService.activer(nouvelleAnneeId, acteur);  // ✅ Correction
 
         return resultat;
     }
@@ -74,7 +73,6 @@ public class MigrationService {
             String decision = ancienne.getDecisionFinAnnee();
 
             if (decision == null) {
-                // Décision non encore prise → on ignore
                 resultat.ajouterIgnore(ancienne.getEtudiant().getMatricule());
                 continue;
             }
@@ -82,23 +80,19 @@ public class MigrationService {
             switch (decision) {
 
                 case "ADMIS" -> {
-                    // Trouver le niveau supérieur
                     Niveau niveauActuel = ancienne.getClasse().getNiveau();
                     Optional<Niveau> niveauSup = niveauService.getNiveauSuperieur(niveauActuel);
 
                     if (niveauSup.isEmpty()) {
-                        // Étudiant diplômé → pas de nouvelle inscription
                         resultat.ajouterDiplome(ancienne.getEtudiant().getMatricule());
                         break;
                     }
 
-                    // ✅ CORRECTION : Trouver la classe correspondante au niveau supérieur
                     Classe classeSuperieure = trouverClasseCorrespondante(
                             ancienne.getClasse(),
                             niveauSup.get()
                     );
 
-                    // Créer nouvelle inscription
                     creerNouvelleInscription(
                             ancienne.getEtudiant(),
                             classeSuperieure,
@@ -108,7 +102,6 @@ public class MigrationService {
                 }
 
                 case "REDOUBLANT" -> {
-                    // Reste dans la même classe
                     creerNouvelleInscription(
                             ancienne.getEtudiant(),
                             ancienne.getClasse(),
@@ -118,13 +111,11 @@ public class MigrationService {
                 }
 
                 case "EXCLU" -> {
-                    // Désactiver l'étudiant
                     ancienne.getEtudiant().setActive(false);
                     resultat.ajouterExclu(ancienne.getEtudiant().getMatricule());
                 }
 
                 case "DIPLOME" -> {
-                    // Pas de nouvelle inscription
                     resultat.ajouterDiplome(ancienne.getEtudiant().getMatricule());
                 }
             }
@@ -133,19 +124,15 @@ public class MigrationService {
 
     // ══════════════════════════════════════════
     // TROUVER la classe du niveau supérieur
-    // dans la même spécialité (via le niveau)
     // ══════════════════════════════════════════
     private Classe trouverClasseCorrespondante(Classe actuelle, Niveau niveauSup) {
 
-        // ✅ CORRECTION : Récupérer la spécialité depuis le niveau actuel
         Long specialiteId = actuelle.getNiveau().getSpecialite() != null
                 ? actuelle.getNiveau().getSpecialite().getId()
                 : null;
 
-        // Récupérer toutes les classes du niveau supérieur
         List<Classe> classesNiveauSup = classesRepo.findByNiveauId(niveauSup.getId());
 
-        // Filtrer par spécialité si nécessaire
         if (specialiteId != null) {
             classesNiveauSup = classesNiveauSup.stream()
                     .filter(c -> c.getNiveau() != null &&
@@ -160,7 +147,6 @@ public class MigrationService {
             );
         }
 
-        // Retourner la première classe (ou implémenter une logique de répartition)
         return classesNiveauSup.get(0);
     }
 
@@ -172,7 +158,6 @@ public class MigrationService {
             Classe classe,
             Annee_academique annee
     ) {
-        // Vérifier qu'elle n'existe pas déjà
         if (inscriptionRepo.existsByEtudiantIdAndAnneeAcademiqueId(
                 etudiant.getId(), annee.getId())) {
             return;

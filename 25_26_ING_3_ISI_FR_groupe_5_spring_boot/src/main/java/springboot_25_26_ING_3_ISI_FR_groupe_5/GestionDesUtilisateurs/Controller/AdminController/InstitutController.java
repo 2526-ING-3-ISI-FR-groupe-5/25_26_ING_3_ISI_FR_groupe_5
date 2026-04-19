@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.institut.InstitutRequest;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.institut.InstitutResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.InstitutMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InstitutService;
 
@@ -49,7 +50,8 @@ public class InstitutController {
             @Valid @ModelAttribute("form") InstitutRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("instituts", institutMapper.toResponseList(institutService.getAll()));
@@ -59,7 +61,7 @@ public class InstitutController {
 
         try {
             Institut institut = institutMapper.toEntity(request);
-            institutService.creer(institut);
+            institutService.creer(institut, acteur);
             redirectAttributes.addFlashAttribute("succes", "Institut créé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -97,7 +99,8 @@ public class InstitutController {
             @Valid @ModelAttribute("form") InstitutRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("institut", institutMapper.toResponse(institutService.findById(id)));
@@ -106,7 +109,7 @@ public class InstitutController {
 
         try {
             Institut institutModifie = institutMapper.toEntity(request);
-            institutService.modifier(id, institutModifie);
+            institutService.modifier(id, institutModifie, acteur);
             redirectAttributes.addFlashAttribute("succes", "Institut modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -116,9 +119,13 @@ public class InstitutController {
     }
 
     @PostMapping("/{id}/supprimer")
-    public String supprimer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String supprimer(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
+    ) {
         try {
-            institutService.supprimer(id);
+            institutService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "Institut supprimé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());

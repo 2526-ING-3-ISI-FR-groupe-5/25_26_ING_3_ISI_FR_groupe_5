@@ -183,4 +183,13 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
             }
         }
     }
+@Override
+public List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId) {
+        return programmationRepo.findByEnseignantId(enseignantId);
+    }
+@Transactional
+@Override
+public List<Classe> getClassesByEnseignant(Long enseignantId) {
+        return programmationRepo.findClassesByEnseignantId(enseignantId);
+    }
 }

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Journal des actions — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                        Journal <span class="text-primary italic">des actions</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Historique complet des actions utilisateurs
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <a th:href="@{/admin/journal/stats}"
+                       class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 gap-2 py-2 px-4">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Statistiques
+                    </a>
+                    <a th:href="@{/admin/journal/securite}"
+                       class="btn bg-red-600 hover:bg-red-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 gap-2 py-2 px-4">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Sécurité
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres sur une seule ligne -->
+        <div class="mb-6 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
+            <form method="get" class="flex flex-wrap items-end gap-3">
+                <!-- Utilisateur ID -->
+                <div class="w-32">
+                    <label class="block text-xs text-gray-500 mb-1">ID Utilisateur</label>
+                    <input type="number" name="utilisateurId" th:value="${utilisateurIdFiltre}"
+                           class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <!-- Type d'action -->
+                <div class="w-48">
+                    <label class="block text-xs text-gray-500 mb-1">Type d'action</label>
+                    <select name="typeAction" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
+                        <option value="">Tous</option>
+                        <option th:each="type : ${typesAction}" th:value="${type}" th:text="${type}" th:selected="${type == typeActionFiltre}"></option>
+                    </select>
+                </div>
+
+                <!-- Statut -->
+                <div class="w-32">
+                    <label class="block text-xs text-gray-500 mb-1">Statut</label>
+                    <select name="statut" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
+                        <option value="">Tous</option>
+                        <option th:each="s : ${statuts}" th:value="${s}" th:text="${s}" th:selected="${s == statutFiltre}"></option>
+                    </select>
+                </div>
+
+                <!-- Date début -->
+                <div class="w-44">
+                    <label class="block text-xs text-gray-500 mb-1">Date début</label>
+                    <input type="datetime-local" name="debut" th:value="${debutFiltre}"
+                           class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <!-- Date fin -->
+                <div class="w-44">
+                    <label class="block text-xs text-gray-500 mb-1">Date fin</label>
+                    <input type="datetime-local" name="fin" th:value="${finFiltre}"
+                           class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"/>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex gap-2">
+                    <button type="submit" class="bg-primary hover:bg-primary/90 text-white rounded-lg py-2 px-4 text-sm font-medium transition-all duration-200 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                        </svg>
+                        Filtrer
+                    </button>
+                    <a th:href="@{/admin/journal}" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg py-2 px-3 text-sm transition-colors">
+                        Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg p-3 rounded-xl">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg p-3 rounded-xl">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Tableau -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateur</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Entité</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Statut</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tr th:each="journal : ${journaux}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors">
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400" th:text="${#temporals.format(journal.dateAction, 'dd/MM/yyyy HH:mm')}">-</td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-col">
+                                <span class="font-medium text-gray-900 dark:text-white" th:text="${journal.utilisateurNom} + ' ' + ${journal.utilisateurPrenom}">-</span>
+                                <span class="text-xs text-gray-500" th:text="${journal.utilisateurEmail}">-</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400" th:text="${journal.typeActionLibelle}">-</td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-col">
+                                <span class="text-sm text-gray-600 dark:text-gray-400" th:text="${journal.entiteConcernee}">-</span>
+                                <span class="text-xs text-gray-500" th:if="${journal.entiteId}" th:text="'ID: ' + ${journal.entiteId}">-</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span th:if="${journal.statut == 'SUCCES'}" class="badge badge-success py-1 px-2 text-xs">Succès</span>
+                            <span th:if="${journal.statut == 'ECHEC'}" class="badge badge-error py-1 px-2 text-xs">Échec</span>
+                            <span th:if="${journal.statut == 'EN_COURS'}" class="badge badge-warning py-1 px-2 text-xs">En cours</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <a th:href="@{/admin/journal/{id}(id=${journal.id})}" class="text-primary hover:text-primary/80 transition-colors">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${journaux.empty}">
+                        <td colspan="6" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+                            Aucune action enregistrée
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="mt-6 flex justify-center">
+            <div class="join">
+                <a th:href="@{/admin/journal(page=${pageActuelle - 1}, size=20, utilisateurId=${utilisateurIdFiltre}, typeAction=${typeActionFiltre}, statut=${statutFiltre}, debut=${debutFiltre}, fin=${finFiltre})}"
+                   th:classappend="${pageActuelle == 0} ? 'btn-disabled' : ''" class="join-item btn btn-sm">«</a>
+                <span class="join-item btn btn-sm btn-primary" th:text="${pageActuelle + 1}"></span>
+                <a th:href="@{/admin/journal(page=${pageActuelle + 1}, size=20, utilisateurId=${utilisateurIdFiltre}, typeAction=${typeActionFiltre}, statut=${statutFiltre}, debut=${debutFiltre}, fin=${finFiltre})}"
+                   th:classappend="${pageActuelle >= totalPages - 1} ? 'btn-disabled' : ''" class="join-item btn btn-sm">»</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

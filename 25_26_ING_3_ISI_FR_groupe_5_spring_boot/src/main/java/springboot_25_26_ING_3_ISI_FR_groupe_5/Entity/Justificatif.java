@@ -5,6 +5,7 @@ import lombok.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.StatutJustificatif;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeJustificatif;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Auditable;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ import java.util.Collection;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Justificatif {
+public class Justificatif extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

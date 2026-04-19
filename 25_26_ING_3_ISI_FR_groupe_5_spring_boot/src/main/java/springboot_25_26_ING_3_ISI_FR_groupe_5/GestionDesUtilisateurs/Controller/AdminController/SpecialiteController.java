@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Filiere;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Specialite;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.specialite.SpecialiteRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.FiliereMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.SpecialiteMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.FiliereService;
@@ -52,7 +54,8 @@ public class SpecialiteController {
             @Valid @ModelAttribute("form") SpecialiteRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("specialites",
@@ -63,24 +66,21 @@ public class SpecialiteController {
         }
 
         try {
-            // Créer l'entité
             Specialite specialite = new Specialite();
             specialite.setNom(request.getNom());
             specialite.setCode(request.getCode());
             specialite.setDescription(request.getDescription());
 
-            // Associer la filière
             Filiere filiere = filiereService.findById(request.getFiliereId());
             specialite.setFiliere(filiere);
 
-            specialiteService.creer(specialite);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Spécialité créée avec succès");
+            specialiteService.creer(specialite, acteur);
+            redirectAttributes.addFlashAttribute("succes", "Spécialité créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/specialites";
+        return "redirect:/admin/specialites";
     }
 
     @GetMapping("/{id}/modifier")
@@ -105,7 +105,8 @@ public class SpecialiteController {
             @Valid @ModelAttribute("form") SpecialiteRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("specialite",
@@ -120,29 +121,28 @@ public class SpecialiteController {
             data.setNom(request.getNom());
             data.setCode(request.getCode());
             data.setDescription(request.getDescription());
-            specialiteService.modifier(id, data);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Spécialité modifiée avec succès");
+            specialiteService.modifier(id, data, acteur);
+            redirectAttributes.addFlashAttribute("succes", "Spécialité modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/specialites";
+        return "redirect:/admin/specialites";
     }
 
     @PostMapping("/{id}/supprimer")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            specialiteService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Spécialité supprimée avec succès");
+            specialiteService.supprimer(id, acteur);
+            redirectAttributes.addFlashAttribute("succes", "Spécialité supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/specialites";
+        return "redirect:/admin/specialites";
     }
 
     @GetMapping("/{id}/json")

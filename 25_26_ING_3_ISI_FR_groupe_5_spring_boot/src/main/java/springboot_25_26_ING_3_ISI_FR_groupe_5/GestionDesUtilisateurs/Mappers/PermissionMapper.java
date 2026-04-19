@@ -25,7 +25,6 @@ public interface PermissionMapper {
     @Mapping(target = "nom", ignore = true)
     @Mapping(target = "description", ignore = true)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "updateAt",    ignore = true)
     void  updatePermission(ActivePermissionRequest activePermissionRequest, @MappingTarget Permission  permission );
 
     //--------------

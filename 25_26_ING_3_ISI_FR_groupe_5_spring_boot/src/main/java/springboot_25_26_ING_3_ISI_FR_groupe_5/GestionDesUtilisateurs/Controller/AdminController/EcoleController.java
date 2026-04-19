@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Ecole;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ecole.EcoleRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EcoleMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.InstitutMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EcoleService;
@@ -62,7 +64,8 @@ public class EcoleController {
             @Valid @ModelAttribute("form") EcoleRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("ecoles", ecoleMapper.toResponseList(ecoleService.getAll()));
@@ -72,7 +75,7 @@ public class EcoleController {
         }
 
         try {
-            ecoleService.creer(request);
+            ecoleService.creer(request, acteur);
             redirectAttributes.addFlashAttribute("succes", "École créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -111,7 +114,8 @@ public class EcoleController {
             @Valid @ModelAttribute("form") EcoleRequest request,
             BindingResult result,
             RedirectAttributes redirectAttributes,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("ecole", ecoleMapper.toResponse(ecoleService.findById(id)));
@@ -120,7 +124,7 @@ public class EcoleController {
         }
 
         try {
-            ecoleService.modifier(id, request);
+            ecoleService.modifier(id, request, acteur);
             redirectAttributes.addFlashAttribute("succes", "École modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -130,9 +134,13 @@ public class EcoleController {
     }
 
     @PostMapping("/{id}/supprimer")
-    public String supprimer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String supprimer(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
+    ) {
         try {
-            ecoleService.supprimer(id);
+            ecoleService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "École supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());

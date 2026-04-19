@@ -17,8 +17,7 @@ public interface AnneeAcademiqueMapper {
     List<AnneeResponse> toResponseList(List<Annee_academique> annees);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     @Mapping(target = "semestres", ignore = true)
     Annee_academique toEntity(AnneeRequest request);
 }

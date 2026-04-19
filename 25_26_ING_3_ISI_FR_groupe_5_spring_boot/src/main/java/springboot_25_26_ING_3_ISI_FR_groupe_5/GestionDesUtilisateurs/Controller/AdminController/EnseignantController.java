@@ -5,23 +5,31 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.ProgrammationUE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEnseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.ClassesMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EnseignantMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.ProgrammationUEMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InscriptionService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.ProgrammationUEService;
 
+import java.util.List;
+
 @Controller
-@RequestMapping("/enseignants")
+@RequestMapping("/enseignant")
 @RequiredArgsConstructor
 public class EnseignantController {
 
@@ -30,10 +38,67 @@ public class EnseignantController {
     private final AnneeAcademiqueService anneeService;
     private final ProgrammationUEService programmationService;
     private final ProgrammationUEMapper programmationMapper;
+    private final ClassesMapper classeMapper;
+    private final InscriptionService inscriptionService;
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public String liste(
+    @GetMapping("/accueil")
+    @PreAuthorize("hasRole('ENSEIGNANT')")
+    public String dashboard(
+            @AuthenticationPrincipal Enseignant enseignant,
+            Model model
+    ) {
+        Long enseignantId = enseignant.getId();
+
+        List<Classe> classes = programmationService.getClassesByEnseignant(enseignantId);
+        List<ProgrammationUE> programmations = programmationService.getProgrammationsByEnseignant(enseignantId);
+
+        model.addAttribute("enseignant", enseignant);
+        model.addAttribute("classes", classeMapper.toResponseList(classes));
+        model.addAttribute("programmations", programmationMapper.toResponseList(programmations));
+        model.addAttribute("totalClasses", classes.size());
+        model.addAttribute("totalUE", programmations.size());
+
+        return "enseignant/dashboard";
+    }
+
+    @GetMapping("/classe/{id}")
+    @PreAuthorize("hasRole('ENSEIGNANT')")
+    public String detailClasse(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Enseignant enseignant,
+            Model model
+    ) {
+        List<Classe> classesAutorisees = programmationService.getClassesByEnseignant(enseignant.getId());
+        boolean hasAccess = classesAutorisees.stream().anyMatch(c -> c.getId().equals(id));
+
+        if (!hasAccess) {
+            return "redirect:/enseignant/dashboard?erreur=Accès non autorisé";
+        }
+
+        var anneeActive = anneeService.getAnneeActive();
+        List<Inscription> inscriptions = inscriptionService.getEtudiantsActifsByClasse(id, anneeActive.getId());
+        List<ProgrammationUE> programmations = programmationService.getByClasseAndAnnee(id, anneeActive.getId());
+
+        model.addAttribute("classeId", id);
+        model.addAttribute("classeNom", classesAutorisees.stream()
+                .filter(c -> c.getId().equals(id))
+                .findFirst()
+                .map(Classe::getNom)
+                .orElse(""));
+        model.addAttribute("etudiants", inscriptions);
+        model.addAttribute("programmations", programmationMapper.toResponseList(programmations));
+        model.addAttribute("totalEtudiants", inscriptions.size());
+
+        return "enseignant/classe-detail";
+    }
+
+    // ============================================
+    // ADMIN - GESTION DES ENSEIGNANTS
+    // ============================================
+
+    @GetMapping("/admin/liste")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String listeAdmin(
             @RequestParam(required = false) String recherche,
             @RequestParam(required = false) Long anneeId,
             @RequestParam(defaultValue = "0") int page,
@@ -48,20 +113,20 @@ public class EnseignantController {
                 annee.getId(), recherche, PageRequest.of(page, size)
         );
 
-        model.addAttribute("enseignants",
-                enseignantMapper.toResponseList(enseignants.getContent()));
+        model.addAttribute("enseignants", enseignantMapper.toResponseList(enseignants.getContent()));
         model.addAttribute("anneeActive", annee);
         model.addAttribute("annees", anneeService.getAll());
         model.addAttribute("recherche", recherche);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", enseignants.getTotalPages());
         model.addAttribute("form", new EnseignantRequest());
-        return "enseignants/liste";
+
+        return "admin/enseignants/liste";
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public String detail(
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String detailAdmin(
             @PathVariable Long id,
             @RequestParam(required = false) Long anneeId,
             Model model
@@ -70,24 +135,23 @@ public class EnseignantController {
                 ? anneeService.findById(anneeId)
                 : anneeService.getAnneeActive();
 
-        model.addAttribute("enseignant",
-                enseignantMapper.toResponse(enseignantService.findById(id)));
-        model.addAttribute("programmations",
-                programmationMapper.toResponseList(
-                        programmationService.getByEnseignantAndAnnee(id, annee.getId())));
+        model.addAttribute("enseignant", enseignantMapper.toResponse(enseignantService.findById(id)));
+        model.addAttribute("programmations", programmationMapper.toResponseList(
+                programmationService.getByEnseignantAndAnnee(id, annee.getId())));
         model.addAttribute("anneeActive", annee);
         model.addAttribute("annees", anneeService.getAll());
-        return "enseignants/detail";
+
+        return "admin/enseignants/detail";
     }
 
-    @GetMapping("/nouveau")
+    @GetMapping("/admin/nouveau")
     @PreAuthorize("hasRole('ADMIN')")
     public String formulaireCreer(Model model) {
         model.addAttribute("form", new EnseignantRequest());
-        return "enseignants/form";
+        return "admin/enseignants/form";
     }
 
-    @PostMapping("/creer")
+    @PostMapping("/admin/creer")
     @PreAuthorize("hasRole('ADMIN')")
     public String creer(
             @Valid @ModelAttribute("form") EnseignantRequest request,
@@ -95,22 +159,21 @@ public class EnseignantController {
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            return "enseignants/form";
+            return "admin/enseignants/form";
         }
 
         try {
             Enseignant enseignant = enseignantMapper.toEntity(request);
             enseignantService.creer(enseignant);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Enseignant créé avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Enseignant créé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/enseignants";
+        return "redirect:/enseignant/admin/liste";
     }
 
-    @GetMapping("/{id}/modifier")
+    @GetMapping("/admin/{id}/modifier")
     @PreAuthorize("hasRole('ADMIN')")
     public String formulaireModifier(@PathVariable Long id, Model model) {
         Enseignant enseignant = enseignantService.findById(id);
@@ -120,15 +183,17 @@ public class EnseignantController {
         form.setEmail(enseignant.getEmail());
         form.setTelephone(enseignant.getTelephone());
         form.setGrade(enseignant.getGrade());
-        form.setTypeEnseignant(TypeEnseignant.valueOf(enseignant.getTypeEnseignant()));
+        if (enseignant.getTypeEnseignant() != null) {
+            form.setTypeEnseignant(TypeEnseignant.valueOf(enseignant.getTypeEnseignant()));
+        }
 
-        model.addAttribute("enseignant",
-                enseignantMapper.toResponse(enseignant));
+        model.addAttribute("enseignant", enseignantMapper.toResponse(enseignant));
         model.addAttribute("form", form);
-        return "enseignants/modifier";
+
+        return "admin/enseignants/modifier";
     }
 
-    @PostMapping("/{id}/modifier")
+    @PostMapping("/admin/{id}/modifier")
     @PreAuthorize("hasRole('ADMIN')")
     public String modifier(
             @PathVariable Long id,
@@ -138,24 +203,22 @@ public class EnseignantController {
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("enseignant",
-                    enseignantMapper.toResponse(enseignantService.findById(id)));
-            return "enseignants/modifier";
+            model.addAttribute("enseignant", enseignantMapper.toResponse(enseignantService.findById(id)));
+            return "admin/enseignants/modifier";
         }
 
         try {
             Enseignant data = enseignantMapper.toEntity(request);
             enseignantService.modifier(id, data);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Enseignant modifié avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Enseignant modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/enseignants/" + id;
+        return "redirect:/enseignant/admin/liste";
     }
 
-    @PostMapping("/{id}/toggle")
+    @PostMapping("/admin/{id}/toggle")
     @PreAuthorize("hasRole('ADMIN')")
     public String toggle(
             @PathVariable Long id,
@@ -163,15 +226,14 @@ public class EnseignantController {
     ) {
         try {
             enseignantService.toggleActif(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Statut modifié avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Statut modifié avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/enseignants/" + id;
+        return "redirect:/enseignant/admin/liste";
     }
 
-    @PostMapping("/{id}/reset-password")
+    @PostMapping("/admin/{id}/reset-password")
     @PreAuthorize("hasRole('ADMIN')")
     public String resetPassword(
             @PathVariable Long id,
@@ -179,15 +241,14 @@ public class EnseignantController {
     ) {
         try {
             enseignantService.reinitialiserMotDePasse(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Mot de passe réinitialisé avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Mot de passe réinitialisé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/enseignants/" + id;
+        return "redirect:/enseignant/admin/liste";
     }
 
-    @PostMapping("/{id}/supprimer")
+    @PostMapping("/admin/{id}/supprimer")
     @PreAuthorize("hasRole('ADMIN')")
     public String supprimer(
             @PathVariable Long id,
@@ -195,11 +256,10 @@ public class EnseignantController {
     ) {
         try {
             enseignantService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes",
-                    "Enseignant supprimé avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Enseignant supprimé avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/enseignants";
+        return "redirect:/enseignant/admin/liste";
     }
 }

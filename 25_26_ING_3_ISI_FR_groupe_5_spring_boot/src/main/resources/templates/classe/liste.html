@@ -19,7 +19,7 @@
                         Classes <span class="text-primary italic">d'études</span>
                     </h1>
                     <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
-                        Gérez les classes par niveau
+                        Gérez les groupes d'étudiants (ING4 ISI, LIC3 Maths, etc.)
                     </p>
                 </div>
                 <button onclick="createModal.showModal()"
@@ -32,32 +32,25 @@
             </div>
         </div>
 
-        <!-- Filtres -->
+        <!-- Filtres sur une seule ligne -->
         <div class="mb-6 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5">
             <div class="flex flex-wrap items-end gap-3">
-                <!-- Filtre Niveau -->
-                <div class="flex-1 min-w-[200px]">
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs text-gray-500 mb-1">Filière</label>
+                    <select id="filiereSelect" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
+                        <option value="">Toutes les filières</option>
+                        <option th:each="filiere : ${filieres}" th:value="${filiere.id}" th:text="${filiere.nom}"></option>
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[180px]">
                     <label class="block text-xs text-gray-500 mb-1">Niveau</label>
                     <select id="niveauSelect" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
                         <option value="">Tous les niveaux</option>
-                        <option th:each="niveau : ${niveaux}"
-                                th:value="${niveau.id}"
-                                th:text="${niveau.nom}"></option>
+                        <option th:each="niveau : ${niveaux}" th:value="${niveau.id}" th:text="${niveau.nom}"></option>
                     </select>
                 </div>
 
-                <!-- Filtre Spécialité -->
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs text-gray-500 mb-1">Spécialité</label>
-                    <select id="specialiteSelect" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary">
-                        <option value="">Toutes les spécialités</option>
-                        <option th:each="specialite : ${specialites}"
-                                th:value="${specialite.id}"
-                                th:text="${specialite.nom}"></option>
-                    </select>
-                </div>
-
-                <!-- Boutons -->
                 <div class="flex gap-2">
                     <button id="filtrerBtn" class="bg-primary hover:bg-primary/90 text-white rounded-lg py-2 px-4 text-sm font-medium transition-all duration-200 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,31 +79,39 @@
                 <table class="w-full">
                     <thead class="bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nom</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Niveau</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Spécialité</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Filière</th>
-                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Étudiants</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Niveau</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Spécialité</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Filière</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cycle</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Étudiants</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">UE</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-white/5">
                     <tr th:each="classe : ${classes}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors">
-                        <td class="px-6 py-3">
+                        <td class="px-4 py-3">
                             <span class="font-semibold text-gray-900 dark:text-white" th:text="${classe.nom}">-</span>
                         </td>
-                        <td class="px-6 py-3">
+                        <td class="px-4 py-3">
                             <span class="badge badge-primary py-0.5 px-2 text-xs" th:text="${classe.niveauNom}">-</span>
                         </td>
-                        <td class="px-6 py-3">
+                        <td class="px-4 py-3">
                             <span th:if="${classe.specialiteNom != null}" class="badge badge-info py-0.5 px-2 text-xs" th:text="${classe.specialiteNom}">-</span>
                             <span th:unless="${classe.specialiteNom != null}" class="text-gray-400 text-sm">-</span>
                         </td>
-                        <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400" th:text="${classe.filiereNom}">-</td>
-                        <td class="px-6 py-3 text-center">
-                            <span class="font-mono bg-gray-100 dark:bg-bgsurface py-0.5 px-2 rounded text-sm">0</span>
+                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400" th:text="${classe.filiereNom}">-</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="badge badge-secondary py-0.5 px-2 text-xs" th:text="${classe.cycleNom}">-</span>
                         </td>
-                        <td class="px-6 py-3 text-right">
+                        <td class="px-4 py-3 text-center">
+                            <span class="font-mono bg-gray-100 dark:bg-bgsurface py-0.5 px-2 rounded text-sm" th:text="${classe.nombreEtudiants}">0</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="font-mono bg-gray-100 dark:bg-bgsurface py-0.5 px-2 rounded text-sm" th:text="${classe.nombreProgrammations}">0</span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <a th:href="@{/admin/classes/{id}(id=${classe.id})}"
                                    class="text-primary hover:text-primary/80 transition-colors p-1">
@@ -138,7 +139,7 @@
                         </td>
                     </tr>
                     <tr th:if="${classes.empty}">
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <td colspan="8" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                             <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
@@ -148,6 +149,17 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="mt-6 flex justify-center">
+            <div class="join">
+                <a th:href="@{/admin/classes(page=${currentPage - 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
+                   th:classappend="${currentPage == 0} ? 'btn-disabled' : ''" class="join-item btn btn-sm">«</a>
+                <span class="join-item btn btn-sm btn-primary" th:text="${currentPage + 1}"></span>
+                <a th:href="@{/admin/classes(page=${currentPage + 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
+                   th:classappend="${currentPage >= totalPages - 1} ? 'btn-disabled' : ''" class="join-item btn btn-sm">»</a>
             </div>
         </div>
     </div>
@@ -160,12 +172,11 @@
                     Nouvelle classe
                 </h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Créez une nouvelle classe
+                    Créez un nouveau groupe d'étudiants (ex: ING4 ISI FR)
                 </p>
             </div>
 
             <form th:action="@{/admin/classes/creer}" th:object="${form}" method="post" class="p-6 space-y-5">
-                <!-- Niveau -->
                 <div class="form-control w-full">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700 dark:text-gray-300">Niveau <span class="text-red-500">*</span></span>
@@ -177,12 +188,11 @@
                     <p th:if="${#fields.hasErrors('niveauId')}" th:errors="*{niveauId}" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
-                <!-- Nom -->
                 <div class="form-control w-full">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nom <span class="text-red-500">*</span></span>
                     </label>
-                    <input type="text" th:field="*{nom}" placeholder="Ex: ING3" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                    <input type="text" th:field="*{nom}" placeholder="Ex: ING4 ISI FR" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
                     <p th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}" class="text-red-500 text-xs mt-1"></p>
                 </div>
 
@@ -244,18 +254,17 @@
 </div>
 
 <script>
-    // Filtres
+    const filiereSelect = document.getElementById('filiereSelect');
     const niveauSelect = document.getElementById('niveauSelect');
-    const specialiteSelect = document.getElementById('specialiteSelect');
     const filtrerBtn = document.getElementById('filtrerBtn');
     const resetBtn = document.getElementById('resetBtn');
 
     function applyFilters() {
+        const filiereId = filiereSelect.value;
         const niveauId = niveauSelect.value;
-        const specialiteId = specialiteSelect.value;
         let url = '/admin/classes?';
-        if (niveauId) url += 'niveauId=' + niveauId + '&';
-        if (specialiteId) url += 'specialiteId=' + specialiteId;
+        if (filiereId) url += 'filiereId=' + filiereId + '&';
+        if (niveauId) url += 'niveauId=' + niveauId;
         window.location.href = url;
     }
 
@@ -264,7 +273,6 @@
         window.location.href = '/admin/classes';
     });
 
-    // Modale édition
     async function openEditModal(id) {
         if (!id) return;
         try {

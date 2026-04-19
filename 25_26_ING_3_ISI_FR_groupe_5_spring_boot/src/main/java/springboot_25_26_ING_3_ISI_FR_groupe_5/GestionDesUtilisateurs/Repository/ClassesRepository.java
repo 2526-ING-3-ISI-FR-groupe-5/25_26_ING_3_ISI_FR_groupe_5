@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface ClassesRepository extends JpaRepository<Classe, Long> {
-
+    Optional<Classe> findByNomAndNiveauId(String nom, Long niveauId);
     List<Classe> findByNiveauId(Long niveauId);
 
     List<Classe> findByNomContainingIgnoreCase(String nom);

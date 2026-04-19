@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Controller
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.UE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ue.UERequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.SpecialiteMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.UEMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.AnneeAcademiqueService;
@@ -62,7 +64,8 @@ public class UEController {
             @Valid @ModelAttribute("form") UERequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             model.addAttribute("ues", ueMapper.toResponseList(ueService.getAll()));
@@ -72,7 +75,7 @@ public class UEController {
 
         try {
             UE ue = ueMapper.toEntity(request);
-            ueService.creer(ue, request.getSpecialiteId());
+            ueService.creer(ue, request.getSpecialiteId(), acteur);
             redirectAttributes.addFlashAttribute("succes", "UE créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -81,10 +84,6 @@ public class UEController {
         return "redirect:/admin/ues";
     }
 
-    // ❌ SUPPRIMER cette méthode (plus utilisée)
-    // @GetMapping("/{id}/modifier")
-    // public String formulaireModifier(...) { ... }
-
     @PostMapping("/{id}/modifier")
     @PreAuthorize("hasRole('ADMIN')")
     public String modifier(
@@ -92,7 +91,8 @@ public class UEController {
             @Valid @ModelAttribute("form") UERequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("erreur", "Erreur de validation");
@@ -101,7 +101,7 @@ public class UEController {
 
         try {
             UE data = ueMapper.toEntity(request);
-            ueService.modifier(id, data);
+            ueService.modifier(id, data, acteur);
             redirectAttributes.addFlashAttribute("succes", "UE modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -114,10 +114,11 @@ public class UEController {
     @PreAuthorize("hasRole('ADMIN')")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            ueService.supprimer(id);
+            ueService.supprimer(id, acteur);
             redirectAttributes.addFlashAttribute("succes", "UE supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -125,7 +126,6 @@ public class UEController {
         return "redirect:/admin/ues";
     }
 
-    // ✅ Endpoint JSON pour la modale d'édition
     @GetMapping("/{id}/json")
     @ResponseBody
     @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")

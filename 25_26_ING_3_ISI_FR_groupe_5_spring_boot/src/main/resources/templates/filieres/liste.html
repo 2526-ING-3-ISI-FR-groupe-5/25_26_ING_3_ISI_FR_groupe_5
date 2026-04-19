@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr"
       xmlns:th="http://www.thymeleaf.org"
@@ -34,10 +35,10 @@
         </div>
 
         <!-- Filtres -->
-        <div class="mb-6 flex flex-wrap items-center gap-3">
+        <div class="mb-6 flex flex-wrap items-center gap-3 flex-row">
             <span class="text-sm text-gray-600 dark:text-gray-400">Filtrer par :</span>
 
-            <form th:action="@{/admin/filieres}" method="get" class="flex flex-wrap gap-2">
+            <form th:action="@{/admin/filieres}" method="get" class="flex flex-wrap gap-2 flex-row">
                 <select name="ecoleId" class="select select-bordered select-sm bg-gray-50 dark:bg-bgsurface">
                     <option value="">Toutes les écoles</option>
                     <option th:each="ecole : ${ecoles}"

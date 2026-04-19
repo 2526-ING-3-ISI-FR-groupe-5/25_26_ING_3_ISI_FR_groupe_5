@@ -22,8 +22,7 @@ public interface NiveauMapper {
 
     @Mapping(target = "specialite", ignore = true)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
+
     @Mapping(target = "filiere", ignore = true)
     @Mapping(target = "classes", ignore = true)
     Niveau toEntity(@Valid NiveauRequest request);

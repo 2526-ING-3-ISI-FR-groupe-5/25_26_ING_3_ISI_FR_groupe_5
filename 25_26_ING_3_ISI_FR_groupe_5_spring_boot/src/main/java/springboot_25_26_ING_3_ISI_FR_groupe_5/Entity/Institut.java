@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Auditable;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Collection;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Institut {
+public class Institut extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
