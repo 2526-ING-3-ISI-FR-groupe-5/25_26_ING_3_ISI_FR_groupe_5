@@ -182,4 +182,9 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             throw new RuntimeException("Erreur lors de la suppression de l'année académique", e);
         }
     }
+
+    @Override
+    public Annee_academique findEntityById(Long nouvelleAnneeId) {
+        return null;
+    }
 }

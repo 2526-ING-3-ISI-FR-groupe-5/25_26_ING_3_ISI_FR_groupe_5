@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@source "../templates/**/*.html";
+@source "../../java/**/*.java";
 @theme {
     --font-sans: "DM Sans", sans-serif;
     --font-serif: "Playfair Display", serif;

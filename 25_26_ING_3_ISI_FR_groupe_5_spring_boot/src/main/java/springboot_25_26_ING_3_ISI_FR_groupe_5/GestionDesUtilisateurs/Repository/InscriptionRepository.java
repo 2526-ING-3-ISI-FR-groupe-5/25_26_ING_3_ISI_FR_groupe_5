@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
 
+
     // Recherches de base
     List<Inscription> findByAnneeAcademiqueId(Long anneeId);
     List<Inscription> findByEtudiantId(Long etudiantId);

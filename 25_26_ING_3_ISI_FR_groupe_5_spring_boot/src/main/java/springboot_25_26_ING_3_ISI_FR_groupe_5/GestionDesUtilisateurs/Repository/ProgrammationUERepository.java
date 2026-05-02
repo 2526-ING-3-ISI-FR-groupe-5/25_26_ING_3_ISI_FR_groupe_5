@@ -58,7 +58,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
 
     List<ProgrammationUE> findBySemestre_AnneeAcademique_Id(Long anneeId);
 
-    // ✅ Version corrigée - SANS ORDER BY
+    // ✅ Trouver les programmations d'un enseignant (année active uniquement)
     @Query("""
         SELECT DISTINCT p FROM ProgrammationUE p
         JOIN p.enseignants e
@@ -75,4 +75,27 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         AND p.semestre.anneeAcademique.active = true
     """)
     List<Classe> findClassesByEnseignantId(@Param("enseignantId") Long enseignantId);
+
+    // ✅ Trouver les programmations d'une UE pour un semestre donné
+    @Query("""
+        SELECT p FROM ProgrammationUE p
+        WHERE p.ue.id = :ueId
+        AND p.semestre.id = :semestreId
+    """)
+    List<ProgrammationUE> findByUeIdAndSemestreId(
+            @Param("ueId") Long ueId,
+            @Param("semestreId") Long semestreId
+    );
+
+    // ✅ Trouver les programmations d'un enseignant pour un semestre donné
+    @Query("""
+        SELECT DISTINCT p FROM ProgrammationUE p
+        JOIN p.enseignants e
+        WHERE e.id = :enseignantId
+        AND p.semestre.id = :semestreId
+    """)
+    List<ProgrammationUE> findByEnseignantIdAndSemestreId(
+            @Param("enseignantId") Long enseignantId,
+            @Param("semestreId") Long semestreId
+    );
 }

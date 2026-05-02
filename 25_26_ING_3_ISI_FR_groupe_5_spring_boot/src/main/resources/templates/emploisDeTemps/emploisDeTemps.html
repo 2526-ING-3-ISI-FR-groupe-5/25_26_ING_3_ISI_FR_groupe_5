@@ -1,14 +1,405 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emploi du Temps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .grid-lines {
+            background-size: 100% 48px;
+            background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+        }
+        .schedule-item {
+            position: absolute; width: 100%; z-index: 10; border-radius: 10px;
+            touch-action: none; user-select: none; border: 1px solid rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; box-sizing: border-box;
+            background-clip: padding-box; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .dropzone { position: relative; background-color: white; min-height: 480px; }
+        .resize-handle-s { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900">
 
+<!-- NAVBAR -->
+<nav class="bg-white border-b border-slate-200 px-8 py-4 sticky top-0 z-[100] shadow-sm">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-6">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                <input type="date" id="startDate" class="bg-transparent text-sm font-bold p-1 outline-none" value="2023-10-02">
+                <span class="text-slate-400 font-bold">→</span>
+                <input type="date" id="endDate" class="bg-transparent text-sm font-bold p-1 outline-none" value="2023-10-06">
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- Select des classes rempli depuis la BDD -->
+            <select id="classSelect"
+                    class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    onchange="reloadForClasse(this.value)">
+                <option value="">-- Toutes les classes --</option>
+                <option th:each="classe : ${classes}"
+                        th:value="${classe.id}"
+                        th:text="${classe.nom}"
+                        th:selected="${classe.id == classeIdSelectionne}">
+                </option>
+            </select>
+            <button onclick="exportToPDF()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
+                EXPORTER PDF
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="flex flex-col lg:flex-row h-[calc(100vh-82px)] overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-full lg:w-80 bg-white border-r border-slate-200 p-6 overflow-y-auto">
+
+        <!-- CONFIGURATION ACADÉMIQUE -->
+        <section class="mb-8">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Configuration Académique</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">ANNÉE SCOLAIRE</label>
+                    <!-- Valeur injectée depuis la BDD (année académique active) -->
+                    <input type="text" id="academicYear"
+                           th:value="${anneeActive != null ? anneeActive.nom : '2024-2025'}"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-400 transition-all mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">SEMESTRE</label>
+                    <select id="semesterSelect" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-sm focus:border-indigo-400 transition-all mt-1">
+                        <option value="Semestre 1">Semestre 1</option>
+                        <option value="Semestre 2">Semestre 2</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- LISTE DES MATIÈRES depuis la BDD -->
+        <section class="pt-6 border-t border-slate-100">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Liste des Matières</h3>
+            <input type="text" id="searchSubject" placeholder="Rechercher une matière..."
+                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl mb-6 outline-none focus:border-indigo-400 transition-all">
+
+            <!-- UEs générées depuis la BDD, colorées par index -->
+            <div id="subjectsList" class="space-y-3">
+                <div th:each="ue, iterStat : ${ues}"
+                     class="subject-card p-4 rounded-2xl border-l-[6px] bg-white border border-slate-200 shadow-sm cursor-grab active:cursor-grabbing hover:translate-x-1 transition-all"
+                     th:attr="data-name=${ue.nom}, data-index=${iterStat.index}"
+                     draggable="true">
+                    <span class="font-extrabold text-slate-800 text-xs uppercase" th:text="${ue.nom}">Matière</span>
+                    <span class="text-[10px] text-slate-400 block mt-1" th:text="${ue.code != null ? ue.code : ''}"></span>
+                </div>
+                <p th:if="${#lists.isEmpty(ues)}" class="text-sm text-slate-400 italic text-center py-4">
+                    Aucune matière trouvée.
+                </p>
+            </div>
+        </section>
+    </aside>
+
+    <!-- ZONE PRINCIPALE -->
+    <main class="flex-1 p-6 lg:p-10 overflow-auto bg-slate-50">
+        <div id="captureArea" class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 p-10 min-w-[1300px]">
+            <div class="mb-12 text-center border-b-2 border-slate-50 pb-10">
+                <h2 id="mainHeader" class="text-2xl font-black text-slate-900 tracking-tight leading-tight"></h2>
+                <p class="text-indigo-600 font-bold text-xs uppercase tracking-[0.3em] mt-3 italic">Document Officiel de Scolarité</p>
+            </div>
+            <div class="flex">
+                <div class="w-20 pt-[68px] flex-shrink-0" id="hoursCol"></div>
+                <div id="daysGrid" class="flex flex-1 gap-6"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md hidden items-center justify-center z-[200]">
+    <div class="bg-white p-10 rounded-[3rem] w-[550px] shadow-2xl">
+        <h2 class="text-3xl font-black text-slate-900 mb-8 tracking-tighter" id="modalTitle">Édition du cours</h2>
+        <div class="space-y-8">
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest italic">Personnalisation Couleur</label>
+                <input type="color" id="blockColor" class="w-full h-14 rounded-2xl cursor-pointer bg-slate-50 p-2 border border-slate-100">
+            </div>
+            <div>
+                <div class="flex justify-between items-end mb-3">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Affectation Enseignants</label>
+                    <input type="text" id="searchTeacher" placeholder="Filtrer nom..."
+                           class="text-xs border-b border-slate-200 outline-none focus:border-indigo-500 pb-1 px-2">
+                </div>
+                <!-- Enseignants depuis la BDD -->
+                <div id="teacherList" class="grid grid-cols-2 gap-3 bg-slate-50 p-5 rounded-3xl border border-slate-200 max-h-48 overflow-y-auto">
+                    <label th:each="ens : ${enseignants}"
+                           class="teacher-item flex items-center gap-3 p-2 hover:bg-white rounded-xl cursor-pointer text-sm font-bold transition">
+                        <input type="checkbox"
+                               th:value="${ens.nom + ' ' + ens.prenom}"
+                               class="w-4 h-4 rounded text-indigo-600">
+                        <span th:text="${ens.nom + ' ' + ens.prenom}">Enseignant</span>
+                    </label>
+                    <p th:if="${#lists.isEmpty(enseignants)}"
+                       class="col-span-2 text-sm text-slate-400 italic text-center py-2">
+                        Aucun enseignant disponible.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between mt-12 gap-4">
+            <button onclick="deleteBlock()" class="text-red-500 font-black px-4 hover:bg-red-50 rounded-2xl transition">Supprimer</button>
+            <div class="flex gap-4">
+                <button onclick="closeModal()" class="bg-slate-100 px-8 py-3 rounded-2xl font-bold hover:bg-slate-200">Annuler</button>
+                <button onclick="saveModal()" class="bg-indigo-600 text-white px-10 py-3 rounded-2xl font-black hover:bg-indigo-700 shadow-lg">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // ══════════════════════════════════════════
+    // PALETTES DE COULEURS POUR LES MATIÈRES
+    // ══════════════════════════════════════════
+    const COLORS  = ["#e0e7ff","#dcfce7","#f3e8ff","#ffedd5","#fee2e2","#fef9c3","#e0f2fe","#fce7f3"];
+    const BORDERS = ["#4f46e5","#16a34a","#9333ea","#ea580c","#dc2626","#ca8a04","#0284c7","#db2777"];
+
+    const SLOT_H = 48, START_H = 8, END_H = 18;
+    let currentEditingElement = null;
+
+    window.onload = () => {
+        // Colorier chaque carte de matière selon son index
+        document.querySelectorAll('.subject-card').forEach((card) => {
+            const idx    = parseInt(card.dataset.index) || 0;
+            const color  = COLORS[idx % COLORS.length];
+            const border = BORDERS[idx % BORDERS.length];
+            card.style.borderLeftColor = border;
+            card.dataset.color  = color;
+            card.dataset.border = border;
+            card.ondragstart = (e) => {
+                e.dataTransfer.setData('name',  card.dataset.name);
+                e.dataTransfer.setData('color', color);
+            };
+        });
+
+        initGrid();
+    };
+
+    // ══════════════════════════════════════════
+    // FILTRAGE PAR CLASSE (rechargement page)
+    // ══════════════════════════════════════════
+    function reloadForClasse(classeId) {
+        window.location.href = classeId
+            ? '/emploi-du-temps?classeId=' + classeId
+            : '/emploi-du-temps';
+    }
+
+    // ══════════════════════════════════════════
+    // EN-TÊTE
+    // ══════════════════════════════════════════
+    document.getElementById('startDate').onchange = initGrid;
+    document.getElementById('endDate').onchange   = initGrid;
+    document.getElementById('academicYear').oninput  = updateHeader;
+    document.getElementById('semesterSelect').onchange = updateHeader;
+
+    function updateHeader() {
+        const year  = document.getElementById('academicYear').value;
+        const sem   = document.getElementById('semesterSelect').value;
+        const sel   = document.getElementById('classSelect');
+        const cls   = sel.options[sel.selectedIndex]?.text || '';
+        const start = new Date(document.getElementById('startDate').value).toLocaleDateString('fr-FR');
+        const end   = new Date(document.getElementById('endDate').value).toLocaleDateString('fr-FR');
+        document.getElementById('mainHeader').innerText =
+            `Emploi de temps ${year} – ${sem} – ${cls} (semaine du ${start} au ${end})`;
+    }
+
+    // ══════════════════════════════════════════
+    // GRILLE
+    // ══════════════════════════════════════════
+    function initGrid() {
+        updateHeader();
+        const start = new Date(document.getElementById('startDate').value);
+        const end   = new Date(document.getElementById('endDate').value);
+        const grid  = document.getElementById('daysGrid');
+        const hCol  = document.getElementById('hoursCol');
+
+        hCol.innerHTML = '';
+        for (let i = START_H; i < END_H; i++) {
+            hCol.innerHTML += `<div style="height:${SLOT_H}px" class="text-[10px] font-black text-slate-300 text-right pr-6">${i}h00</div>`;
+        }
+
+        grid.innerHTML = '';
+        const diff = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+        for (let i = 0; i < diff; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            const col = document.createElement('div');
+            col.className = 'flex-1 min-w-[200px] flex flex-col day-column';
+            col.innerHTML = `
+                <div class="text-center mb-6">
+                    <div class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">${d.toLocaleDateString('fr-FR', {weekday:'long'})}</div>
+                    <div class="text-3xl font-black text-slate-900">${d.getDate()}</div>
+                </div>
+                <div class="flex-1 grid-lines border border-slate-100 rounded-[2rem] dropzone"
+                     style="height:${(END_H - START_H) * SLOT_H}px"></div>
+            `;
+            grid.appendChild(col);
+        }
+        setupInteract();
+    }
+
+    // ══════════════════════════════════════════
+    // DRAG & DROP / INTERACT
+    // ══════════════════════════════════════════
+    function setupInteract() {
+        document.querySelectorAll('.dropzone').forEach(dz => {
+            dz.ondragover = (e) => e.preventDefault();
+            dz.ondrop = (e) => {
+                const rect    = dz.getBoundingClientRect();
+                const hourIdx = Math.floor((e.clientY - rect.top) / SLOT_H);
+                createBlock(dz, e.dataTransfer.getData('name'), e.dataTransfer.getData('color'), hourIdx);
+            };
+        });
+    }
+
+    function createBlock(parent, name, color, hourIdx, height = SLOT_H) {
+        const block = document.createElement('div');
+        block.className = 'schedule-item p-4';
+        block.style.backgroundColor = color;
+        block.style.top    = `${hourIdx * SLOT_H}px`;
+        block.style.height = `${height}px`;
+        block.innerHTML = `
+            <div class="font-black text-[11px] uppercase text-slate-800 leading-none mb-1">${name}</div>
+            <div class="teachers-list text-[9px] font-bold text-slate-500 italic leading-tight pointer-events-none"></div>
+            <div class="resize-handle-s"></div>
+        `;
+        block.ondblclick = () => openModal(block);
+        parent.appendChild(block);
+        makeInteractable(block);
+    }
+
+    function makeInteractable(el) {
+        interact(el)
+        .draggable({
+            modifiers: [
+                interact.modifiers.snap({ targets: [interact.snappers.grid({y: SLOT_H})], range: Infinity, relativePoints: [{x:0,y:0}] }),
+                interact.modifiers.restrictRect({ restriction: '#daysGrid', endOnly: true })
+            ],
+            onmove: (e) => {
+                const x = (parseFloat(e.target.dataset.x) || 0) + e.dx;
+                const y = (parseFloat(e.target.dataset.y) || 0) + e.dy;
+                e.target.style.transform = `translate(${x}px,${y}px)`;
+                e.target.dataset.x = x; e.target.dataset.y = y;
+            },
+            onend: (e) => finalizeReparent(e.target)
+        })
+        .resizable({
+            edges: { bottom: true, left: true, right: true },
+            onmove: (e) => {
+                let { x, y } = e.target.dataset;
+                x = (parseFloat(x) || 0) + e.deltaRect.left;
+                y = (parseFloat(y) || 0) + e.deltaRect.top;
+                Object.assign(e.target.style, {
+                    width: `${e.rect.width}px`, height: `${e.rect.height}px`,
+                    transform: `translate(${x}px,${y}px)`
+                });
+                e.target.dataset.x = x; e.target.dataset.y = y;
+            },
+            onend: (e) => {
+                const snappedH = Math.round(parseFloat(e.target.style.height) / SLOT_H) * SLOT_H;
+                e.target.style.height = `${Math.max(SLOT_H, snappedH)}px`;
+                handleDuplication(e.target);
+                finalizeReparent(e.target);
+            }
+        });
+    }
+
+    function finalizeReparent(el) {
+        const rect = el.getBoundingClientRect();
+        el.style.display = 'none';
+        const dz = document.elementFromPoint(rect.left + rect.width/2, rect.top + 10)?.closest('.dropzone');
+        el.style.display = 'flex';
+        if (dz) {
+            const dzRect = dz.getBoundingClientRect();
+            const newTop = Math.round((rect.top - dzRect.top) / SLOT_H) * SLOT_H;
+            dz.appendChild(el);
+            el.style.transform = 'none'; el.style.width = '100%';
+            el.style.top = `${newTop}px`; el.dataset.x = 0; el.dataset.y = 0;
+        } else { el.remove(); }
+    }
+
+    function handleDuplication(el) {
+        const rect   = el.getBoundingClientRect();
+        const name   = el.querySelector('div').innerText;
+        const color  = el.style.backgroundColor;
+        const h      = parseFloat(el.style.height);
+        const topIdx = Math.round(parseFloat(el.style.top) / SLOT_H);
+        document.querySelectorAll('.dropzone').forEach(dz => {
+            const dzRect = dz.getBoundingClientRect();
+            if (dz !== el.parentElement && rect.left < dzRect.right && rect.right > dzRect.left) {
+                createBlock(dz, name, color, topIdx, h);
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════
+    // RECHERCHE
+    // ══════════════════════════════════════════
+    document.getElementById('searchSubject').oninput = (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('.subject-card').forEach(c => {
+            c.style.display = c.dataset.name.toLowerCase().includes(q) ? 'block' : 'none';
+        });
+    };
+
+    document.getElementById('searchTeacher').oninput = (e) => {
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('.teacher-item').forEach(item => {
+            item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+        });
+    };
+
+    // ══════════════════════════════════════════
+    // MODAL
+    // ══════════════════════════════════════════
+    function openModal(el) {
+        currentEditingElement = el;
+        document.getElementById('modal').classList.replace('hidden', 'flex');
+        document.getElementById('modalTitle').innerText = el.querySelector('div').innerText;
+        document.getElementById('blockColor').value = rgbToHex(el.style.backgroundColor);
+        document.getElementById('searchTeacher').value = '';
+        document.querySelectorAll('.teacher-item').forEach(it => it.style.display = 'flex');
+        const selected = el.querySelector('.teachers-list').innerText.split(', ');
+        document.querySelectorAll('#teacherList input').forEach(i => i.checked = selected.includes(i.value));
+    }
+    function closeModal() { document.getElementById('modal').classList.replace('flex','hidden'); }
+    function saveModal() {
+        currentEditingElement.style.backgroundColor = document.getElementById('blockColor').value;
+        const selected = Array.from(document.querySelectorAll('#teacherList input:checked')).map(i => i.value);
+        currentEditingElement.querySelector('.teachers-list').innerText = selected.join(', ');
+        closeModal();
+    }
+    function deleteBlock() { currentEditingElement.remove(); closeModal(); }
+
+    function rgbToHex(rgb) {
+        if (!rgb.startsWith('rgb')) return rgb;
+        const parts = rgb.match(/\d+/g);
+        return '#' + parts.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
+    }
+
+    // ══════════════════════════════════════════
+    // EXPORT PDF
+    // ══════════════════════════════════════════
+    function exportToPDF() {
+        html2pdf().set({
+            margin: 0, filename: 'EDT_Export.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+        }).from(document.getElementById('captureArea')).save();
+    }
+</script>
 </body>
 </html>
-
-
-je veux que tu me cree une sidebar verticale qui va  contenir toutes les rediretions possibles avec une navbar  qui va contenir
-un bouton dropdown qui aura les options de deconnexion, parametre, profile. sur la meme navbar on aura un bouton pour le dark-mode.

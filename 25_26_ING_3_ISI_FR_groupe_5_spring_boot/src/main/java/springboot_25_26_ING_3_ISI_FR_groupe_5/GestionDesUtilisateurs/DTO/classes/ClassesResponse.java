@@ -12,13 +12,33 @@ public class ClassesResponse {
     private Long id;
     private String nom;
 
-    // Infos Niveau
+    // ========== Infos Niveau ==========
     private Long niveauId;
     private String niveauNom;
     private Integer niveauOrdre;
 
-    // ✅ Spécialité via le niveau
+    // ========== Spécialité (via niveau) ==========
     private Long specialiteId;
     private String specialiteNom;
     private String specialiteCode;
+
+    // ========== Filière (via specialite) ==========
+    private Long filiereId;
+    private String filiereNom;
+
+    // ========== Cycle (via filiere) ==========
+    private Long cycleId;
+    private String cycleNom;
+
+    // ========== École (via filiere) ==========
+    private Long ecoleId;
+    private String ecoleNom;
+
+    // ========== Institut (via ecole) ==========
+    private Long institutId;
+    private String institutNom;
+
+    // ========== Statistiques ==========
+    private Integer nombreEtudiants;
+    private Integer nombreProgrammations;
 }

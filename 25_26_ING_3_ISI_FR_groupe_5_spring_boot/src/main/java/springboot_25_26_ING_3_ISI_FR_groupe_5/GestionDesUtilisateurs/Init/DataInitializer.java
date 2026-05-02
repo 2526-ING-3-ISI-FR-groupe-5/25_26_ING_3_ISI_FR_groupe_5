@@ -11,6 +11,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeCycle;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeSemestre;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeContrat;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.*;
@@ -210,7 +211,7 @@ public class DataInitializer implements ApplicationRunner {
         List<Etudiant> etudiants = etudiantRepository.findAll();
         if (!etudiants.isEmpty()) {
             Etudiant etudiant1 = etudiants.get(0);
-            createInscription(etudiant1, ing4A, annee2024, StatutInscription.ACTIF, null);
+            createInscription(etudiant1, ing4A, annee2024, StatutInscription.ACTIF, "EN_COURS");
         }
 
         // ============================================
@@ -411,7 +412,7 @@ public class DataInitializer implements ApplicationRunner {
                 .classe(classe)
                 .anneeAcademique(annee)
                 .statut(statut)
-                .decisionFinAnnee(decisionFinAnnee)
+                .decisionFinAnnee(DecisionFinAnnee.valueOf(decisionFinAnnee))
                 .build();
 
         return inscriptionRepository.save(inscription);

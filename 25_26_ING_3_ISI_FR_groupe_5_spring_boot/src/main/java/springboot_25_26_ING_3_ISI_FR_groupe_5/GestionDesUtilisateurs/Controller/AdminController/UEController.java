@@ -75,7 +75,7 @@ public class UEController {
 
         try {
             UE ue = ueMapper.toEntity(request);
-            ueService.creer(ue, request.getSpecialiteId(), acteur);
+            ueService.creer(ue, request.getSpecialiteId());
             redirectAttributes.addFlashAttribute("succes", "UE créée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -101,7 +101,7 @@ public class UEController {
 
         try {
             UE data = ueMapper.toEntity(request);
-            ueService.modifier(id, data, acteur);
+            ueService.modifier(id, data);
             redirectAttributes.addFlashAttribute("succes", "UE modifiée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
@@ -118,7 +118,7 @@ public class UEController {
             @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
-            ueService.supprimer(id, acteur);
+            ueService.supprimer(id);
             redirectAttributes.addFlashAttribute("succes", "UE supprimée avec succès");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());

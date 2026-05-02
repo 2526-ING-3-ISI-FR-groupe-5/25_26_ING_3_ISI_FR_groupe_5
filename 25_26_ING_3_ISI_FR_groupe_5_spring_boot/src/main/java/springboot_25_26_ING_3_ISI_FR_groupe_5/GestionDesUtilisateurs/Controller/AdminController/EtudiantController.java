@@ -66,6 +66,11 @@ public class EtudiantController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", etudiants.getTotalPages());
         model.addAttribute("totalElements", etudiants.getTotalElements());
+        // Needed for the "Ajouter étudiant" modal
+        model.addAttribute("classes",
+                classesMapper.toResponseList(classesService.getByAnnee(
+                        annee.getId(), null, PageRequest.of(0, 200)
+                ).getContent()));
 
         return "etudiants/liste";
     }

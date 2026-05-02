@@ -57,9 +57,13 @@ public interface InterfaceProgrammeUE {
     @Transactional
     void dupliquerVersNouvelleAnnee(Long ancienneAnneeId, Long nouvelleAnneeId);
 
+    @Transactional
+    void dupliquerEnseignantVersNouvelleAnnee(Long enseignantId, Long ancienneAnneeId, Long nouvelleAnneeId);
+
     List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId);
 
     @Transactional
     List<Classe> getClassesByEnseignant(Long enseignantId);
 
+    void dupliquerUEVersNouvelleAnnee(Long ueId, Long id, Long id1);
 }

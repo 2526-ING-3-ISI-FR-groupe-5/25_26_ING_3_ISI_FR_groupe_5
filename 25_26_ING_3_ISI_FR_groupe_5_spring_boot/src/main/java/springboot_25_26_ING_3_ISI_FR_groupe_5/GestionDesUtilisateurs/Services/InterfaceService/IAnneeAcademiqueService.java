@@ -21,4 +21,6 @@ public interface IAnneeAcademiqueService {
     Annee_academique findById(Long id);
 
     void supprimer(Long anneeId, Utilisateur acteur);
+
+    Annee_academique findEntityById(Long nouvelleAnneeId);
 }

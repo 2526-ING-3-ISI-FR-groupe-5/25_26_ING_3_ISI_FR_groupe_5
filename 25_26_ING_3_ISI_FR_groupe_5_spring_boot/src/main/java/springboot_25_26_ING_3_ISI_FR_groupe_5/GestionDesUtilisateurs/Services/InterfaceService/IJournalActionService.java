@@ -489,4 +489,6 @@ public interface IJournalActionService {
         journaliserSucces(acteur, TypeAction.SPECIALITE_SUPPRIMEE,
                 "Specialite", id, "Spécialité supprimée : " + nom);
     }
+
+    
 }

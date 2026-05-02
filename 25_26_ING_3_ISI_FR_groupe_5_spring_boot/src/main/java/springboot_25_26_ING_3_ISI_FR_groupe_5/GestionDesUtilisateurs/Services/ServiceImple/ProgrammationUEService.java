@@ -183,13 +183,95 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
             }
         }
     }
-@Override
-public List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId) {
+
+    @Override
+    @Transactional
+    public void dupliquerUEVersNouvelleAnnee(Long ueId, Long ancienneAnneeId, Long nouvelleAnneeId) {
+        List<Semestre> nouveauxSemestres = semestreService.getByAnnee(nouvelleAnneeId);
+        List<Semestre> anciensSemestres = semestreService.getByAnnee(ancienneAnneeId);
+
+        for (Semestre ancienSemestre : anciensSemestres) {
+            Semestre nouveauSemestre = nouveauxSemestres.stream()
+                    .filter(s -> s.getTypeSemestre().equals(ancienSemestre.getTypeSemestre()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (nouveauSemestre == null) continue;
+
+            List<ProgrammationUE> programmationsUE = programmationRepo
+                    .findByUeIdAndSemestreId(ueId, ancienSemestre.getId());
+
+            for (ProgrammationUE ancienne : programmationsUE) {
+                if (programmationRepo.existsByUeIdAndClasseIdAndSemestreId(
+                        ueId,
+                        ancienne.getClasse().getId(),
+                        nouveauSemestre.getId())) {
+                    continue;
+                }
+
+                ProgrammationUE nouvelle = new ProgrammationUE();
+                nouvelle.setUe(ancienne.getUe());
+                nouvelle.setSemestre(nouveauSemestre);
+                nouvelle.setClasse(ancienne.getClasse());
+                nouvelle.setDheure(ancienne.getDheure());
+                nouvelle.setNbrCredit(ancienne.getNbrCredit());
+                nouvelle.setEnseignants(ancienne.getEnseignants());
+                nouvelle.setLibelle(ancienne.getLibelle());
+                nouvelle.setLibelleAnglais(ancienne.getLibelleAnglais());
+
+                programmationRepo.save(nouvelle);
+            }
+        }
+    }
+
+    @Transactional
+    @Override
+    public void dupliquerEnseignantVersNouvelleAnnee(Long enseignantId, Long ancienneAnneeId, Long nouvelleAnneeId) {
+        List<Semestre> nouveauxSemestres = semestreService.getByAnnee(nouvelleAnneeId);
+        List<Semestre> anciensSemestres = semestreService.getByAnnee(ancienneAnneeId);
+
+        for (Semestre ancienSemestre : anciensSemestres) {
+            Semestre nouveauSemestre = nouveauxSemestres.stream()
+                    .filter(s -> s.getTypeSemestre().equals(ancienSemestre.getTypeSemestre()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (nouveauSemestre == null) continue;
+
+            List<ProgrammationUE> programmationsEnseignant = programmationRepo
+                    .findByEnseignantIdAndSemestreId(enseignantId, ancienSemestre.getId());
+
+            for (ProgrammationUE ancienne : programmationsEnseignant) {
+                if (programmationRepo.existsByUeIdAndClasseIdAndSemestreId(
+                        ancienne.getUe().getId(),
+                        ancienne.getClasse().getId(),
+                        nouveauSemestre.getId())) {
+                    continue;
+                }
+
+                ProgrammationUE nouvelle = new ProgrammationUE();
+                nouvelle.setUe(ancienne.getUe());
+                nouvelle.setSemestre(nouveauSemestre);
+                nouvelle.setClasse(ancienne.getClasse());
+                nouvelle.setDheure(ancienne.getDheure());
+                nouvelle.setNbrCredit(ancienne.getNbrCredit());
+                nouvelle.setEnseignants(ancienne.getEnseignants());
+                nouvelle.setLibelle(ancienne.getLibelle());
+                nouvelle.setLibelleAnglais(ancienne.getLibelleAnglais());
+
+                programmationRepo.save(nouvelle);
+            }
+        }
+    }
+
+    @Override
+    public List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId) {
         return programmationRepo.findByEnseignantId(enseignantId);
     }
-@Transactional
-@Override
-public List<Classe> getClassesByEnseignant(Long enseignantId) {
+
+    @Transactional
+    @Override
+    public List<Classe> getClassesByEnseignant(Long enseignantId) {
         return programmationRepo.findClassesByEnseignantId(enseignantId);
     }
 }

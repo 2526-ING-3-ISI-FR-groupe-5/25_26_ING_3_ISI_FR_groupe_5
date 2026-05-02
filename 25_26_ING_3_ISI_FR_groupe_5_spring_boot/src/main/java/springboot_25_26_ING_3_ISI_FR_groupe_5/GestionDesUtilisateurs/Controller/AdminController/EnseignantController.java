@@ -25,6 +25,12 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InscriptionService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.ProgrammationUEService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.UEService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.UEMapper;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ue.UEResponse;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.util.List;
 
@@ -40,6 +46,8 @@ public class EnseignantController {
     private final ProgrammationUEMapper programmationMapper;
     private final ClassesMapper classeMapper;
     private final InscriptionService inscriptionService;
+    private final UEService ueService;
+    private final UEMapper ueMapper;
 
     @GetMapping("/accueil")
     @PreAuthorize("hasRole('ENSEIGNANT')")
@@ -113,13 +121,33 @@ public class EnseignantController {
                 annee.getId(), recherche, PageRequest.of(page, size)
         );
 
-        model.addAttribute("enseignants", enseignantMapper.toResponseList(enseignants.getContent()));
+        var enseignantList = enseignantMapper.toResponseList(enseignants.getContent());
+        model.addAttribute("enseignants", enseignantList);
         model.addAttribute("anneeActive", annee);
         model.addAttribute("annees", anneeService.getAll());
         model.addAttribute("recherche", recherche);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", enseignants.getTotalPages());
         model.addAttribute("form", new EnseignantRequest());
+
+        // UEs pour le filtre et le modal
+        model.addAttribute("ues", ueMapper.toResponseList(ueService.getAll()));
+
+        // Map enseignantId -> liste UEs enseignées
+        Map<Long, List<UEResponse>> matieresByEnseignant = enseignants.getContent().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        e -> e.getId(),
+                        e -> ueMapper.toResponseList(
+                                programmationService.getByEnseignantAndAnnee(e.getId(), annee.getId())
+                                        .stream()
+                                        .map(p -> p.getUe())
+                                        .filter(java.util.Objects::nonNull)
+                                        .distinct()
+                                        .collect(java.util.stream.Collectors.toList())
+                        ),
+                        (a, b) -> a
+                ));
+        model.addAttribute("matieresByEnseignant", matieresByEnseignant);
 
         return "admin/enseignants/liste";
     }

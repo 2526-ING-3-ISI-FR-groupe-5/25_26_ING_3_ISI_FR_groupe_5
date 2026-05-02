@@ -1,11 +1,11 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers;
 
 
-import CarnetRouge.CarnetRouge.GDU.dtos.annee.AnneeResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.annee.AnneeRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.annee.AnneeResponse;
 
 import java.util.List;
 
