@@ -2,10 +2,14 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.PlageHoraire;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.SessionAppel;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.MethodeValidation;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutPresence;
 
-import java.util.*;
+import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -15,35 +19,255 @@ import java.util.*;
 @Entity
 public class Appels {
 
+    /**
+     * Seuil heure de début pour considérer un cours comme "premier cours du matin".
+     * Un retard n'est applicable que si heureDebut <= ce seuil.
+     */
+    public static final LocalTime SEUIL_PREMIER_COURS = LocalTime.of(8, 30);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date date;
+    // ══════════════════════════════════════════
+    // PRÉSENCE
+    // ══════════════════════════════════════════
 
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date dateDebut;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean present = false;
 
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date dateFin;
+    @Column(nullable = false)
+    @Builder.Default
+    private int nbHeuresPresent = 0;
 
-    private Long nombreHeures;
+    // ══════════════════════════════════════════
+    // RETARD
+    // ══════════════════════════════════════════
 
-    @ManyToOne
-    private Utilisateur utilisateur;
+    /**
+     * Heure d'arrivée réelle de l'étudiant.
+     * Renseignée par l'enseignant uniquement pour les retards
+     * sur le premier cours du matin (heureDebut ≤ 08:30).
+     */
+    private LocalTime heureArrivee;
 
-    @ManyToOne
-    @JoinColumn(name = "etudiant_id")
+    // ══════════════════════════════════════════
+    // STATUT
+    // ══════════════════════════════════════════
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private StatutPresence statut = StatutPresence.EN_ATTENTE;
+
+    @Column(length = 500)
+    private String commentaire;
+
+    // ══════════════════════════════════════════
+    // MÉTHODE DE VALIDATION
+    // ══════════════════════════════════════════
+
+    @Enumerated(EnumType.STRING)
+    private MethodeValidation methode;
+
+    private String codeUtilise;
+
+    private LocalDateTime dateValidation;
+
+    // ══════════════════════════════════════════
+    // GÉOLOCALISATION ÉTUDIANT
+    // ══════════════════════════════════════════
+
+    private Double latitudeEtudiant;
+    private Double longitudeEtudiant;
+    private boolean dansLePerimetre;
+
+    // ══════════════════════════════════════════
+    // PWA — SYNCHRONISATION OFFLINE
+    // ══════════════════════════════════════════
+
+    @Builder.Default
+    private boolean synchronise = true;
+
+    private LocalDateTime dateSynchronisation;
+
+    // ══════════════════════════════════════════
+    // RELATIONS
+    // ══════════════════════════════════════════
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "etudiant_id", nullable = false)
     private Etudiant etudiant;
 
-    @OneToMany(mappedBy = "appels")
-    @Builder.Default
-    private Collection<SeanceCours> seanceCours = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plage_horaire_id", nullable = false)
+    private PlageHoraire plageHoraire;
 
-    @ManyToOne
-    private ValidationPresence validationPresence;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "enseignant_id")
+    private Enseignant enseignant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_appel_id")
+    private SessionAppel sessionAppel;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "justificatif_id")
+    private Justificatif justificatif;
+
+    // ══════════════════════════════════════════
+    // HELPERS — statut
+    // ══════════════════════════════════════════
+
+    public boolean isPresentToutLeCours() {
+        return statut == StatutPresence.PRESENT;
+    }
+
+    public boolean isAbsentToutLeCours() {
+        return statut == StatutPresence.ABSENT;
+    }
+
+    public boolean isRetard() {
+        return statut == StatutPresence.RETARD;
+    }
+
+    public boolean isPartiel() {
+        return statut == StatutPresence.PARTIEL;
+    }
+
+    public boolean isAbsenceJustifiee() {
+        return statut == StatutPresence.JUSTIFIE && justificatif != null;
+    }
+
+    public boolean isEnAttente() {
+        return statut == StatutPresence.EN_ATTENTE;
+    }
+
+    public String getStatutLibelle() {
+        return switch (statut) {
+            case EN_ATTENTE -> "En attente";
+            case PRESENT    -> "Présent";
+            case RETARD     -> "En retard" + (getRetardMinutes() > 0 ? " (" + getRetardMinutes() + " min)" : "");
+            case PARTIEL    -> "Partiel";
+            case ABSENT     -> "Absent";
+            case JUSTIFIE   -> "Justifié";
+        };
+    }
+
+    // ══════════════════════════════════════════
+    // HELPERS — retard
+    // ══════════════════════════════════════════
+
+    /**
+     * Indique si un retard peut être marqué pour cette séance.
+     * Règle : uniquement si c'est le premier cours du matin (heureDebut ≤ 08:30).
+     */
+    public boolean isRetardAutorise() {
+        if (plageHoraire == null) return false;
+        return !plageHoraire.getHeureDebut().isAfter(SEUIL_PREMIER_COURS);
+    }
+
+    /**
+     * Nombre de minutes de retard par rapport à l'heure de début du cours.
+     * Retourne 0 si heureArrivee non renseignée ou si pas de retard.
+     */
+    public int getRetardMinutes() {
+        if (heureArrivee == null || plageHoraire == null || statut != StatutPresence.RETARD) return 0;
+        int minutes = (int) java.time.Duration.between(plageHoraire.getHeureDebut(), heureArrivee).toMinutes();
+        return Math.max(0, minutes);
+    }
+
+    /**
+     * Marque l'étudiant en retard.
+     * Lève une exception si la règle métier n'est pas respectée.
+     *
+     * @param heureArrivee heure réelle d'arrivée de l'étudiant
+     * @param enseignant   enseignant qui enregistre le retard
+     * @throws IllegalStateException si le retard n'est pas autorisé sur ce cours
+     */
+    public void marquerRetard(LocalTime heureArrivee, Enseignant enseignant) {
+        if (!isRetardAutorise()) {
+            throw new IllegalStateException(
+                    "Le retard n'est applicable qu'au premier cours du matin (début ≤ 08h30). " +
+                            "Ce cours commence à " + plageHoraire.getHeureDebut() + "."
+            );
+        }
+        if (heureArrivee != null && plageHoraire != null
+                && heureArrivee.isBefore(plageHoraire.getHeureDebut())) {
+            throw new IllegalArgumentException(
+                    "L'heure d'arrivée (" + heureArrivee + ") ne peut pas être avant l'heure de début du cours."
+            );
+        }
+        this.statut       = StatutPresence.RETARD;
+        this.heureArrivee = heureArrivee;
+        this.enseignant   = enseignant;
+        this.dateValidation = LocalDateTime.now();
+        this.methode      = MethodeValidation.MANUELLE;
+        this.present      = false;
+    }
+
+    /**
+     * Marque l'étudiant présent.
+     */
+    public void marquerPresent(Enseignant enseignant, MethodeValidation methode) {
+        this.statut         = StatutPresence.PRESENT;
+        this.present        = true;
+        this.heureArrivee   = null;
+        this.enseignant     = enseignant;
+        this.dateValidation = LocalDateTime.now();
+        this.methode        = methode;
+    }
+
+    /**
+     * Marque l'étudiant absent.
+     */
+    public void marquerAbsent(Enseignant enseignant) {
+        this.statut         = StatutPresence.ABSENT;
+        this.present        = false;
+        this.heureArrivee   = null;
+        this.enseignant     = enseignant;
+        this.dateValidation = LocalDateTime.now();
+        this.methode        = MethodeValidation.MANUELLE;
+    }
+
+    /**
+     * Marque l'étudiant partiellement présent.
+     *
+     * @param nbHeures nombre d'heures de présence effective
+     */
+    public void marquerPartiel(int nbHeures, Enseignant enseignant) {
+        this.statut          = StatutPresence.PARTIEL;
+        this.present         = false;
+        this.nbHeuresPresent = nbHeures;
+        this.enseignant      = enseignant;
+        this.dateValidation  = LocalDateTime.now();
+        this.methode         = MethodeValidation.MANUELLE;
+    }
+
+    // ══════════════════════════════════════════
+    // HELPERS — méthode de validation
+    // ══════════════════════════════════════════
+
+    public boolean isValideParQR() {
+        return methode == MethodeValidation.QR_CODE;
+    }
+
+    public boolean isValideParPIN() {
+        return methode == MethodeValidation.CODE_PIN;
+    }
+
+    public boolean isValideManuellement() {
+        return methode == MethodeValidation.MANUELLE;
+    }
+
+    // ══════════════════════════════════════════
+    // HELPERS — institut (pour le filtrage multi-tenant)
+    // ══════════════════════════════════════════
+
+    public Long getInstitutId() {
+        if (etudiant != null && etudiant.getInstitut() != null) {
+            return etudiant.getInstitut().getId();
+        }
+        return null;
+    }
 }

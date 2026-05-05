@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
@@ -40,12 +41,11 @@ public class JwtService {
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
-
         claims.put("firstLogin", utilisateurs.isFirstLogin());
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(utilisateurs.getEmail())   // ✅ email seul (plus simple à extraire)
+                .subject(utilisateurs.getEmail())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_TIME))
                 .signWith(getSignKey())              // ✅ plus besoin de préciser l'algo

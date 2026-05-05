@@ -16,13 +16,23 @@ public class EcoleRequest {
 
     private String adresse;
 
+    // ✅ Ajoutés
+    private String ville;
+    private String localite;
+
     @Email(message = "Format d'email invalide")
-    @NotBlank(message = "L'email est obligatoire")
     private String email;
 
-    @Pattern(regexp = "^(\\+\\d{1,3}[- ]?)?\\d{8,12}$", message = "Format de téléphone invalide")
+    // ✅ Regex plus flexible
+    @Pattern(
+            regexp = "^(\\+?\\d{1,3}[- ]?)?\\d{8,15}$",
+            message = "Format de téléphone invalide"
+    )
     private String telephone;
 
     @NotNull(message = "Veuillez sélectionner un institut")
     private Long institutId;
+
+    // ✅ Statut actif/inactif
+    private boolean active = true;
 }

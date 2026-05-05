@@ -26,6 +26,8 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/etudiants")
+@PreAuthorize("hasAnyRole('ENSEIGNANT',  'ADMIN_INSTITUT')")
+
 @RequiredArgsConstructor
 public class EtudiantController {
 
@@ -41,7 +43,7 @@ public class EtudiantController {
     // LISTE avec filtre + année
     // ══════════════════════════════════════════
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ASSISTANT')")
     public String liste(
             @RequestParam(required = false) String recherche,
             @RequestParam(required = false) Long anneeId,
@@ -74,7 +76,7 @@ public class EtudiantController {
     // FORMULAIRE CRÉATION
     // ══════════════════════════════════════════
     @GetMapping("/nouveau")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String formulaireCreer(Model model) {
         model.addAttribute("form", new EtudiantRequest());
         model.addAttribute("classes",
@@ -89,7 +91,7 @@ public class EtudiantController {
     // CRÉER
     // ══════════════════════════════════════════
     @PostMapping("/creer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String creer(
             @Valid @ModelAttribute("form") EtudiantRequest request,
             BindingResult result,
@@ -122,7 +124,7 @@ public class EtudiantController {
     // DÉTAIL
     // ══════════════════════════════════════════
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ASSISTANT')")
     public String detail(@PathVariable Long id, Model model) {
         Etudiant etudiant = etudiantService.findById(id);
         List<Inscription> historique = inscriptionService
@@ -136,11 +138,11 @@ public class EtudiantController {
         return "etudiants/detail";
     }
 
-    // ══════════════════════════════════════════
+    // ════════════════��═════════════════════════
     // FORMULAIRE MODIFICATION
     // ══════════════════════════════════════════
     @GetMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String formulaireModifier(@PathVariable Long id, Model model) {
         Etudiant etudiant = etudiantService.findById(id);
         EtudiantRequest form = new EtudiantRequest();
@@ -159,7 +161,7 @@ public class EtudiantController {
     // MODIFIER
     // ══════════════════════════════════════════
     @PostMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String modifier(
             @PathVariable Long id,
             @Valid @ModelAttribute("form") EtudiantRequest request,
@@ -189,7 +191,7 @@ public class EtudiantController {
     // ACTIVER / DÉSACTIVER
     // ══════════════════════════════════════════
     @PostMapping("/{id}/toggle")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String toggle(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes
@@ -208,7 +210,7 @@ public class EtudiantController {
     // RÉINITIALISER MOT DE PASSE
     // ══════════════════════════════════════════
     @PostMapping("/{id}/reset-password")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String resetPassword(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes

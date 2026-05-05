@@ -24,7 +24,8 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/filieres")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
+
 public class FiliereController {
 
     private final FiliereService filiereService;

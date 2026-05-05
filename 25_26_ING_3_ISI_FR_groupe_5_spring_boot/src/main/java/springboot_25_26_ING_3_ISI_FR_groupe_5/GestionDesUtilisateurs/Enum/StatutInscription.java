@@ -5,5 +5,5 @@ public enum StatutInscription {
     RESILIEE,
     DIPLOME,
     EXCLU,
-    ABANDONNE
+    VALIDE, ABANDONNE
 }

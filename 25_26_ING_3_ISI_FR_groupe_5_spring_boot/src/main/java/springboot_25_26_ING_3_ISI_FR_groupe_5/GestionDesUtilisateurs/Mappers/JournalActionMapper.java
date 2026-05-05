@@ -198,6 +198,8 @@ public interface JournalActionMapper {
             case NIVEAU_CREE -> "niveau crée";
             case NIVEAU_MODIFIE -> "niveau modifié";
             case NIVEAU_SUPPRIME -> "niveau supprimé";
+            case INSCRIPTION_MODIFIEE -> "inscrition modifier";
+            case ANNEE_ACADEMIQUE_DESACTIVEE ->"desactiver une année academique";
         };
     }
 }

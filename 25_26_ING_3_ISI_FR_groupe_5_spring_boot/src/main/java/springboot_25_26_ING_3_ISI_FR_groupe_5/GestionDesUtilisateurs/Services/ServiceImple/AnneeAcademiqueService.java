@@ -2,13 +2,16 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.S
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exceptions.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.AnneeAcademiqueRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InstitutRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.SemestreRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IAnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
@@ -23,27 +26,47 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
     private final AnneeAcademiqueRepository anneeRepo;
     private final SemestreRepository semestreRepo;
+    private final InstitutRepository institutRepo;
     private final IJournalActionService journalService;
+    private final InstitutSecurityService securityService;
+
+    // ═══════════════════════════════════════════════════════════
+    // CRÉATION
+    // ═══════════════════════════════════════════════════════════
 
     @Override
     @Transactional
-    public Annee_academique creer(String nom, LocalDate dateDebut, LocalDate dateFin, boolean active, Utilisateur acteur) {
+    public Annee_academique creer(String nom, LocalDate dateDebut, LocalDate dateFin,
+                                  boolean active, Utilisateur acteur) {
+        throw new UnsupportedOperationException("Utilisez creerAvecInstitut() avec un institutId");
+    }
 
+    @Transactional
+    public Annee_academique creerAvecInstitut(String nom, LocalDate dateDebut, LocalDate dateFin,
+                                              boolean active, Long institutId, Utilisateur acteur) {
         try {
-            if (anneeRepo.existsByNom(nom)) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("L'année académique " + nom + " existe déjà");
+            if (!securityService.canManageInstitut(acteur, institutId)) {
+                throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
+            }
+
+            Institut institut = institutRepo.findById(institutId)
+                    .orElseThrow(() -> new RuntimeException("Institut introuvable"));
+
+            if (anneeRepo.existsByNomAndInstitutId(nom, institutId)) {
+                throw new ANNEEACDEMIQUEEXISTEXCEPTION("L'année académique " + nom + " existe déjà pour cet institut");
             }
 
             if (dateDebut.isAfter(dateFin)) {
                 throw new ANNEEACDEMIQUEEXISTEXCEPTION("La date de début doit être antérieure à la date de fin");
             }
 
-            boolean overlap = anneeRepo.findAll().stream().anyMatch(annee ->
+            List<Annee_academique> anneesInstitut = anneeRepo.findByInstitutId(institutId);
+            boolean overlap = anneesInstitut.stream().anyMatch(annee ->
                     (dateDebut.isBefore(annee.getDateFin()) && dateFin.isAfter(annee.getDateDebut()))
             );
 
             if (overlap) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante");
+                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante pour cet institut");
             }
 
             Annee_academique annee = new Annee_academique();
@@ -51,10 +74,10 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             annee.setDateDebut(dateDebut);
             annee.setDateFin(dateFin);
             annee.setActive(active);
+            annee.setInstitut(institut);
 
             Annee_academique saved = anneeRepo.save(annee);
 
-            // ✅ Journalisation
             journalService.journaliserCreationAnnee(acteur, saved.getId(), saved.getNom());
 
             return saved;
@@ -70,22 +93,32 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // MODIFICATION
+    // ═══════════════════════════════════════════════════════════
+
     @Override
     @Transactional
-    public Annee_academique modifier(Long id, String nom, LocalDate dateDebut, LocalDate dateFin, boolean active, Utilisateur acteur) {
+    public Annee_academique modifier(Long id, String nom, LocalDate dateDebut, LocalDate dateFin,
+                                     boolean active, Utilisateur acteur) {
         try {
             Annee_academique annee = findById(id);
+
+            if (!securityService.canManageInstitut(acteur, annee.getInstitut().getId())) {
+                throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
+            }
 
             if (dateDebut.isAfter(dateFin)) {
                 throw new ANNEEACDEMIQUEEXISTEXCEPTION("La date de début doit être antérieure à la date de fin");
             }
 
-            boolean overlap = anneeRepo.findAll().stream()
+            List<Annee_academique> anneesInstitut = anneeRepo.findByInstitutId(annee.getInstitut().getId());
+            boolean overlap = anneesInstitut.stream()
                     .filter(a -> !a.getId().equals(id))
                     .anyMatch(a -> (dateDebut.isBefore(a.getDateFin()) && dateFin.isAfter(a.getDateDebut())));
 
             if (overlap) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante");
+                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante pour cet institut");
             }
 
             annee.setNom(nom);
@@ -95,7 +128,6 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
             Annee_academique saved = anneeRepo.save(annee);
 
-            // ✅ Journalisation
             journalService.journaliserModificationAnnee(acteur, saved.getId(), saved.getNom());
 
             return saved;
@@ -111,13 +143,22 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ACTIVATION
+    // ═══════════════════════════════════════════════════════════
+
     @Override
     @Transactional
     public Annee_academique activer(Long anneeId, Utilisateur acteur) {
         try {
             Annee_academique nouvelleAnnee = findById(anneeId);
+            Long institutId = nouvelleAnnee.getInstitut().getId();
 
-            anneeRepo.findByActiveTrue().ifPresent(ancienne -> {
+            if (!securityService.canManageInstitut(acteur, institutId)) {
+                throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
+            }
+
+            anneeRepo.findByInstitutIdAndActiveTrue(institutId).ifPresent(ancienne -> {
                 semestreRepo.findByAnneeAcademiqueIdAndActifTrue(ancienne.getId())
                         .ifPresent(semestre -> {
                             semestre.setActif(false);
@@ -130,7 +171,6 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             nouvelleAnnee.setActive(true);
             Annee_academique saved = anneeRepo.save(nouvelleAnnee);
 
-            // ✅ Journalisation
             journalService.journaliserActivationAnnee(acteur, saved.getId(), saved.getNom());
 
             return saved;
@@ -142,34 +182,99 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
         }
     }
 
+    @Transactional
+    @Override
+    public Annee_academique desactiver(Long anneeId, Utilisateur acteur) {
+        try {
+            Annee_academique anneeADesactiver = findById(anneeId);
+            Long institutId = anneeADesactiver.getInstitut().getId();
+
+            if (!securityService.canManageInstitut(acteur, institutId)) {
+                throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
+            }
+
+            anneeADesactiver.setActive(false);
+
+            semestreRepo.findByAnneeAcademiqueIdAndActifTrue(anneeId)
+                    .ifPresent(semestre -> {
+                        semestre.setActif(false);
+                        semestreRepo.save(semestre);
+                    });
+
+            Annee_academique saved = anneeRepo.save(anneeADesactiver);
+            journalService.journaliserDesactivationAnnee(acteur, saved.getId(), saved.getNom());
+
+            return saved;
+
+        } catch (AccessDeniedException e) {
+            // Laisser remonter sans journaliser dans une transaction mourante
+            throw e;
+        } catch (Exception e) {
+            journalService.journaliserEchec(acteur, TypeAction.ANNEE_ACADEMIQUE_DESACTIVEE,
+                    "Annee_academique", anneeId, e.getMessage());
+            throw new RuntimeException("Erreur lors de la désactivation de l'année académique", e);
+        }
+    }
+    // ═══════════════════════════════════════════════════════════
+    // RÉCUPÉRATION
+    // ═══════════════════════════════════════════════════════════
+
     @Override
     public Annee_academique getAnneeActive() {
-        return anneeRepo.findByActiveTrue()
-                .orElseThrow(() -> new ANNEACADEMIQUEACTIVER("Aucune année académique active"));
+        Long institutId = securityService.getInstitutIdCourant();
+        if (institutId == null) {
+            throw new RuntimeException("Veuillez sélectionner un institut");
+        }
+        return anneeRepo.findByInstitutIdAndActiveTrue(institutId)
+                .orElseThrow(() -> new ANNEACADEMIQUEACTIVER("Aucune année académique active pour cet institut"));
     }
 
     @Override
     public List<Annee_academique> getAll() {
-        return anneeRepo.findAllByOrderByNomDesc();
+        Long institutId = securityService.getInstitutIdCourant();
+        if (institutId == null) {
+            return anneeRepo.findAllByOrderByNomDesc();
+        }
+        return anneeRepo.findByInstitutIdOrderByNomDesc(institutId);
     }
 
     @Override
     public Annee_academique findById(Long id) {
-        return anneeRepo.findById(id)
+        Annee_academique annee = anneeRepo.findById(id)
                 .orElseThrow(() -> new ANNEACADEMIQUENOTFOUND("Année académique introuvable"));
+
+        if (!securityService.canAccessInstitut(annee.getInstitut().getId())) {
+            throw new AccessDeniedException("Vous n'avez pas accès à cette année académique");
+        }
+
+        return annee;
     }
+
+    @Override
+    public Annee_academique findEntityById(Long id) {
+        return findById(id);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SUPPRESSION
+    // ═══════════════════════════════════════════════════════════
 
     @Override
     @Transactional
     public void supprimer(Long anneeId, Utilisateur acteur) {
         try {
             Annee_academique annee = findById(anneeId);
+
+            if (!securityService.canManageInstitut(acteur, annee.getInstitut().getId())) {
+                throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
+            }
+
             if (annee.isActive()) {
                 throw new IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU("Impossible de supprimer l'année en cours");
             }
+
             anneeRepo.delete(annee);
 
-            // ✅ Journalisation
             journalService.journaliserSuppressionAnnee(acteur, anneeId, annee.getNom());
 
         } catch (IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU e) {
@@ -181,5 +286,24 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
                     "Annee_academique", anneeId, e.getMessage());
             throw new RuntimeException("Erreur lors de la suppression de l'année académique", e);
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES MULTI-INSTITUTS
+    // ═══════════════════════════════════════════════════════════
+
+    public List<Annee_academique> getByInstitut(Long institutId) {
+        if (!securityService.canAccessInstitut(institutId)) {
+            throw new AccessDeniedException("Vous n'avez pas accès à cet institut");
+        }
+        return anneeRepo.findByInstitutIdOrderByNomDesc(institutId);
+    }
+
+    public Annee_academique getAnneeActivePourInstitut(Long institutId) {
+        if (!securityService.canAccessInstitut(institutId)) {
+            throw new AccessDeniedException("Vous n'avez pas accès à cet institut");
+        }
+        return anneeRepo.findByInstitutIdAndActiveTrue(institutId)
+                .orElseThrow(() -> new ANNEACADEMIQUEACTIVER("Aucune année académique active pour cet institut"));
     }
 }

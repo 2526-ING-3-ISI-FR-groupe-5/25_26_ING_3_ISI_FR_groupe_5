@@ -16,6 +16,39 @@ public interface IJournalActionService {
     // Méthodes de base — à implémenter
     // ============================================
 
+
+
+    // ═══════════════════════════════════════════════════════════
+// APPELS - QR CODE / CODE PIN
+// ═══════════════════════════════════════════════════════════
+
+    default void journaliserGenerationCodePIN(Utilisateur auteur, Long sessionId, String code) {
+        journaliserSucces(auteur, TypeAction.CODE_PIN_GENERE,
+                "SessionAppel", sessionId,
+                "Code PIN généré : " + code);
+    }
+
+    default void journaliserGenerationQRCode(Utilisateur auteur, Long sessionId) {
+        journaliserSucces(auteur, TypeAction.QR_CODE_GENERE,
+                "SessionAppel", sessionId,
+                "QR Code généré pour la session d'appel");
+    }
+
+    default void journaliserValidationPresence(Utilisateur auteur, Long appelId, String description) {
+        journaliserSucces(auteur, TypeAction.PRESENCE_VALIDEE,
+                "Appels", appelId,
+                "Présence validée : " + description);
+    }
+
+
+
+
+// Dans IJournalActionService.java
+    void journaliserAppel(Utilisateur acteur, Long appelId, String description);
+    void journaliserJustificatif(Utilisateur acteur, Long justificatifId, TypeAction type, String description);
+
+
+
     void journaliser(
             Utilisateur utilisateur,
             TypeAction typeAction,
@@ -61,6 +94,54 @@ public interface IJournalActionService {
     List<JournalStatsResponse> getStatsByType();
     List<JournalEchecResponse> getStatsByEchecs();
     List<IpSuspecteResponse> getIpsSuspectes(LocalDateTime depuis, Long seuil);
+
+
+
+    // ═══════════════════════════════════════════════════════════
+    // APPELS (méthodes default)
+    // ═══════════════════════════════════════════════════════════
+
+
+
+    default void journaliserClotureAppel(Utilisateur auteur, Long appelId, int nbPresents, int nbAbsents) {
+        journaliserSucces(auteur, TypeAction.APPEL_CLOTURE,
+                "Appels", appelId,
+                String.format("Appel clôturé : %d présents, %d absents", nbPresents, nbAbsents));
+    }
+
+    default void journaliserEchecAppel(Utilisateur auteur, Long appelId, String erreur) {
+        journaliserEchec(auteur, TypeAction.APPEL_LANCE,
+                "Appels", appelId,
+                "Échec de l'appel : " + erreur);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // JUSTIFICATIFS (méthodes default)
+    // ═══════════════════════════════════════════════════════════
+
+
+
+    default void journaliserValidationJustificatif(Utilisateur auteur, Long justificatifId) {
+        journaliserSucces(auteur, TypeAction.JUSTIFICATIF_VALIDE,
+                "Justificatif", justificatifId,
+                "Justificatif validé");
+    }
+
+
+
+    default void journaliserSuppressionJustificatif(Utilisateur auteur, Long justificatifId) {
+        journaliserSucces(auteur, TypeAction.JUSTIFICATIF_SUPPRIME,
+                "Justificatif", justificatifId,
+                "Justificatif supprimé");
+    }
+
+    default void journaliserEchecJustificatif(Utilisateur auteur, Long justificatifId, TypeAction type, String erreur) {
+        journaliserEchec(auteur, type,
+                "Justificatif", justificatifId,
+                "Échec : " + erreur);
+    }
+
+
 
     // ============================================
     // ✅ Méthodes raccourcies — Authentification
@@ -489,4 +570,10 @@ public interface IJournalActionService {
         journaliserSucces(acteur, TypeAction.SPECIALITE_SUPPRIMEE,
                 "Specialite", id, "Spécialité supprimée : " + nom);
     }
-}
+
+
+    default  void journaliserDesactivationAnnee(Utilisateur acteur, Long id, String nom){
+        journaliserSucces(acteur, TypeAction.ANNEE_ACADEMIQUE_DESACTIVEE,
+                "Annee_academique", id,
+                "Année académique désactivée : " + nom);
+    }};

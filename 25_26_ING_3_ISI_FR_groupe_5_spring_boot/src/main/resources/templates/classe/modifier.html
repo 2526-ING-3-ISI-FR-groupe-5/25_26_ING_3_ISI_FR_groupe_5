@@ -1,10 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Modifier classe — CarnetRouge</title>
 </head>
 <body>
 
+<div layout:fragment="content">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <div class="flex items-center gap-4 mb-4">
+                <a th:href="@{/enseignant/classes}" class="btn btn-ghost btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour
+                </a>
+            </div>
+            <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                Modifier <span class="text-primary italic">la classe</span>
+            </h1>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                Modifiez les informations de la classe <span th:text="${classe.nom}" class="font-semibold"></span>
+            </p>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 sm:p-8">
+            <form th:action="@{/enseignant/classes/{id}/modifier(id=${classe.id})}" th:object="${form}" method="post" class="space-y-6">
+
+                <!-- Niveau -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Niveau <span class="text-red-400">*</span></span>
+                    </label>
+                    <select th:field="*{niveauId}" class="select select-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl" required>
+                        <option value="" disabled>Sélectionner un niveau</option>
+                        <option th:each="niveau : ${niveaux}" th:value="${niveau.id}" th:text="${niveau.nom}"></option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('niveauId')}" th:errors="*{niveauId}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Nom -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Nom de la classe <span class="text-red-400">*</span></span>
+                    </label>
+                    <input type="text" th:field="*{nom}" placeholder="Ex: ING4 ISI FR"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl" required/>
+                    <p th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 pt-4">
+                    <a th:href="@{/enseignant/classes}" class="flex-1 btn btn-ghost border border-white/10 text-gray-400">
+                        Annuler
+                    </a>
+                    <button type="submit" class="flex-1 btn bg-primary hover:bg-primaryhover border-none text-white">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

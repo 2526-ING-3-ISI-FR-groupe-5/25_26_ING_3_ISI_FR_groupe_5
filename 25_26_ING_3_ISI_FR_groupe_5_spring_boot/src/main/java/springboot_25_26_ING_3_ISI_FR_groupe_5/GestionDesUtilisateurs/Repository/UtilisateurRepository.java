@@ -30,9 +30,38 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     );
 
     Optional<Utilisateur> findByEmail(String email);
+
     boolean existsByEmail(String email);
+
     Optional<Utilisateur> findByEmailAndActiveTrue(String email);
 
     @Query("SELECT u FROM Utilisateur u JOIN u.roles r WHERE r.nom = :roleNom")
-    List<Utilisateur> findByRole(@Param("roleName") String roleName);
+    List<Utilisateur> findByRole(@Param("roleNom") String roleNom);
+
+    // 🆕 Pour le multi-instituts
+    Page<Utilisateur> findByInstitutId(Long institutId, Pageable pageable);
+
+    // 🆕 Recherche par institut
+    @Query("""
+        SELECT u FROM Utilisateur u 
+        WHERE (:institutId IS NULL OR u.institut.id = :institutId)
+        AND (:active IS NULL OR u.active = :active)
+    """)
+    Page<Utilisateur> findAllFiltre(
+            @Param("institutId") Long institutId,
+            @Param("active") Boolean active,
+            Pageable pageable);
+
+    // 🆕 Recherche globale avec filtre institut
+    @Query("""
+        SELECT u FROM Utilisateur u 
+        WHERE (:institutId IS NULL OR u.institut.id = :institutId)
+        AND (LOWER(u.nom) LIKE LOWER(CONCAT('%', :recherche, '%')) 
+             OR LOWER(u.prenom) LIKE LOWER(CONCAT('%', :recherche, '%'))
+             OR LOWER(u.email) LIKE LOWER(CONCAT('%', :recherche, '%')))
+    """)
+    Page<Utilisateur> search(
+            @Param("institutId") Long institutId,
+            @Param("recherche") String recherche,
+            Pageable pageable);
 }

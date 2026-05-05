@@ -21,7 +21,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 @Controller
 @RequestMapping("/assistants")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole( 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
 public class AssistantController {
 
     private final AssistantService assistantService;

@@ -14,14 +14,15 @@ import java.util.Set;
 @Setter
 public class PlageHoraireRecurrenceRequest {
 
+    /**
+     * Remplace ueId — on passe par ProgrammationUE qui contient
+     * déjà l'UE, le semestre, la classe et les enseignants assignés.
+     */
     @NotNull(message = "La programmation UE est obligatoire")
     private Long programmationUEId;
 
     @NotNull(message = "La classe est obligatoire")
     private Long classeId;
-
-    @NotNull(message = "Le semestre est obligatoire")
-    private Long semestreId;
 
     @NotNull(message = "L'heure de début est obligatoire")
     @DateTimeFormat(pattern = "HH:mm")
@@ -34,8 +35,11 @@ public class PlageHoraireRecurrenceRequest {
     private String salle;
     private String couleur;
 
+    /** Enseignant ponctuel — si null, ceux de la ProgrammationUE sont utilisés. */
+    private Long enseignantId;
+
     @NotNull(message = "Les jours de la semaine sont obligatoires")
-    private Set<DayOfWeek> jours;  // ex: [LUNDI, MARDI, MERCREDI, JEUDI, VENDREDI]
+    private Set<DayOfWeek> jours;
 
     @NotNull(message = "La date de début est obligatoire")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -44,6 +48,4 @@ public class PlageHoraireRecurrenceRequest {
     @NotNull(message = "La date de fin est obligatoire")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFin;
-
-    private Long enseignantId;  // Optionnel
 }

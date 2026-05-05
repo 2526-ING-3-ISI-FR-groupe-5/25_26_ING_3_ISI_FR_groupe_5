@@ -2,10 +2,12 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Auditable;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.PlageHoraire;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.ProgrammationUE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,15 +18,39 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// ✅ Contrainte unicité nom par niveau
+@Table(
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_classe_nom_niveau",
+                columnNames = {"nom", "niveau_id"}
+        )
+)
+// ✅ Nécessaire pour Auditable
+@EntityListeners(AuditingEntityListener.class)
 public class Classe extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ============================================
+    // Attributs propres
+    // ============================================
+
+    @Column(nullable = false)
     private String nom;
 
-    // ========== RELATIONS ==========
+    // ✅ Capacité max de la classe
+    private Integer capaciteMax;
+
+    // ✅ Statut actif/inactif
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
+
+    // ============================================
+    // Relations
+    // ============================================
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "niveau_id", nullable = false)
@@ -42,7 +68,9 @@ public class Classe extends Auditable {
     @Builder.Default
     private Set<ProgrammationUE> programmations = new HashSet<>();
 
-    // ========== MÉTHODES UTILITAIRES ==========
+    // ============================================
+    // Helpers — navigation académique
+    // ============================================
 
     public Specialite getSpecialite() {
         return niveau != null ? niveau.getSpecialite() : null;
@@ -53,19 +81,10 @@ public class Classe extends Auditable {
         return spec != null ? spec.getNom() : null;
     }
 
-    public String getSpecialiteCode() {
-        Specialite spec = getSpecialite();
-        return spec != null ? spec.getCode() : null;
-    }
-
     public Filiere getFiliere() {
-        return niveau != null && niveau.getSpecialite() != null
-                ? niveau.getSpecialite().getFiliere() : null;
-    }
-
-    public String getFiliereNom() {
-        Filiere filiere = getFiliere();
-        return filiere != null ? filiere.getNom() : null;
+        // ✅ Via spécialité — chemin correct
+        Specialite spec = getSpecialite();
+        return spec != null ? spec.getFiliere() : null;
     }
 
     public Cycle getCycle() {
@@ -73,13 +92,57 @@ public class Classe extends Auditable {
         return filiere != null ? filiere.getCycle() : null;
     }
 
-    public String getCycleNom() {
-        Cycle cycle = getCycle();
-        return cycle != null && cycle.getTypeCycle() != null
-                ? cycle.getTypeCycle().getLibelle() : null;
+    // ============================================
+    // Helpers — multi-instituts
+    // ✅ Chemin correct : niveau → specialite → filiere → ecole → institut
+    // ============================================
+
+    public Institut getInstitut() {
+        Filiere filiere = getFiliere();
+        if (filiere != null && filiere.getEcole() != null) {
+            return filiere.getEcole().getInstitut();
+        }
+        return null;
     }
 
-    // Helpers pour PlageHoraire
+    public Long getInstitutId() {
+        Institut institut = getInstitut();
+        return institut != null ? institut.getId() : null;
+    }
+
+    public String getInstitutNom() {
+        Institut institut = getInstitut();
+        return institut != null ? institut.getNom() : null;
+    }
+
+    // ============================================
+    // Helpers — étudiants
+    // ============================================
+
+    // ✅ Compte uniquement les inscriptions actives
+    public int getNombreEtudiants() {
+        if (inscriptions == null) return 0;
+        return (int) inscriptions.stream()
+                .filter(i -> i.getStatut() == StatutInscription.ACTIF
+                        || i.getStatut() == StatutInscription.VALIDE)
+                .count();
+    }
+
+    // ✅ Total toutes inscriptions
+    public int getNombreTotalInscriptions() {
+        return inscriptions != null ? inscriptions.size() : 0;
+    }
+
+    // ✅ Vérifie si la classe est pleine
+    public boolean isPleine() {
+        return capaciteMax != null
+                && getNombreEtudiants() >= capaciteMax;
+    }
+
+    // ============================================
+    // Helpers — ajout/suppression
+    // ============================================
+
     public void addPlageHoraire(PlageHoraire plageHoraire) {
         plagesHoraires.add(plageHoraire);
         plageHoraire.setClasse(this);
@@ -90,7 +153,6 @@ public class Classe extends Auditable {
         plageHoraire.setClasse(null);
     }
 
-    // Helpers pour Inscription
     public void addInscription(Inscription inscription) {
         inscriptions.add(inscription);
         inscription.setClasse(this);
@@ -101,7 +163,6 @@ public class Classe extends Auditable {
         inscription.setClasse(null);
     }
 
-    // Helpers pour ProgrammationUE
     public void addProgrammation(ProgrammationUE programmation) {
         programmations.add(programmation);
         programmation.setClasse(this);

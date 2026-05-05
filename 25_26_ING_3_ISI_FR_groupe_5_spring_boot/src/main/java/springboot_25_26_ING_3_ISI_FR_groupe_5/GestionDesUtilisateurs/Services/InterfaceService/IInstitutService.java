@@ -18,6 +18,7 @@ public interface IInstitutService {
 
     Page<Institut> getAllPaginated(int page, int size, String search);
 
+
     List<Institut> getByVille(String ville);
 
     void supprimer(Long id, Utilisateur acteur);

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Modifier étudiant — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <div class="flex items-center gap-4 mb-4">
+                <a th:href="@{/etudiants/{id}(id=${etudiant.id})}" class="btn btn-ghost btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour
+                </a>
+            </div>
+            <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                Modifier <span class="text-primary italic">l'étudiant</span>
+            </h1>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                Modifiez les informations de <span th:text="${etudiant.prenom + ' ' + etudiant.nom}" class="font-semibold"></span>
+            </p>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 sm:p-8">
+            <form th:action="@{/etudiants/{id}/modifier(id=${etudiant.id})}" th:object="${form}" method="post" class="space-y-6">
+
+                <!-- Nom -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Nom <span class="text-red-400">*</span></span>
+                    </label>
+                    <input type="text" th:field="*{nom}" placeholder="Nom de l'étudiant"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl" required/>
+                    <p th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Prénom -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Prénom <span class="text-red-400">*</span></span>
+                    </label>
+                    <input type="text" th:field="*{prenom}" placeholder="Prénom de l'étudiant"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl" required/>
+                    <p th:if="${#fields.hasErrors('prenom')}" th:errors="*{prenom}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Email -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Email <span class="text-red-400">*</span></span>
+                    </label>
+                    <input type="email" th:field="*{email}" placeholder="email@exemple.com"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl" required/>
+                    <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Téléphone -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Téléphone</span>
+                    </label>
+                    <input type="tel" th:field="*{telephone}" placeholder="+225 XX XX XX XX"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl"/>
+                    <p th:if="${#fields.hasErrors('telephone')}" th:errors="*{telephone}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Date de naissance -->
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-gray-400 text-xs uppercase tracking-wide">Date de naissance</span>
+                    </label>
+                    <input type="date" th:field="*{dateNaissance}"
+                           class="input input-bordered w-full bg-bgsurface border-white/10 text-gray-200 text-sm rounded-xl"/>
+                    <p th:if="${#fields.hasErrors('dateNaissance')}" th:errors="*{dateNaissance}" class="text-red-500 text-xs mt-1"></p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 pt-4">
+                    <a th:href="@{/etudiants/{id}(id=${etudiant.id})}" class="flex-1 btn btn-ghost border border-white/10 text-gray-400">
+                        Annuler
+                    </a>
+                    <button type="submit" class="flex-1 btn bg-primary hover:bg-primaryhover border-none text-white">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

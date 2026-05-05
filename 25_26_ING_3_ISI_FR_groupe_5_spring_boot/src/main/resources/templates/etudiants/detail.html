@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Détails étudiant — CarnetRouge</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <div class="flex items-center gap-4 mb-4">
+                <a th:href="@{/etudiants}" class="btn btn-ghost btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour
+                </a>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="text-xl font-semibold text-primary" th:text="${#strings.substring(etudiant.prenom, 0, 1) + #strings.substring(etudiant.nom, 0, 1)}"></span>
+                </div>
+                <div>
+                    <h1 class="font-serif text-2xl text-gray-900 dark:text-gray-100" th:text="${etudiant.prenom + ' ' + etudiant.nom}"></h1>
+                    <p class="text-gray-500 dark:text-gray-400" th:text="${etudiant.email}"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${succes}" class="mb-6 alert alert-success shadow-lg">
+            <span th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 alert alert-error shadow-lg">
+            <span th:text="${erreur}"></span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Informations principales -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Informations personnelles -->
+                <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informations personnelles</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Nom</label>
+                            <p class="text-gray-900 dark:text-white font-medium" th:text="${etudiant.nom}"></p>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Prénom</label>
+                            <p class="text-gray-900 dark:text-white font-medium" th:text="${etudiant.prenom}"></p>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Email</label>
+                            <p class="text-gray-600 dark:text-gray-400" th:text="${etudiant.email}"></p>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Téléphone</label>
+                            <p class="text-gray-600 dark:text-gray-400" th:text="${etudiant.telephone ?: '—'}"></p>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Date de naissance</label>
+                            <p class="text-gray-600 dark:text-gray-400" th:if="${etudiant.dateNaissance}" th:text="${#temporals.format(etudiant.dateNaissance, 'dd/MM/yyyy')}"></p>
+                            <p class="text-gray-400" th:unless="${etudiant.dateNaissance}">—</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Statut</label>
+                            <span th:if="${etudiant.actif}" class="badge badge-success">Actif</span>
+                            <span th:unless="${etudiant.actif}" class="badge badge-ghost text-gray-500">Inactif</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historique des inscriptions -->
+                <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Historique des inscriptions</h2>
+                    <div class="space-y-3">
+                        <div th:each="inscription : ${historique}" class="flex items-center justify-between p-3 bg-gray-50 dark:bg-bgsurface rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white" th:text="${inscription.classeNom}"></p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400" th:text="${inscription.anneeNom}"></p>
+                            </div>
+                            <span th:if="${inscription.actif}" class="badge badge-success">En cours</span>
+                            <span th:unless="${inscription.actif}" class="badge badge-ghost text-gray-500">Terminée</span>
+                        </div>
+                        <div th:if="${historique.empty}" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <p>Aucune inscription trouvée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-6">
+
+                <!-- Actions rapides -->
+                <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Actions</h2>
+                    <div class="space-y-3">
+                        <a th:href="@{/etudiants/{id}/modifier(id=${etudiant.id})}"
+                           class="w-full btn btn-outline btn-primary">
+                            Modifier les informations
+                        </a>
+
+                        <form th:action="@{/etudiants/{id}/toggle(id=${etudiant.id})}" method="post" class="w-full">
+                            <button type="submit"
+                                    th:classappend="${etudiant.actif} ? 'btn btn-outline btn-warning' : 'btn btn-outline btn-success'"
+                                    class="w-full">
+                                <span th:if="${etudiant.actif}">Désactiver le compte</span>
+                                <span th:unless="${etudiant.actif}">Activer le compte</span>
+                            </button>
+                        </form>
+
+                        <form th:action="@{/etudiants/{id}/reset-password(id=${etudiant.id})}" method="post" class="w-full">
+                            <button type="submit" class="w-full btn btn-outline btn-secondary">
+                                Réinitialiser le mot de passe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Statistiques</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Total inscriptions</span>
+                            <span class="font-semibold text-gray-900 dark:text-white" th:text="${historique.size()}"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">Inscriptions actives</span>
+                            <span class="font-semibold text-green-600" th:text="${#lists.size(historique.?[actif])}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

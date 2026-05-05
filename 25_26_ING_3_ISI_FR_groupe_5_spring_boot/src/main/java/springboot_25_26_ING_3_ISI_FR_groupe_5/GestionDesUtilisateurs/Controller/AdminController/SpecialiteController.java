@@ -23,7 +23,8 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/specialites")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
+
 public class SpecialiteController {
 
     private final SpecialiteService specialiteService;

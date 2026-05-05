@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Détail justificatif — CarnetRouge</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- Retour -->
+        <div class="mb-6">
+            <a th:href="@{/justificatifs/assistant}"
+               class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour à la liste
+            </a>
+        </div>
+
+        <!-- En-tête -->
+        <div class="flex items-start justify-between mb-8">
+            <div>
+                <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                    Justificatif <span class="text-primary italic">#<span th:text="${justificatif.id}"></span></span>
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Soumis le <span th:text="${#temporals.format(justificatif.dateSoumission, 'dd/MM/yyyy à HH:mm')}"></span>
+                </p>
+            </div>
+            <!-- Badge statut -->
+            <span th:switch="${justificatif.statut.name()}">
+                <span th:case="'EN_ATTENTE'"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    En attente
+                </span>
+                <span th:case="'VALIDE'"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    Validé
+                </span>
+                <span th:case="'REFUSE'"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                    Refusé
+                </span>
+            </span>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${successMessage}" class="mb-6 alert alert-success shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="mb-6 alert alert-error shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Infos étudiant -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 mb-4">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Étudiant</h2>
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg"
+                     th:text="${#strings.substring(justificatif.etudiant.prenom, 0, 1)}">A</div>
+                <div>
+                    <div class="text-base font-semibold text-gray-900 dark:text-white"
+                         th:text="${justificatif.etudiant.prenom} + ' ' + ${justificatif.etudiant.nom}"></div>
+                    <div class="text-sm text-gray-400"
+                         th:text="${justificatif.etudiant.matricule}"></div>
+                    <div class="text-sm text-gray-400"
+                         th:text="${justificatif.etudiant.email}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détails du justificatif -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 mb-4">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Détails</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Type</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${justificatif.type}"></dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Nombre d'heures</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${justificatif.nombreHeures != null ? justificatif.nombreHeures + ' h' : '—'}"></dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Début de l'absence</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${#temporals.format(justificatif.dateDebutAbsence, 'dd/MM/yyyy HH:mm')}"></dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Fin de l'absence</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${#temporals.format(justificatif.dateFinAbsence, 'dd/MM/yyyy HH:mm')}"></dd>
+                </div>
+                <div class="sm:col-span-2">
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Motif</dt>
+                    <dd class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"
+                        th:text="${justificatif.contenu}"></dd>
+                </div>
+                <div th:if="${justificatif.fichierUrl != null}" class="sm:col-span-2">
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Document joint</dt>
+                    <dd>
+                        <a th:href="${justificatif.fichierUrl}" target="_blank"
+                           class="inline-flex items-center gap-2 text-primary hover:underline text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                            </svg>
+                            Consulter le document
+                        </a>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Infos validation (si déjà traité) -->
+        <div th:if="${justificatif.statut.name() != 'EN_ATTENTE'}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 mb-4">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Décision</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Traité par</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${justificatif.validateur != null ? justificatif.validateur.prenom + ' ' + justificatif.validateur.nom : '—'}"></dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Date de décision</dt>
+                    <dd class="text-sm font-medium text-gray-900 dark:text-white"
+                        th:text="${justificatif.dateValidation != null ? #temporals.format(justificatif.dateValidation, 'dd/MM/yyyy HH:mm') : '—'}"></dd>
+                </div>
+                <div th:if="${justificatif.commentaireValidation != null}" class="sm:col-span-2">
+                    <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Commentaire</dt>
+                    <dd class="text-sm text-gray-700 dark:text-gray-300"
+                        th:text="${justificatif.commentaireValidation}"></dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Actions valider / refuser (seulement si EN_ATTENTE) -->
+        <div th:if="${justificatif.statut.name() == 'EN_ATTENTE'}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+                Traiter la demande
+            </h2>
+
+            <!-- Commentaire commun -->
+            <div class="form-control w-full mb-4">
+                <label class="label">
+                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                        Commentaire <span class="text-gray-400 font-normal">(optionnel)</span>
+                    </span>
+                </label>
+                <textarea id="commentaire" rows="3"
+                          placeholder="Motif de la décision..."
+                          class="textarea w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 resize-none"></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <!-- Refuser -->
+                <form th:action="@{/justificatifs/assistant/{id}/refuser(id=${justificatif.id})}"
+                      method="post" class="flex-1" id="form-refuser">
+                    <input type="hidden" name="commentaire" id="commentaire-refus">
+                    <button type="submit"
+                            onclick="document.getElementById('commentaire-refus').value = document.getElementById('commentaire').value"
+                            class="btn w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Refuser
+                    </button>
+                </form>
+
+                <!-- Valider -->
+                <form th:action="@{/justificatifs/assistant/{id}/valider(id=${justificatif.id})}"
+                      method="post" class="flex-1">
+                    <input type="hidden" name="commentaire" id="commentaire-validation">
+                    <button type="submit"
+                            onclick="document.getElementById('commentaire-validation').value = document.getElementById('commentaire').value"
+                            class="btn w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Valider
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

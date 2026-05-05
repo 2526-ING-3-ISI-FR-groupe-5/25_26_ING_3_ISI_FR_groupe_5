@@ -13,16 +13,22 @@ import java.util.Optional;
 
 public interface EcoleRepository extends JpaRepository<Ecole, Long> {
 
+    // Recherche par l'objet Institut complet
     List<Ecole> findByInstitut(Institut institut);
 
-    List<Ecole> findByInstitutId(Long institutId);
+    // ✅ Navigation via l'objet institut puis son id (avec underscore)
+    List<Ecole> findByInstitut_Id(Long institutId);
 
-    Optional<Ecole> findByNomAndInstitutId(String nom, Long institutId);
+    // ✅ Navigation via l'objet institut puis son id (avec underscore)
+    Optional<Ecole> findByNomAndInstitut_Id(String nom, Long institutId);
 
-    boolean existsByNomAndInstitutId(String nom, Long institutId);
+    // ✅ Navigation via l'objet institut puis son id (avec underscore)
+    boolean existsByNomAndInstitut_Id(String nom, Long institutId);
 
-    Page<Ecole> findByInstitutId(Long institutId, Pageable pageable);
+    // ✅ Navigation via l'objet institut puis son id (avec underscore)
+    Page<Ecole> findByInstitut_Id(Long institutId, Pageable pageable);
 
+    // Requête de recherche
     @Query("SELECT e FROM Ecole e WHERE " +
             "LOWER(e.nom) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%'))")

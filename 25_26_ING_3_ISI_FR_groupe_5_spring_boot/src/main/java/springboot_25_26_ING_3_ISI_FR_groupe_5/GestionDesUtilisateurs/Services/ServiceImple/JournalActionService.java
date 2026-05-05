@@ -1,10 +1,12 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple;
-
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -34,6 +36,69 @@ public class JournalActionService implements IJournalActionService {
     // Journalisation principale
     // ============================================
 
+// ═══════════════════════════════════════════════════════════
+// APPELS (implémentation dans le service)
+// ═══════════════════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public void journaliserAppel(Utilisateur acteur, Long appelId, String description) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId, description, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserLancementAppel(Utilisateur acteur, Long appelId, String plageInfo) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
+                "Appel lancé pour : " + plageInfo, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserClotureAppel(Utilisateur acteur, Long appelId, int nbPresents, int nbAbsents) {
+        journaliser(acteur, TypeAction.APPEL_CLOTURE, "Appels", appelId,
+                String.format("Appel clôturé : %d présents, %d absents", nbPresents, nbAbsents),
+                StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserEchecAppel(Utilisateur acteur, Long appelId, String erreur) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
+                "Échec de l'appel : " + erreur, StatutAction.ECHEC);
+    }
+
+// ═══════════════════════════════════════════════════════════
+// JUSTIFICATIFS (implémentation dans le service)
+// ═══════════════════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public void journaliserJustificatif(Utilisateur acteur, Long justificatifId, TypeAction type, String description) {
+        journaliser(acteur, type, "Justificatif", justificatifId, description, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserSoumissionJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_SOUMIS, "Justificatif", justificatifId,
+                "Justificatif soumis : " + motif, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserValidationJustificatif(Utilisateur acteur, Long justificatifId) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_VALIDE, "Justificatif", justificatifId,
+                "Justificatif validé", StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserRefusJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_REFUSE, "Justificatif", justificatifId,
+                "Justificatif refusé : " + motif, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserSuppressionJustificatif(Utilisateur acteur, Long justificatifId) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_SUPPRIME, "Justificatif", justificatifId,
+                "Justificatif supprimé", StatutAction.SUCCES);
+    }
+
     @Override
     @Transactional
     public void journaliser(
@@ -50,6 +115,7 @@ public class JournalActionService implements IJournalActionService {
                     .typeAction(typeAction)
                     .entiteConcernee(entiteConcernee)
                     .entiteId(entiteId)
+                    .institut(utilisateur.getInstitut())
                     .description(description)
                     .adresseIp(getClientIp())
                     .navigateur(getUserAgent())
@@ -78,16 +144,31 @@ public class JournalActionService implements IJournalActionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void journaliserEchec(
             Utilisateur utilisateur,
             TypeAction typeAction,
             String entiteConcernee,
             Long entiteId,
             String description) {
+        try {
+            JournalAction journal = JournalAction.builder()
+                    .utilisateur(utilisateur)
+                    .typeAction(typeAction)
+                    .entiteConcernee(entiteConcernee)
+                    .entiteId(entiteId)
+                    .institut(utilisateur.getInstitut())
+                    .description(description)
+                    .adresseIp(getClientIp())
+                    .navigateur(getUserAgent())
+                    .statut(StatutAction.ECHEC)  // ← statut forcé à ECHEC
+                    .build();
 
-        journaliser(utilisateur, typeAction, entiteConcernee,
-                entiteId, description, StatutAction.ECHEC);
+            journalActionRepository.save(journal);
+
+        } catch (Exception e) {
+            log.error("Erreur journalisation échec : {}", e.getMessage());
+        }
     }
 
     // ============================================
@@ -138,9 +219,10 @@ public class JournalActionService implements IJournalActionService {
             );
         }
 
+        // ✅ Ajout de null comme premier paramètre (institutId)
         return journalActionRepository
-                .search(utilisateurId, typeAction, statut, debut, fin, pageable)
-                .map(journalActionMapper::toResponse); // ✅ map → DTO
+                .search(null, utilisateurId, typeAction, statut, debut, fin, pageable)
+                .map(journalActionMapper::toResponse);
     }
 
     // ============================================
@@ -221,4 +303,26 @@ public class JournalActionService implements IJournalActionService {
             return "UNKNOWN";
         }
     }
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void journaliserDesactivationAnnee(Utilisateur acteur, Long anneeId, String nom) {
+        try {
+            JournalAction journal = JournalAction.builder()
+                    .utilisateur(acteur)
+                    .typeAction(TypeAction.ANNEE_ACADEMIQUE_DESACTIVEE)
+                    .entiteConcernee("Annee_academique")
+                    .entiteId(anneeId)
+                    .institut(acteur.getInstitut())
+                    .description("Année " + nom + " désactivée")
+                    .adresseIp(getClientIp())
+                    .navigateur(getUserAgent())
+                    .statut(StatutAction.SUCCES)
+                    .build();
+
+            journalActionRepository.save(journal);
+        } catch (Exception e) {
+            log.error("Erreur journalisation désactivation année : {}", e.getMessage());
+        }
+    }
+
 }

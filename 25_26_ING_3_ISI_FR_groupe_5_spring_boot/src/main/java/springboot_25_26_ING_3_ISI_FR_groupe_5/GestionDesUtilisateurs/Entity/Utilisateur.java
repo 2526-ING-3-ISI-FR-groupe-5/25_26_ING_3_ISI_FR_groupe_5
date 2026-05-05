@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Institut;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -81,9 +82,6 @@ public abstract class Utilisateur implements UserDetails {
     protected String codePostal;
     protected String pays;
 
-    // ============================================
-    // Audit automatique via AuditingEntityListener
-    // ============================================
 
     @CreatedDate
     @Column(updatable = false, nullable = false)
@@ -116,12 +114,9 @@ public abstract class Utilisateur implements UserDetails {
     @Builder.Default
     protected Set<Role> roles = new HashSet<>();
 
-    /*
-     * ❌ SUPPRIMÉ — viole SRP, LSP, ISP
-     * EnseignantInfo, EtudiantInfo, AssistantInfo, SurveillantInfo
-     * n'ont pas leur place dans la classe mère.
-     * Chaque classe fille porte ses propres attributs.
-     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institut_id")
+    private Institut institut;  // 🆕 Un seul institut par utilisateur
 
     // ============================================
     // Méthodes utilitaires

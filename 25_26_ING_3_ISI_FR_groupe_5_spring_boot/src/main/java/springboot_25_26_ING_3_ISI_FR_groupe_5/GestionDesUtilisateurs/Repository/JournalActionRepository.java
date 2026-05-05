@@ -10,7 +10,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Jour
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +17,7 @@ import java.util.List;
 public interface JournalActionRepository extends JpaRepository<JournalAction, Long> {
 
     // ============================================
-    // Recherches simples
+    // RECHERCHES SIMPLES
     // ============================================
 
     Page<JournalAction> findByUtilisateurId(Long utilisateurId, Pageable pageable);
@@ -28,14 +27,14 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
     Page<JournalAction> findByEntiteConcerneeAndEntiteId(String entiteConcernee, Long entiteId, Pageable pageable);
 
     // ============================================
-    // Recherches par période
+    // RECHERCHES PAR PÉRIODE
     // ============================================
 
     Page<JournalAction> findByDateActionBetween(LocalDateTime debut, LocalDateTime fin, Pageable pageable);
     Page<JournalAction> findByUtilisateurIdAndDateActionBetween(Long utilisateurId, LocalDateTime debut, LocalDateTime fin, Pageable pageable);
 
     // ============================================
-    // Recherches combinées simples
+    // RECHERCHES COMBINÉES
     // ============================================
 
     Page<JournalAction> findByUtilisateurIdAndTypeAction(Long utilisateurId, TypeAction typeAction, Pageable pageable);
@@ -43,19 +42,33 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
     Page<JournalAction> findByTypeActionAndStatut(TypeAction typeAction, StatutAction statut, Pageable pageable);
 
     // ============================================
-    // Recherche avancée — TOUS les critères (corrigée)
+    // 🆕 RECHERCHES PAR INSTITUT
+    // ============================================
+
+    Page<JournalAction> findByInstitutId(Long institutId, Pageable pageable);
+
+    Page<JournalAction> findByInstitutIdAndTypeAction(Long institutId, TypeAction typeAction, Pageable pageable);
+
+    Page<JournalAction> findByInstitutIdAndStatut(Long institutId, StatutAction statut, Pageable pageable);
+
+    Page<JournalAction> findByInstitutIdAndDateActionBetween(Long institutId, LocalDateTime debut, LocalDateTime fin, Pageable pageable);
+
+    // ============================================
+    // RECHERCHE AVANCÉE (avec institut)
     // ============================================
 
     @Query("""
         SELECT j FROM JournalAction j
-        WHERE (COALESCE(:utilisateurId, -1) = -1 OR j.utilisateur.id = :utilisateurId)
-        AND (COALESCE(:typeAction, '') = '' OR j.typeAction = :typeAction)
-        AND (COALESCE(:statut, '') = '' OR j.statut = :statut)
-        AND (COALESCE(:debut, NULL) IS NULL OR j.dateAction >= :debut)
-        AND (COALESCE(:fin, NULL) IS NULL OR j.dateAction <= :fin)
+        WHERE (:institutId IS NULL OR j.institut.id = :institutId)
+        AND (:utilisateurId IS NULL OR j.utilisateur.id = :utilisateurId)
+        AND (:typeAction IS NULL OR j.typeAction = :typeAction)
+        AND (:statut IS NULL OR j.statut = :statut)
+        AND (:debut IS NULL OR j.dateAction >= :debut)
+        AND (:fin IS NULL OR j.dateAction <= :fin)
         ORDER BY j.dateAction DESC
     """)
     Page<JournalAction> search(
+            @Param("institutId") Long institutId,
             @Param("utilisateurId") Long utilisateurId,
             @Param("typeAction") TypeAction typeAction,
             @Param("statut") StatutAction statut,
@@ -65,11 +78,18 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
     );
 
     // ============================================
-    // Statistiques
+    // STATISTIQUES
     // ============================================
 
     @Query("SELECT j.typeAction, COUNT(j) FROM JournalAction j GROUP BY j.typeAction ORDER BY COUNT(j) DESC")
     List<Object[]> countByTypeAction();
+
+    @Query("""
+        SELECT j.typeAction, COUNT(j) FROM JournalAction j 
+        WHERE j.institut.id = :institutId 
+        GROUP BY j.typeAction ORDER BY COUNT(j) DESC
+    """)
+    List<Object[]> countByTypeActionAndInstitut(@Param("institutId") Long institutId);
 
     @Query("""
         SELECT j.utilisateur.id, j.utilisateur.nom, j.utilisateur.prenom, COUNT(j) 
@@ -79,6 +99,15 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
         ORDER BY COUNT(j) DESC
     """)
     List<Object[]> countEchecByUtilisateur();
+
+    @Query("""
+        SELECT j.utilisateur.id, j.utilisateur.nom, j.utilisateur.prenom, COUNT(j) 
+        FROM JournalAction j 
+        WHERE j.statut = 'ECHEC' AND j.institut.id = :institutId 
+        GROUP BY j.utilisateur.id, j.utilisateur.nom, j.utilisateur.prenom 
+        ORDER BY COUNT(j) DESC
+    """)
+    List<Object[]> countEchecByUtilisateurAndInstitut(@Param("institutId") Long institutId);
 
     @Query("""
         SELECT COUNT(j) FROM JournalAction j 
@@ -104,4 +133,10 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
         AND j.dateAction >= :depuis
     """)
     boolean isUtilisateurActifDepuis(@Param("utilisateurId") Long utilisateurId, @Param("depuis") LocalDateTime depuis);
+
+    // ============================================
+    // 🆕 NETTOYAGE (optionnel)
+    // ============================================
+
+    void deleteByDateActionBefore(LocalDateTime date);
 }

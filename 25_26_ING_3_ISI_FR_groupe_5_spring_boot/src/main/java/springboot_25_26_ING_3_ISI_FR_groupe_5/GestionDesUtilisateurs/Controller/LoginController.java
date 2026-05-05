@@ -9,7 +9,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,8 +21,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.JwtS
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.RefreshTokenService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
-
-import java.util.Collection;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InstitutSecurityService;
 
 @Slf4j
 @Controller
@@ -34,6 +32,7 @@ public class LoginController {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UtilisateurRepository utilisateurRepository;
+    private final InstitutSecurityService securityService;
 
     // ══════════════════════════════════════════
     // PAGE LOGIN
@@ -85,6 +84,13 @@ public class LoginController {
                 return "redirect:/login?error=true";
             }
 
+            // 🆕 Vérifier que l'utilisateur a un institut (sauf SUPER_ADMIN)
+            if (!securityService.isSuperAdmin(utilisateur) && utilisateur.getInstitut() == null) {
+                redirectAttributes.addFlashAttribute("erreur",
+                        "Votre compte n'est rattaché à aucun institut. Contactez l'administration.");
+                return "redirect:/login?error=true";
+            }
+
             // Générer JWT
             String jwt = jwtService.generateJwtToken(utilisateur);
 
@@ -96,9 +102,11 @@ public class LoginController {
             CookieUtils.addCookie(response, "REFRESH_TOKEN",
                     refreshToken.getToken(), 604800); // 7 jours
 
-            log.info("✅ Connexion réussie pour : {}", email);
+            log.info("✅ Connexion réussie pour : {} (Institut: {})",
+                    email,
+                    utilisateur.getInstitut() != null ? utilisateur.getInstitut().getNom() : "SUPER_ADMIN");
 
-            // ✅ TOUT LE MONDE VA VERS /dashboard (plus de redirection par rôle)
+            // ✅ Redirection vers le dashboard
             return "redirect:/dashboard";
 
         } catch (BadCredentialsException e) {

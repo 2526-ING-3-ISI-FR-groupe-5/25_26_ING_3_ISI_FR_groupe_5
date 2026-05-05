@@ -50,7 +50,10 @@
                     </label>
                     <input type="text"
                            th:field="*{nom}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"
                            required/>
                     <p th:if="${#fields.hasErrors('nom')}"
                        th:errors="*{nom}"
@@ -64,7 +67,10 @@
                     </label>
                     <input type="text"
                            th:field="*{ville}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"
                            required/>
                     <p th:if="${#fields.hasErrors('ville')}"
                        th:errors="*{ville}"
@@ -78,7 +84,10 @@
                     </label>
                     <input type="text"
                            th:field="*{adresse}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"/>
                     <p th:if="${#fields.hasErrors('adresse')}"
                        th:errors="*{adresse}"
                        class="text-red-500 text-xs mt-1"></p>
@@ -91,7 +100,11 @@
                     </label>
                     <input type="text"
                            th:field="*{localite}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"
+                    />
                     <p th:if="${#fields.hasErrors('localite')}"
                        th:errors="*{localite}"
                        class="text-red-500 text-xs mt-1"></p>
@@ -104,7 +117,10 @@
                     </label>
                     <input type="email"
                            th:field="*{email}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"
                            required/>
                     <p th:if="${#fields.hasErrors('email')}"
                        th:errors="*{email}"
@@ -118,7 +134,11 @@
                     </label>
                     <input type="tel"
                            th:field="*{telephone}"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                           class="input w-full bg-gray-50 dark:bg-bgsurface
+                            border-gray-300 dark:border-white/10 focus:border-primary
+                             focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all
+                             duration-200 rounded-xl"
+                    />
                     <p th:if="${#fields.hasErrors('telephone')}"
                        th:errors="*{telephone}"
                        class="text-red-500 text-xs mt-1"></p>
