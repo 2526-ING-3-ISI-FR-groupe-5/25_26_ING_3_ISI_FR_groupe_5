@@ -20,6 +20,9 @@ public interface InscriptionMapper {
     @Mapping(target = "classeNom", source = "classe.nom")
     @Mapping(target = "anneeAcademiqueId", source = "anneeAcademique.id")
     @Mapping(target = "anneeAcademiqueNom", source = "anneeAcademique.nom")
+    // 🆕 Mapping de l'institut (remonte via la classe ou l'année)
+    @Mapping(target = "institutId", expression = "java(getInstitutId(inscription))")
+    @Mapping(target = "institutNom", expression = "java(getInstitutNom(inscription))")
     InscriptionResponse toResponse(Inscription inscription);
 
     List<InscriptionResponse> toResponseList(List<Inscription> inscriptions);
@@ -30,6 +33,28 @@ public interface InscriptionMapper {
     @Mapping(target = "anneeAcademique", ignore = true)
     @Mapping(target = "statut", ignore = true)
     @Mapping(target = "decisionFinAnnee", ignore = true)
-
     Inscription toEntity(InscriptionRequest request);
+
+    // Méthodes par défaut pour récupérer l'institut
+    default Long getInstitutId(Inscription inscription) {
+        if (inscription.getClasse() != null
+                && inscription.getClasse().getNiveau() != null
+                && inscription.getClasse().getNiveau().getFiliere() != null
+                && inscription.getClasse().getNiveau().getFiliere().getEcole() != null
+                && inscription.getClasse().getNiveau().getFiliere().getEcole().getInstitut() != null) {
+            return inscription.getClasse().getNiveau().getFiliere().getEcole().getInstitut().getId();
+        }
+        return null;
+    }
+
+    default String getInstitutNom(Inscription inscription) {
+        if (inscription.getClasse() != null
+                && inscription.getClasse().getNiveau() != null
+                && inscription.getClasse().getNiveau().getFiliere() != null
+                && inscription.getClasse().getNiveau().getFiliere().getEcole() != null
+                && inscription.getClasse().getNiveau().getFiliere().getEcole().getInstitut() != null) {
+            return inscription.getClasse().getNiveau().getFiliere().getEcole().getInstitut().getNom();
+        }
+        return null;
+    }
 }

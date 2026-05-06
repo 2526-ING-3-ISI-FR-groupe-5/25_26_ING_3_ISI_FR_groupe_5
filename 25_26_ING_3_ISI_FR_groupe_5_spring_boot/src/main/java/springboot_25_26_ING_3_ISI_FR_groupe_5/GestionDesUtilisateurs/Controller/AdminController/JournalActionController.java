@@ -22,6 +22,8 @@ import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/journal")
+@PreAuthorize("hasAnyRole( 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
+
 @RequiredArgsConstructor
 public class JournalActionController {
 

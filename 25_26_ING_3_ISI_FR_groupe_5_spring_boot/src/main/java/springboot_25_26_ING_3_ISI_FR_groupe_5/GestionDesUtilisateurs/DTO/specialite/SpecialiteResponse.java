@@ -2,6 +2,8 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.specia
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -14,9 +16,27 @@ public class SpecialiteResponse {
     private String code;
     private String description;
 
+    // ✅ Statut
+    private boolean active;
+
+    // ✅ Filière
     private Long filiereId;
     private String filiereNom;
-    // Ajoute ce champ
-    private int nombreNiveaux;
+    private String filiereCode;
 
+    // ✅ École — navigation multi-instituts
+    private Long ecoleId;
+    private String ecoleNom;
+
+    // ✅ Institut — navigation multi-instituts
+    private Long institutId;
+    private String institutNom;
+
+    // ✅ Stats
+    private int nombreNiveaux;
+    private int nombreClasses;
+
+    // ✅ Audit
+    private LocalDateTime createdAt;
+    private String creePar;
 }

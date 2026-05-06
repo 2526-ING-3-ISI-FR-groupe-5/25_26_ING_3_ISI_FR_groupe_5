@@ -23,7 +23,7 @@ import java.util.Set;
 @Controller
 @RequestMapping("/admin/programmations")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class ProgrammationUEController {
 
     private final ProgrammationUEService programmationService;
@@ -216,7 +216,7 @@ public class ProgrammationUEController {
     }
 
     @GetMapping("/annee/{anneeId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String getByAnnee(@PathVariable Long anneeId, Model model) {
         Annee_academique annee = anneeService.findById(anneeId);
         List<ProgrammationUE> programmations = programmationService.getByAnnee(anneeId);
@@ -229,7 +229,7 @@ public class ProgrammationUEController {
     // ✅ Endpoint JSON pour la modale d'édition
     @GetMapping("/{id}/json")
     @ResponseBody
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ProgrammationRequest getProgrammationJson(@PathVariable Long id) {
         ProgrammationUE p = programmationService.findById(id);
         ProgrammationRequest request = new ProgrammationRequest();

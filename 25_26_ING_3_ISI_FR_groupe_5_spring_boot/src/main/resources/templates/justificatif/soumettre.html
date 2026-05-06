@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Soumettre un justificatif — CarnetRouge</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- Retour -->
+        <div class="mb-6">
+            <a th:href="@{/justificatifs/mes-justificatifs}"
+               class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour à mes justificatifs
+            </a>
+        </div>
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                Soumettre un <span class="text-primary italic">justificatif</span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Renseignez les informations relatives à votre absence
+            </p>
+        </div>
+
+        <!-- Messages -->
+        <div th:if="${errorMessage}" class="mb-6 alert alert-error shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 md:p-8">
+            <form th:action="@{/justificatifs/soumettre}"
+                  th:object="${justificatifRequest}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="space-y-6">
+
+                <!-- Type de justificatif -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                            Type de justificatif <span class="text-red-500">*</span>
+                        </span>
+                    </label>
+                    <select th:field="*{type}"
+                            class="select w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                            required>
+                        <option value="">— Choisir un type —</option>
+                        <option th:each="type : ${typesJustificatif}"
+                                th:value="${type}"
+                                th:text="${type}"></option>
+                    </select>
+                    <label class="label" th:if="${#fields.hasErrors('type')}">
+                        <span class="label-text-alt text-red-400" th:errors="*{type}"></span>
+                    </label>
+                </div>
+
+                <!-- Période d'absence -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                                Début de l'absence <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <input type="datetime-local"
+                               th:field="*{dateDebutAbsence}"
+                               class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                               required/>
+                        <label class="label" th:if="${#fields.hasErrors('dateDebutAbsence')}">
+                            <span class="label-text-alt text-red-400" th:errors="*{dateDebutAbsence}"></span>
+                        </label>
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                                Fin de l'absence <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <input type="datetime-local"
+                               th:field="*{dateFinAbsence}"
+                               class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
+                               required/>
+                        <label class="label" th:if="${#fields.hasErrors('dateFinAbsence')}">
+                            <span class="label-text-alt text-red-400" th:errors="*{dateFinAbsence}"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Nombre d'heures -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                            Nombre d'heures d'absence
+                        </span>
+                        <span class="label-text-alt text-gray-400">Optionnel</span>
+                    </label>
+                    <input type="number"
+                           th:field="*{nombreHeures}"
+                           min="1"
+                           placeholder="ex. 2"
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                </div>
+
+                <!-- Contenu / motif -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                            Motif détaillé <span class="text-red-500">*</span>
+                        </span>
+                    </label>
+                    <textarea th:field="*{contenu}"
+                              rows="4"
+                              placeholder="Décrivez les raisons de votre absence..."
+                              class="textarea w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 resize-none"
+                              required></textarea>
+                    <label class="label" th:if="${#fields.hasErrors('contenu')}">
+                        <span class="label-text-alt text-red-400" th:errors="*{contenu}"></span>
+                    </label>
+                </div>
+
+                <!-- Fichier justificatif -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                            Document justificatif
+                        </span>
+                        <span class="label-text-alt text-gray-400">PDF, image — Optionnel</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{fichierUrl}"
+                           placeholder="URL du document ou lien Drive..."
+                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex gap-3 pt-4">
+                    <a th:href="@{/justificatifs/mes-justificatifs}"
+                       class="btn btn-ghost flex-1">Annuler</a>
+                    <button type="submit"
+                            class="btn bg-primary hover:bg-primary/90 text-white border-none flex-1">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        Soumettre
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

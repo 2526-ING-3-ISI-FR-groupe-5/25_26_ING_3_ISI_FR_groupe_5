@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Mes justificatifs — CarnetRouge</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                    Mes <span class="text-primary italic">justificatifs</span>
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Historique de vos demandes de justification d'absence
+                </p>
+            </div>
+            <a th:href="@{/justificatifs/soumettre}"
+               class="btn bg-primary hover:bg-primary/90 text-white border-none gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nouveau justificatif
+            </a>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${successMessage}" class="mb-6 alert alert-success shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="mb-6 alert alert-error shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Liste vide -->
+        <div th:if="${#lists.isEmpty(justificatifs)}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-12 text-center">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Aucun justificatif soumis pour le moment.</p>
+            <a th:href="@{/justificatifs/soumettre}" class="btn bg-primary hover:bg-primary/90 text-white border-none mt-4">
+                Soumettre un justificatif
+            </a>
+        </div>
+
+        <!-- Tableau -->
+        <div th:if="${!#lists.isEmpty(justificatifs)}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <table class="table w-full">
+                <thead>
+                <tr class="border-b border-gray-200 dark:border-white/5 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th class="px-6 py-4 font-semibold text-left">Type</th>
+                    <th class="px-6 py-4 font-semibold text-left">Période d'absence</th>
+                    <th class="px-6 py-4 font-semibold text-left">Soumis le</th>
+                    <th class="px-6 py-4 font-semibold text-left">Statut</th>
+                    <th class="px-6 py-4 font-semibold text-left">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="j : ${justificatifs}"
+                    class="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-bgsurface transition-colors">
+
+                    <!-- Type -->
+                    <td class="px-6 py-4">
+                            <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                  th:text="${j.type}">MEDICAL</span>
+                    </td>
+
+                    <!-- Période -->
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            <span th:text="${#temporals.format(j.dateDebutAbsence, 'dd/MM/yyyy HH:mm')}"></span>
+                            <span class="text-gray-400 mx-1">→</span>
+                            <span th:text="${#temporals.format(j.dateFinAbsence, 'dd/MM/yyyy HH:mm')}"></span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-0.5"
+                             th:if="${j.nombreHeures != null}"
+                             th:text="${j.nombreHeures} + ' heure(s)'"></div>
+                    </td>
+
+                    <!-- Date soumission -->
+                    <td class="px-6 py-4">
+                            <span class="text-sm text-gray-600 dark:text-gray-400"
+                                  th:text="${#temporals.format(j.dateSoumission, 'dd/MM/yyyy')}"></span>
+                    </td>
+
+                    <!-- Statut -->
+                    <td class="px-6 py-4">
+                            <span th:switch="${j.statut.name()}">
+                                <span th:case="'EN_ATTENTE'"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                    En attente
+                                </span>
+                                <span th:case="'VALIDE'"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    Validé
+                                </span>
+                                <span th:case="'REFUSE'"
+                                      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                    Refusé
+                                </span>
+                            </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <!-- Fichier joint -->
+                            <a th:if="${j.fichierUrl != null}"
+                               th:href="${j.fichierUrl}" target="_blank"
+                               class="btn btn-ghost btn-xs gap-1 text-gray-500 hover:text-primary">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
+                                Fichier
+                            </a>
+
+                            <!-- Supprimer si EN_ATTENTE -->
+                            <form th:if="${j.statut.name() == 'EN_ATTENTE'}"
+                                  th:action="@{/justificatifs/{id}/supprimer(id=${j.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Supprimer ce justificatif ?')">
+                                <button type="submit" class="btn btn-ghost btn-xs text-red-400 hover:text-red-500 hover:bg-red-500/10">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

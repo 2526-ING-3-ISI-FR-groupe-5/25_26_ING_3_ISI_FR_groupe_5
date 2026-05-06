@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Justificatifs en attente — CarnetRouge</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- En-tête -->
+        <div class="mb-8">
+            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
+                Justificatifs <span class="text-primary italic">en attente</span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Traitez les demandes de justification soumises par les étudiants
+            </p>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${successMessage}" class="mb-6 alert alert-success shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="mb-6 alert alert-error shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Compteur -->
+        <div th:if="${!#lists.isEmpty(justificatifs)}"
+             class="mb-4 flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span th:text="${#lists.size(justificatifs)}">0</span>&nbsp;en attente
+            </span>
+        </div>
+
+        <!-- Liste vide -->
+        <div th:if="${#lists.isEmpty(justificatifs)}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-12 text-center">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucun justificatif en attente.</p>
+            <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Tout est à jour !</p>
+        </div>
+
+        <!-- Tableau -->
+        <div th:if="${!#lists.isEmpty(justificatifs)}"
+             class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden">
+            <table class="table w-full">
+                <thead>
+                <tr class="border-b border-gray-200 dark:border-white/5 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th class="px-6 py-4 font-semibold text-left">Étudiant</th>
+                    <th class="px-6 py-4 font-semibold text-left">Type</th>
+                    <th class="px-6 py-4 font-semibold text-left">Période d'absence</th>
+                    <th class="px-6 py-4 font-semibold text-left">Soumis le</th>
+                    <th class="px-6 py-4 font-semibold text-left">Document</th>
+                    <th class="px-6 py-4 font-semibold text-left">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="j : ${justificatifs}"
+                    class="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-bgsurface transition-colors">
+
+                    <!-- Étudiant -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm"
+                                 th:text="${#strings.substring(j.etudiant.prenom, 0, 1)}">A</div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900 dark:text-white"
+                                     th:text="${j.etudiant.prenom} + ' ' + ${j.etudiant.nom}"></div>
+                                <div class="text-xs text-gray-400"
+                                     th:text="${j.etudiant.matricule}"></div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Type -->
+                    <td class="px-6 py-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300"
+                                  th:text="${j.type}"></span>
+                    </td>
+
+                    <!-- Période -->
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            <span th:text="${#temporals.format(j.dateDebutAbsence, 'dd/MM/yyyy')}"></span>
+                            <span class="text-gray-400 mx-1">→</span>
+                            <span th:text="${#temporals.format(j.dateFinAbsence, 'dd/MM/yyyy')}"></span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-0.5"
+                             th:if="${j.nombreHeures != null}"
+                             th:text="${j.nombreHeures} + ' heure(s)'"></div>
+                    </td>
+
+                    <!-- Date soumission -->
+                    <td class="px-6 py-4">
+                            <span class="text-sm text-gray-600 dark:text-gray-400"
+                                  th:text="${#temporals.format(j.dateSoumission, 'dd/MM/yyyy')}"></span>
+                    </td>
+
+                    <!-- Document -->
+                    <td class="px-6 py-4">
+                        <a th:if="${j.fichierUrl != null}"
+                           th:href="${j.fichierUrl}" target="_blank"
+                           class="btn btn-ghost btn-xs gap-1 text-primary">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                            </svg>
+                            Voir
+                        </a>
+                        <span th:if="${j.fichierUrl == null}"
+                              class="text-xs text-gray-400">—</span>
+                    </td>
+
+                    <!-- Action -->
+                    <td class="px-6 py-4">
+                        <a th:href="@{/justificatifs/assistant/{id}(id=${j.id})}"
+                           class="btn btn-sm bg-primary/10 hover:bg-primary/20 text-primary border-none gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Traiter
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

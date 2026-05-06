@@ -30,6 +30,8 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/enseignant")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN')")
+
 @RequiredArgsConstructor
 public class EnseignantController {
 

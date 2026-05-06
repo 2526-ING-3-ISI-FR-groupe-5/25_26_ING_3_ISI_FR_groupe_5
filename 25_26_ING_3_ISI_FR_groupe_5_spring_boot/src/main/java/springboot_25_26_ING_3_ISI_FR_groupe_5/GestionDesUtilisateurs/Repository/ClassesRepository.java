@@ -21,7 +21,8 @@ public interface ClassesRepository extends JpaRepository<Classe, Long> {
     Page<Classe> findByNomContainingIgnoreCase(String nom, Pageable pageable);
 
     Optional<Classe> findByNom(String nom);
-
+    // 🆕 À ajouter dans ClassesRepository.java
+    List<Classe> findByNiveau_Filiere_Ecole_Institut_Id(Long institutId);
     boolean existsByNom(String nom);
 
     boolean existsByNomAndNiveauId(String nom, Long niveauId);
@@ -67,4 +68,11 @@ public interface ClassesRepository extends JpaRepository<Classe, Long> {
         WHERE i.anneeAcademique.id = :anneeId
     """)
     List<Classe> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
+
+    /**
+     * Trouve toutes les classes d'un institut via le chemin :
+     * classe → niveau → filière → école → institut
+     */
+    @Query("SELECT c FROM Classe c WHERE c.niveau.filiere.ecole.institut.id = :institutId")
+    List<Classe> findByInstitutId(@Param("institutId") Long institutId);
 }

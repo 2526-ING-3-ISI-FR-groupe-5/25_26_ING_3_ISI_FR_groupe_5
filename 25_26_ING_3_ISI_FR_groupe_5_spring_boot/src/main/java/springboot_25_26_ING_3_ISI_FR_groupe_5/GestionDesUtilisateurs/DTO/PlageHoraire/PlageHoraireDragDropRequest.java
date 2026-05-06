@@ -1,39 +1,58 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.PlageHoraire;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.format.annotation.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Getter
-@Setter
+@Data
 public class PlageHoraireDragDropRequest {
 
-    @NotNull(message = "L'UE est obligatoire")
-    private Long ueId;
-
-    @NotNull(message = "La classe est obligatoire")
+    // ── Obligatoire ──
     private Long classeId;
 
-    @NotNull(message = "Le semestre est obligatoire")
-    private Long semestreId;
-
-    @NotNull(message = "Le jour est obligatoire")
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate jour;
 
-    @NotNull(message = "L'heure de début est obligatoire")
-    @DateTimeFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime heureDebut;
 
-    @NotNull(message = "L'heure de fin est obligatoire")
-    @DateTimeFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime heureFin;
 
+    /**
+     * Remplace ueId — ProgrammationUE contient déjà
+     * l'UE, le semestre, la classe et les enseignants assignés.
+     * Null uniquement pour PAUSE et EVENEMENT libres.
+     */
+    private Long programmationUEId;
+
+    /**
+     * Enseignant ponctuel (remplacement).
+     * Si null → enseignants de la ProgrammationUE utilisés.
+     */
+    private Long enseignantId;
+
+    // ── Optionnel ──
     private String salle;
     private String couleur;
-    private Long enseignantId;  // Optionnel, choisi dans la modale
+
+    /**
+     * CM | TD | TP | EVENEMENT | PAUSE — défaut : CM
+     */
+    private String typeSeance = "CM";
+
+    /**
+     * Titre libre — uniquement pour EVENEMENT et PAUSE.
+     * Pour les cours, titre = programmationUE.ue.nom.
+     */
+    private String titre;
+
+    /**
+     * Jour de fin pour événements multi-jours / étirement horizontal.
+     * Si null → même jour que `jour`.
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate jourFin;
 }

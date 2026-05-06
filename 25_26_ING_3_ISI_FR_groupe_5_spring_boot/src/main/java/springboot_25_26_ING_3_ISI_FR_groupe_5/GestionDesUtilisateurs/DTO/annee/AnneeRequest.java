@@ -24,6 +24,10 @@ public class AnneeRequest {
 
     private boolean active;
 
+    // 🆕 Institut obligatoire pour la création
+    @NotNull(message = "L'institut est obligatoire")
+    private Long institutId;
+
     // ✅ Contrainte 1 : dateDebut doit être avant dateFin
     @AssertTrue(message = "La date de début doit être antérieure à la date de fin")
     public boolean isDateDebutBeforeDateFin() {
@@ -51,5 +55,4 @@ public class AnneeRequest {
         }
         return nom;
     }
-
 }

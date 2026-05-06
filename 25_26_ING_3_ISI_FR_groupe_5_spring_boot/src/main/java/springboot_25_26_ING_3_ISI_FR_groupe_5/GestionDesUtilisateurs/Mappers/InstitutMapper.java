@@ -12,15 +12,12 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface InstitutMapper {
 
-    @Mapping(target = "nombreEcoles", source = "ecoles", qualifiedByName = "countEcoles")
-    @Mapping(target = "nombreUtilisateurs", source = "utilisateurs", qualifiedByName = "countUtilisateurs")
     InstitutResponse toResponse(Institut institut);
 
     List<InstitutResponse> toResponseList(List<Institut> instituts);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ecoles", ignore = true)
-    @Mapping(target = "utilisateurs", ignore = true)
     Institut toEntity(InstitutRequest request);
 
     @Named("countEcoles")

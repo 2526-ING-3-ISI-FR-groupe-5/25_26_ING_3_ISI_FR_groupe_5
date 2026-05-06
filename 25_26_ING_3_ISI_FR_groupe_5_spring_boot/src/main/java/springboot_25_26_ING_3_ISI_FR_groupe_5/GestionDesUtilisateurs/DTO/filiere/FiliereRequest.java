@@ -20,6 +20,9 @@ public class FiliereRequest {
     @NotNull(message = "L'école est obligatoire")
     private Long ecoleId;
 
-    @NotNull(message = "Le cycle est obligatoire")
+    // ✅ Optionnel — cohérent avec l'entité
     private Long cycleId;
+
+    // ✅ Statut actif/inactif
+    private boolean active = true;
 }

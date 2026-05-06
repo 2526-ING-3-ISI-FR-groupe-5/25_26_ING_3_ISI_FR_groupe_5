@@ -1,5 +1,6 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService;
 
+import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
@@ -14,6 +15,9 @@ public interface IAnneeAcademiqueService {
 
     Annee_academique activer(Long anneeId, Utilisateur acteur);
 
+    @Transactional
+    Annee_academique desactiver(Long anneeId, Utilisateur acteur);
+
     Annee_academique getAnneeActive();
 
     List<Annee_academique> getAll();
@@ -21,4 +25,6 @@ public interface IAnneeAcademiqueService {
     Annee_academique findById(Long id);
 
     void supprimer(Long anneeId, Utilisateur acteur);
+
+    Annee_academique findEntityById(Long nouvelleAnneeId);
 }

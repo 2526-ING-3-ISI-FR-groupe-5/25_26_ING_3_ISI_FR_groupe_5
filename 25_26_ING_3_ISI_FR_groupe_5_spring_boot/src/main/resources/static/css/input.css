@@ -1,10 +1,14 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@source "../templates/**/*.html";
+@source "../../java/**/*.java";
+
 @theme {
     --font-sans: "DM Sans", sans-serif;
     --font-serif: "Playfair Display", serif;
 
+    /* Valeurs par défaut (dark) */
     --color-bgdeep: #0a0b0f;
     --color-bgcard: #111318;
     --color-bgsurface: #181b22;
@@ -15,13 +19,27 @@
     --animate-fade-in-up: fadeInUp 0.3s ease-out forwards;
 
     @keyframes fadeInUp {
-        0% {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        0%   { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
+}
+
+/* ── Thème LIGHT ── */
+:root[data-theme="light"] {
+    --color-bgdeep:    #f0f2f5;
+    --color-bgcard:    #ffffff;
+    --color-bgsurface: #f7f8fa;
+    --color-bgsubtle:  #e8eaf0;
+    --color-primary:   #4f7ef8;
+    --color-primaryhover: #3a6ae8;
+}
+
+/* ── Thème DARK (explicite, au cas où) ── */
+:root[data-theme="dark"] {
+    --color-bgdeep:    #0a0b0f;
+    --color-bgcard:    #111318;
+    --color-bgsurface: #181b22;
+    --color-bgsubtle:  #1e2230;
+    --color-primary:   #4f7ef8;
+    --color-primaryhover: #6b94ff;
 }

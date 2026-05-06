@@ -10,13 +10,30 @@ import java.util.Optional;
 @Repository
 public interface AnneeAcademiqueRepository extends JpaRepository<Annee_academique, Long> {
 
-    // Trouver l'année en cours
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES GLOBALES (pour SUPER_ADMIN ou compatibilité)
+    // ═══════════════════════════════════════════════════════════
+
     Optional<Annee_academique> findByActiveTrue();
 
-    // Vérifier si une année existe déjà
     boolean existsByNom(String nom);
+
     Optional<Annee_academique> findByNom(String nom);
 
-    // Toutes les années triées
     List<Annee_academique> findAllByOrderByNomDesc();
+
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES MULTI-INSTITUTS
+    // ═══════════════════════════════════════════════════════════
+
+    // ✅ Correction : retourner Optional<Annee_academique> et non Optional<Object>
+    Optional<Annee_academique> findByInstitutIdAndActiveTrue(Long institutId);
+
+    Optional<Annee_academique> findByNomAndInstitutId(String nom, Long institutId);
+
+    boolean existsByNomAndInstitutId(String nom, Long institutId);
+
+    List<Annee_academique> findByInstitutId(Long institutId);
+
+    List<Annee_academique> findByInstitutIdOrderByNomDesc(Long institutId);
 }

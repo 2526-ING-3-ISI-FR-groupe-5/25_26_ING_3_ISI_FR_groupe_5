@@ -9,11 +9,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Appels;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Niveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.classe.ClassesRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.ProgrammationUE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.SessionAppel;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.*;
 
@@ -21,7 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Controller
-@RequestMapping("/admin/classes")
+@RequestMapping("/enseignant/classes")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'ETUDIANT', 'ASSISTANT')")
 @RequiredArgsConstructor
 public class ClassesController {
 
@@ -31,6 +34,9 @@ public class ClassesController {
     private final SpecialiteMapper specialiteMapper;
     private final NiveauService niveauService;
     private final NiveauMapper niveauMapper;
+    private final AppelsService appelsService;
+    private final SessionAppelService sessionAppelService;
+    private final SessionAppelMapper sessionAppelMapper;
     private final AnneeAcademiqueService anneeService;
     private final InscriptionService inscriptionService;
     private final InscriptionMapper inscriptionMapper;
@@ -38,7 +44,6 @@ public class ClassesController {
     private final ProgrammationUEMapper programmationMapper;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
     public String liste(
             @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) Long niveauId,
@@ -67,12 +72,6 @@ public class ClassesController {
             classesList = classesService.getAll();
         }
 
-        // Debug
-        System.out.println("=== DEBUG CLASSES CONTROLLER ===");
-        System.out.println("specialiteId reçu = " + specialiteId);
-        System.out.println("niveauId reçu = " + niveauId);
-        System.out.println("Nombre de classes trouvées : " + classesList.size());
-
         List<Niveau> tousNiveaux = niveauService.getAll();
 
         model.addAttribute("classes", classesMapper.toResponseList(classesList));
@@ -88,7 +87,6 @@ public class ClassesController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
     public String detail(
             @PathVariable Long id,
             @RequestParam(required = false) Long anneeId,
@@ -99,25 +97,21 @@ public class ClassesController {
                 : anneeService.getAnneeActive();
 
         Classe classe = classesService.findById(id);
-
-        List<Inscription> inscriptions = inscriptionService
-                .getByClasseAndAnnee(id, annee.getId());
-
-        List<ProgrammationUE> programmations = programmationService
-                .getByClasseAndAnnee(id, annee.getId());
+        List<Inscription> inscriptions = inscriptionService.getByClasseAndAnnee(id, annee.getId());
+        SessionAppel sessionActive = sessionAppelService.getSessionActivePourClasse(id);
 
         model.addAttribute("classe", classesMapper.toResponse(classe));
-        model.addAttribute("anneeActive", annee);
-        model.addAttribute("annees", anneeService.getAll());
         model.addAttribute("inscriptions", inscriptionMapper.toResponseList(inscriptions));
-        model.addAttribute("programmations", programmationMapper.toResponseList(programmations));
         model.addAttribute("totalEtudiants", inscriptions.size());
+        model.addAttribute("sessionActive", sessionActive != null ? sessionAppelMapper.toResponse(sessionActive) : null);
+        model.addAttribute("nbPresents", 0);
+        model.addAttribute("nbAbsents", 0);
 
         return "classe/detail";
     }
 
     @PostMapping("/creer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
     public String creer(
             @Valid @ModelAttribute("form") ClassesRequest request,
             BindingResult result,
@@ -137,11 +131,11 @@ public class ClassesController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/admin/classes";
+        return "redirect:/enseignant/classes";
     }
 
     @GetMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
     public String formulaireModifier(@PathVariable Long id, Model model) {
         Classe classe = classesService.findById(id);
         ClassesRequest form = new ClassesRequest();
@@ -157,7 +151,6 @@ public class ClassesController {
     }
 
     @PostMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
     public String modifier(
             @PathVariable Long id,
             @Valid @ModelAttribute("form") ClassesRequest request,
@@ -179,11 +172,10 @@ public class ClassesController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/admin/classes/" + id;
+        return "redirect:/enseignant/classes/" + id;
     }
 
     @PostMapping("/{id}/supprimer")
-    @PreAuthorize("hasRole('ADMIN')")
     public String supprimer(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes
@@ -194,13 +186,11 @@ public class ClassesController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/admin/classes";
+        return "redirect:/enseignant/classes";
     }
 
-    // ✅ Endpoint JSON pour la modale d'édition
     @GetMapping("/{id}/json")
     @ResponseBody
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
     public ClassesRequest getClasseJson(@PathVariable Long id) {
         Classe classe = classesService.findById(id);
         ClassesRequest request = new ClassesRequest();

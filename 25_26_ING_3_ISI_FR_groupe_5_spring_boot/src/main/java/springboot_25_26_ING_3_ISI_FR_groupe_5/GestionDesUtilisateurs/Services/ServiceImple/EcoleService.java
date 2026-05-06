@@ -38,7 +38,8 @@ public class EcoleService implements IEcoleService {
         try {
             Institut institut = institutService.findById(request.getInstitutId());
 
-            if (ecoleRepository.existsByNomAndInstitutId(request.getNom(), request.getInstitutId())) {
+            // ✅ CORRECTION : Utiliser findByNomAndInstitut_Id
+            if (ecoleRepository.existsByNomAndInstitut_Id(request.getNom(), request.getInstitutId())) {
                 throw new DuplicateResourceException("École", request.getNom() + " dans l'institut " + institut.getNom());
             }
 
@@ -70,8 +71,9 @@ public class EcoleService implements IEcoleService {
             Ecole existante = findById(id);
             Institut institut = institutService.findById(request.getInstitutId());
 
+            // ✅ CORRECTION : Utiliser findByNomAndInstitut_Id
             if (!existante.getNom().equalsIgnoreCase(request.getNom()) &&
-                    ecoleRepository.existsByNomAndInstitutId(request.getNom(), request.getInstitutId())) {
+                    ecoleRepository.existsByNomAndInstitut_Id(request.getNom(), request.getInstitutId())) {
                 throw new DuplicateResourceException("École", request.getNom() + " dans l'institut " + institut.getNom());
             }
 
@@ -119,15 +121,17 @@ public class EcoleService implements IEcoleService {
         return ecoleRepository.findAll(pageable);
     }
 
+    // ✅ CORRECTION : getByInstitut retourne une liste simple sans pagination
     @Override
     public List<Ecole> getByInstitut(Long institutId) {
-        return ecoleRepository.findByInstitutId(institutId);
+        return ecoleRepository.findByInstitut_Id(institutId);
     }
 
+    // ✅ CORRECTION : Version paginée correcte
     @Override
     public Page<Ecole> getByInstitutPaginated(Long institutId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
-        return ecoleRepository.findByInstitutId(institutId, pageable);
+        return ecoleRepository.findByInstitut_Id(institutId, pageable);
     }
 
     @Override

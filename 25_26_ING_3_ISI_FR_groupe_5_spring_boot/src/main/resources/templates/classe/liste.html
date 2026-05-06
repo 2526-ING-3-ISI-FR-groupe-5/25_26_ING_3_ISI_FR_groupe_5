@@ -113,7 +113,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a th:href="@{/admin/classes/{id}(id=${classe.id})}"
+                                <a th:href="@{/enseignant/classes/{id}(id=${classe.id})}"
                                    class="text-primary hover:text-primary/80 transition-colors p-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -126,7 +126,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </button>
-                                <form th:action="@{/admin/classes/{id}/supprimer(id=${classe.id})}" method="post" class="inline">
+                                <form th:action="@{/enseignant/classes/{id}/supprimer(id=${classe.id})}" method="post" class="inline">
                                     <button type="submit"
                                             class="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1"
                                             onclick="return confirm('Supprimer cette classe ?')">
@@ -155,10 +155,10 @@
         <!-- Pagination -->
         <div th:if="${totalPages > 1}" class="mt-6 flex justify-center">
             <div class="join">
-                <a th:href="@{/admin/classes(page=${currentPage - 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
+                <a th:href="@{/enseignant/classes(page=${currentPage - 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
                    th:classappend="${currentPage == 0} ? 'btn-disabled' : ''" class="join-item btn btn-sm">«</a>
                 <span class="join-item btn btn-sm btn-primary" th:text="${currentPage + 1}"></span>
-                <a th:href="@{/admin/classes(page=${currentPage + 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
+                <a th:href="@{/enseignant/classes(page=${currentPage + 1}, size=10, filiereId=${filiereIdFiltre}, niveauId=${niveauIdFiltre})}"
                    th:classappend="${currentPage >= totalPages - 1} ? 'btn-disabled' : ''" class="join-item btn btn-sm">»</a>
             </div>
         </div>
@@ -176,7 +176,7 @@
                 </p>
             </div>
 
-            <form th:action="@{/admin/classes/creer}" th:object="${form}" method="post" class="p-6 space-y-5">
+            <form th:action="@{/enseignant/classes/creer}" th:object="${form}" method="post" class="p-6 space-y-5">
                 <div class="form-control w-full">
                     <label class="label">
                         <span class="label-text font-medium text-gray-700 dark:text-gray-300">Niveau <span class="text-red-500">*</span></span>
@@ -262,7 +262,7 @@
     function applyFilters() {
         const filiereId = filiereSelect.value;
         const niveauId = niveauSelect.value;
-        let url = '/admin/classes?';
+        let url = '/enseignant/classes?';
         if (filiereId) url += 'filiereId=' + filiereId + '&';
         if (niveauId) url += 'niveauId=' + niveauId;
         window.location.href = url;
@@ -270,17 +270,17 @@
 
     filtrerBtn.addEventListener('click', applyFilters);
     resetBtn.addEventListener('click', function() {
-        window.location.href = '/admin/classes';
+        window.location.href = '/enseignant/classes';
     });
 
     async function openEditModal(id) {
         if (!id) return;
         try {
-            const response = await fetch('/admin/classes/' + id + '/json');
+            const response = await fetch('/enseignant/classes/' + id + '/json');
             if (!response.ok) throw new Error('Erreur HTTP');
             const data = await response.json();
             const form = document.getElementById('editForm');
-            form.action = '/admin/classes/' + id + '/modifier';
+            form.action = '/enseignant/classes/' + id + '/modifier';
             form.querySelector('[name="niveauId"]').value = data.niveauId;
             form.querySelector('[name="nom"]').value = data.nom;
             document.getElementById('editModal').showModal();

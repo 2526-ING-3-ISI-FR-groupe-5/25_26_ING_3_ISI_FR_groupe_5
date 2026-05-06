@@ -15,7 +15,8 @@ import java.time.LocalDate;
 @Controller
 @RequestMapping("/admin/semestres")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
+
 public class SemestreController {
 
     private final SemestreService semestreService;

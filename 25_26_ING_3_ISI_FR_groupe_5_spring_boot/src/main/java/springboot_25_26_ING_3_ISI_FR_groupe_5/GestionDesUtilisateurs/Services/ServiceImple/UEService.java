@@ -128,4 +128,8 @@ public class UEService implements IUEService {
             throw new RuntimeException("Erreur lors de la suppression de l'UE", e);
         }
     }
+
+    public List<UE> getByNiveau(Long id) {
+        return null;
+    }
 }

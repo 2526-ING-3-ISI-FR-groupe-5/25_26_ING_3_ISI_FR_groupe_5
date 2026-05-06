@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 
@@ -28,6 +29,11 @@ public class JournalAction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    // Dans JournalAction.java
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institut_id")
+    private Institut institut;
     // ========== QUI A FAIT L'ACTION ? ==========
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilisateur_id", nullable = false)

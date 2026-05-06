@@ -36,6 +36,16 @@ public class ClassesService {
         return classesRepo.save(classe);
     }
 
+    /**
+     * Récupère toutes les classes d'un institut
+     */
+
+
+
+    // 🆕 À ajouter dans ClassesService.java
+    public List<Classe> getByInstitut(Long institutId) {
+        return classesRepo.findByNiveau_Filiere_Ecole_Institut_Id(institutId);
+    }
     @Transactional
     public Classe modifier(Long id, String nom, Long niveauId) {
         Classe classe = findById(id);
@@ -96,5 +106,9 @@ public class ClassesService {
                     classe.getProgrammations().size() + " programmation(s)");
         }
         classesRepo.delete(classe);
+    }
+
+    public Long getAnneeAcademiqueActive() {
+        return anneeService.getAnneeActive().getId();
     }
 }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -15,29 +16,61 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.semestr
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.AnneeAcademiqueMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.SemestreMapper;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InstitutRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.AnneeAcademiqueService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InstitutSecurityService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.SemestreService;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin/annees")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole( 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
 public class AnneeAcademiqueController {
-
     private final AnneeAcademiqueService anneeService;
     private final AnneeAcademiqueMapper anneeMapper;
     private final SemestreService semestreService;
     private final SemestreMapper semestreMapper;
+    private final InstitutSecurityService securityService;
+    private final InstitutRepository institutRepository;
 
     @GetMapping
-    public String liste(Model model) {
-        model.addAttribute("annees", anneeMapper.toResponseList(anneeService.getAll()));
+    public String liste(Model model, @RequestParam(required = false) Long institutId) {
+        Long institutCible = null;
+
         try {
-            model.addAttribute("anneeActive", anneeService.getAnneeActive());
+            institutCible = securityService.resolveInstitutId(institutId);
         } catch (Exception e) {
-            model.addAttribute("anneeActive", null);
+            // Super Admin sans institut sélectionné : on laisse passer
+            institutCible = null;
         }
+
+        List<Annee_academique> annees;
+        Annee_academique anneeActive = null;
+
+        if (institutCible != null) {
+            annees = anneeService.getByInstitut(institutCible);
+            try {
+                anneeActive = anneeService.getAnneeActivePourInstitut(institutCible);
+            } catch (Exception e) {
+                // Pas d'année active
+            }
+        } else {
+            // Super Admin : voir toutes les années
+            annees = anneeService.getAll();
+        }
+
+        model.addAttribute("annees", anneeMapper.toResponseList(annees));
+        model.addAttribute("anneeActive", anneeActive);
+        model.addAttribute("selectedInstitutId", institutCible);
         model.addAttribute("form", new AnneeRequest());
+        model.addAttribute("currentInstitutName", securityService.getCurrentInstitutName());
+
+        if (securityService.shouldShowInstitutSelector()) {
+            model.addAttribute("instituts", institutRepository.findAll());
+        }
+
         return "annee/liste";
     }
 
@@ -60,13 +93,21 @@ public class AnneeAcademiqueController {
         }
 
         try {
-            anneeService.creer(request.getNom(), request.getDateDebut(), request.getDateFin(), request.isActive(), acteur);
-            redirectAttributes.addFlashAttribute("succes", "Année académique créée avec succès");
+            // ✅ Utiliser creerAvecInstitut() avec l'institutId du formulaire
+            anneeService.creerAvecInstitut(
+                    request.getNom(),
+                    request.getDateDebut(),
+                    request.getDateFin(),
+                    request.isActive(),
+                    request.getInstitutId(),  // 🆕
+                    acteur
+            );
+            redirectAttributes.addFlashAttribute("succes", "✅ Année créée avec succès");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
+            redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
         }
 
-        return "redirect:/admin/annees";
+        return "redirect:/admin/annees?institutId=" + request.getInstitutId();
     }
 
     @PostMapping("/{id}/activer")
@@ -76,12 +117,34 @@ public class AnneeAcademiqueController {
             @AuthenticationPrincipal Utilisateur acteur
     ) {
         try {
+            Annee_academique annee = anneeService.findById(id);
             anneeService.activer(id, acteur);
-            redirectAttributes.addFlashAttribute("succes", "Année activée avec succès");
+            redirectAttributes.addFlashAttribute("succes",
+                    "✅ Année " + annee.getNom() + " activée pour " + annee.getInstitut().getNom());
+            return "redirect:/admin/annees?institutId=" + annee.getInstitut().getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
+            return "redirect:/admin/annees";
         }
-        return "redirect:/admin/annees";
+    }
+
+
+    @PostMapping("/{id}/desactiver")
+    public String desactiver(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur acteur
+    ) {
+        try {
+            Annee_academique annee = anneeService.findById(id);
+            anneeService.desactiver(id, acteur);
+            redirectAttributes.addFlashAttribute("succes",
+                    "✅ Année " + annee.getNom() + " désactivée pour " + annee.getInstitut().getNom());
+            return "redirect:/admin/annees?institutId=" + annee.getInstitut().getId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
+            return "redirect:/admin/annees";
+        }
     }
 
     @GetMapping("/{id}")

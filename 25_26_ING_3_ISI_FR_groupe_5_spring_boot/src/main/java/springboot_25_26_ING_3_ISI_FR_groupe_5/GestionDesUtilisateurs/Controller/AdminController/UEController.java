@@ -24,6 +24,8 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/ues")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
+
 public class UEController {
 
     private final UEService ueService;
@@ -33,7 +35,7 @@ public class UEController {
     private final AnneeAcademiqueService anneeService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ENSEIGNANT')")
     public String liste(
             @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) String recherche,
@@ -59,7 +61,7 @@ public class UEController {
     }
 
     @PostMapping("/creer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String creer(
             @Valid @ModelAttribute("form") UERequest request,
             BindingResult result,
@@ -85,7 +87,7 @@ public class UEController {
     }
 
     @PostMapping("/{id}/modifier")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String modifier(
             @PathVariable Long id,
             @Valid @ModelAttribute("form") UERequest request,
@@ -111,7 +113,7 @@ public class UEController {
     }
 
     @PostMapping("/{id}/supprimer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public String supprimer(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes,
@@ -128,7 +130,7 @@ public class UEController {
 
     @GetMapping("/{id}/json")
     @ResponseBody
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ENSEIGNANT')")
     public UERequest getUeJson(@PathVariable Long id) {
         UE ue = ueService.findById(id);
         UERequest request = new UERequest();

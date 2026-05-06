@@ -1,4 +1,4 @@
-package CarnetRouge.CarnetRouge.GDU.dtos.annee;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.annee;
 
 import lombok.*;
 
@@ -16,4 +16,9 @@ public class AnneeResponse {
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private boolean active;
+
+    // 🆕 Informations sur l'institut
+    private Long institutId;
+    private String institutNom;
+    private String institutVille;
 }

@@ -116,18 +116,21 @@ public class InstitutService implements IInstitutService {
 
     @Override
     @Transactional
+
     public void supprimer(Long id, Utilisateur acteur) {
         try {
             Institut institut = findById(id);
 
+            // Vérifier les écoles
             if (institut.getEcoles() != null && !institut.getEcoles().isEmpty()) {
                 throw new RuntimeException("Impossible de supprimer l'institut car il contient " +
                         institut.getEcoles().size() + " école(s). Supprimez d'abord les écoles.");
             }
 
+
+
             institutRepository.delete(institut);
 
-            // ✅ Journalisation
             journalService.journaliserSuppressionInstitut(acteur, id, institut.getNom());
 
         } catch (RuntimeException e) {
