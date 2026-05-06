@@ -15,10 +15,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.Method
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutPresence;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.AppelsRepository;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutPresence.*;
 

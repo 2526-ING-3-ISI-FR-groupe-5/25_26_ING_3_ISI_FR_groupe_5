@@ -5,6 +5,22 @@
       layout:decorate="~{layout/app}">
 <head>
     <title>Appel — CarnetRouge</title>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+    </style>
 </head>
 <body>
 
@@ -27,21 +43,22 @@
                 </p>
             </div>
             <div class="flex items-center gap-4 text-sm">
-                <span class="text-emerald-400">✅ <strong th:text="${nbPresents}"></strong> présents</span>
-                <span class="text-red-400">❌ <strong th:text="${nbAbsents}"></strong> absents</span>
+                <span class="text-emerald-400">✅ <strong th:text="${nbPresents}">0</strong> présents</span>
+                <span class="text-amber-400" th:if="${nbRetards > 0}">⏰ <strong th:text="${nbRetards}">0</strong> retards</span>
+                <span class="text-red-400">❌ <strong th:text="${nbAbsents}">0</strong> absents</span>
             </div>
         </div>
 
         <!-- Messages -->
-        <div th:if="${succes}" class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center gap-2">
+        <div th:if="${succes}" class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center gap-2 animate-slide-down">
             <span th:text="${succes}"></span>
         </div>
-        <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2">
+        <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2 animate-slide-down">
             <span th:text="${erreur}"></span>
         </div>
 
         <!-- Session active QR/PIN -->
-        <div th:if="${sessionActive != null}" class="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
+        <div th:if="${sessionActive != null}" class="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl animate-slide-down">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="font-semibold text-primary text-sm">
@@ -57,15 +74,15 @@
                     <form th:action="@{/enseignant/appels/{id}/arreter-session/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post">
                         <button class="btn btn-sm btn-ghost border border-white/10 text-gray-400 rounded-lg h-8 text-xs">Arrêter</button>
                     </form>
-                    <form th:action="@{/enseignant/appels/{id}/terminer/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post">
+                    <form th:action="@{/enseignant/appels/{id}/terminer/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post" onsubmit="return confirm('⚠️ Terminer le cours ? Cette action est irréversible.')">
                         <button class="btn btn-sm bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-lg h-8 text-xs">Terminer le cours</button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Actions rapides -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <!-- Actions rapides (QR ou PIN, pas les deux) -->
+        <div th:unless="${sessionActive != null}" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <!-- QR -->
             <form th:action="@{/enseignant/appels/{id}/lancer-session(id=${plageHoraire.id})}" method="post" class="bg-bgcard border border-white/5 rounded-[16px] p-4">
                 <input type="hidden" name="methode" value="QR_CODE">
@@ -82,58 +99,113 @@
                 <p class="text-[11px] text-gray-500 mb-3">Les étudiants saisissent le code</p>
                 <button type="submit" class="btn btn-sm bg-primary hover:bg-primaryhover border-none text-white w-full rounded-lg h-8 text-xs">Générer PIN</button>
             </form>
-            <!-- Manuel -->
-            <div class="bg-bgcard border border-white/5 rounded-[16px] p-4">
-                <h4 class="font-medium text-gray-200 text-sm mb-2">✋ Manuel</h4>
-                <p class="text-[11px] text-gray-500 mb-3">Cochez les étudiants présents</p>
-                <button onclick="document.getElementById('section-manuel').scrollIntoView({behavior:'smooth'})"
-                        class="btn btn-sm bg-bgsurface border border-white/10 text-gray-300 hover:text-white w-full rounded-lg h-8 text-xs">
-                    Accéder
-                </button>
+        </div>
+
+        <!-- ═══ SECTION RETARDS (premier cours du matin ≤ 08:30) ═══ -->
+        <div th:if="${plageHoraire.heureDebut <= T(java.time.LocalTime).of(8, 30)}" class="bg-bgcard border border-amber-500/20 rounded-[22px] overflow-hidden mb-6">
+            <div class="flex items-center justify-between p-4 md:p-5 border-b border-amber-500/10 bg-amber-500/5">
+                <div>
+                    <h2 class="text-[15px] font-semibold text-amber-400">⏰ Gestion des retards</h2>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Premier cours du matin — Les retards sont autorisés</p>
+                </div>
+                <span class="text-[11px] text-amber-400/70" th:text="${nbRetards} + ' retard(s)'">0 retard(s)</span>
+            </div>
+
+            <div class="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+                <div th:each="appel : ${appels}" th:if="${appel.statut.name() == 'EN_ATTENTE' || appel.statut.name() == 'RETARD'}"
+                     class="flex items-center justify-between p-3 md:p-4 hover:bg-bgsurface/30 transition-colors">
+
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-bgsubtle border border-white/5 flex items-center justify-center text-xs font-bold shrink-0"
+                             th:classappend="${appel.statut.name() == 'RETARD' ? '!bg-amber-500/20 !text-amber-400 !border-amber-500/30' : 'text-gray-400'}"
+                             th:text="${#strings.substring(appel.etudiantNom,0,1) + #strings.substring(appel.etudiantPrenom,0,1)}">AB</div>
+                        <div class="min-w-0">
+                            <p class="text-[13px] font-medium text-gray-200 truncate" th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></p>
+                            <p class="text-[11px] text-gray-500" th:text="${appel.etudiantMatricule}"></p>
+                            <div th:if="${appel.statut.name() == 'RETARD'}" class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] text-amber-400/80">Arrivé à <span th:text="${appel.heureArrivee}"></span></span>
+                                <span class="text-[10px] font-bold text-amber-400">(+<span th:text="${appel.retardMinutes}"></span> min)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <th:block th:if="${appel.statut.name() != 'RETARD'}">
+                            <form th:action="@{/enseignant/appels/{id}/marquer-retard(id=${plageHoraire.id})}" method="post" class="flex items-center gap-1.5">
+                                <input type="hidden" name="etudiantId" th:value="${appel.etudiantId}">
+                                <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
+                                <input type="hidden" name="enseignantId" th:value="${#authentication.principal.id}">
+                                <input type="time" name="heureArrivee" required
+                                       class="bg-bgsubtle border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 w-24 focus:border-amber-500/50 focus:outline-none"
+                                       th:min="${plageHoraire.heureDebut}" th:max="${plageHoraire.heureFin}">
+                                <button type="submit" class="btn btn-xs bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-400 rounded-lg h-7 text-[10px] px-2">Retard</button>
+                            </form>
+                        </th:block>
+                        <span th:if="${appel.statut.name() == 'RETARD'}" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">⏰ En retard</span>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(appels)}" class="p-8 text-center text-gray-500">
+                    <p class="text-sm">Tous les étudiants sont à l'heure 🎉</p>
+                </div>
             </div>
         </div>
 
         <!-- ═══ SECTION CHECK MANUEL ═══ -->
         <div id="section-manuel" class="bg-bgcard border border-white/5 rounded-[22px] overflow-hidden mb-8">
             <div class="flex items-center justify-between p-4 md:p-5 border-b border-white/5 bg-bgsurface/30">
-                <h2 class="text-[15px] font-semibold text-gray-200">Check manuel</h2>
-                <span class="text-[11px] text-gray-500" th:text="${#lists.size(appels)} + ' enregistrements'"></span>
+                <h2 class="text-[15px] font-semibold text-gray-200">📋 Check manuel</h2>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="toggleAll(true)" class="text-[11px] text-emerald-400 hover:text-emerald-300">Tout cocher</button>
+                    <button type="button" onclick="toggleAll(false)" class="text-[11px] text-red-400 hover:text-red-300">Tout décocher</button>
+                    <span class="text-[11px] text-gray-500" th:text="${#lists.size(appels)} + ' étudiants'">0 étudiants</span>
+                </div>
             </div>
 
-            <form th:action="@{/enseignant/appels/{id}/check-manuel(id=${plageHoraire.id})}" method="post">
+            <form th:action="@{/enseignant/appels/{id}/check-manuel(id=${plageHoraire.id})}" method="post" id="form-check-manuel">
                 <input type="hidden" name="enseignantId" th:value="${#authentication.principal.id}">
+                <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
 
                 <div class="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
                     <div th:each="appel : ${appels}" class="flex items-center justify-between p-3 md:p-4 hover:bg-bgsurface/30 transition-colors">
+
+                        <input type="checkbox" name="etudiantIdsPresents" th:value="${appel.etudiantId}"
+                               th:checked="${appel.present || appel.statut.name() == 'PRESENT'}"
+                               class="hidden peer" th:id="'present-' + ${appel.etudiantId}">
+
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-lg bg-bgsubtle border border-white/5 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0"
-                                 th:text="${#strings.substring(appel.etudiantNom,0,1) + #strings.substring(appel.etudiantPrenom,0,1)}">AB</div>
+                            <label th:for="'present-' + ${appel.etudiantId}" class="cursor-pointer">
+                                <div class="w-9 h-9 rounded-lg bg-bgsubtle border border-white/5 flex items-center justify-center text-xs font-bold shrink-0"
+                                     th:classappend="${appel.present ? '!bg-emerald-500/20 !text-emerald-400 !border-emerald-500/30' : 'text-gray-400'}"
+                                     th:text="${#strings.substring(appel.etudiantNom,0,1) + #strings.substring(appel.etudiantPrenom,0,1)}">AB</div>
+                            </label>
                             <div class="min-w-0">
-                                <p class="text-[13px] font-medium text-gray-200 truncate" th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></p>
+                                <label th:for="'present-' + ${appel.etudiantId}" class="text-[13px] font-medium text-gray-200 truncate cursor-pointer hover:text-primary" th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></label>
                                 <p class="text-[11px] text-gray-500" th:text="${appel.etudiantMatricule}"></p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-2 shrink-0">
-                            <th:block th:if="${appel.present}">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">✅ Présent</span>
-                            </th:block>
-                            <th:block th:unless="${appel.present}">
+                            <!-- Ajustement heures (présence partielle) -->
+                            <div th:if="${appel.statut.name() == 'PARTIEL' || appel.nbHeuresPresent > 0}" class="flex items-center gap-1 bg-bgsubtle rounded-lg p-1">
                                 <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent - 1}">
-                                    <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-lg" th:if="${appel.nbHeuresPresent > 0}">−</button>
+                                    <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6" th:disabled="${appel.nbHeuresPresent <= 0}">−</button>
                                 </form>
                                 <span class="text-[13px] font-mono font-medium text-gray-200 w-8 text-center" th:text="${appel.nbHeuresPresent + 'h'}"></span>
                                 <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent + 1}">
-                                    <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-lg" th:if="${appel.nbHeuresPresent < plageHoraire.nbHeure}">+</button>
+                                    <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6" th:disabled="${appel.nbHeuresPresent >= plageHoraire.nbHeure}">+</button>
                                 </form>
-                            </th:block>
+                            </div>
 
+                            <!-- Badge statut -->
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                  th:classappend="${appel.statutLibelle == 'Présent' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}"
-                                  th:classappend="${appel.statutLibelle == 'Partiel' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}"
-                                  th:classappend="${appel.statutLibelle == 'Absent' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : ''}"
+                                  th:classappend="${appel.statut.name() == 'PRESENT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}"
+                                  th:classappend="${appel.statut.name() == 'RETARD' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}"
+                                  th:classappend="${appel.statut.name() == 'PARTIEL' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : ''}"
+                                  th:classappend="${appel.statut.name() == 'ABSENT' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : ''}"
+                                  th:classappend="${appel.statut.name() == 'EN_ATTENTE' ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20' : ''}"
                                   th:text="${appel.statutLibelle}"></span>
                         </div>
                     </div>
@@ -150,7 +222,7 @@
         <!-- ═══ HISTORIQUE DES SESSIONS ═══ -->
         <div th:if="${not #lists.isEmpty(sessions)}" class="bg-bgcard border border-white/5 rounded-[22px] overflow-hidden">
             <div class="p-4 md:p-5 border-b border-white/5 bg-bgsurface/30">
-                <h2 class="text-[15px] font-semibold text-gray-200">Sessions d'appel</h2>
+                <h2 class="text-[15px] font-semibold text-gray-200">📊 Sessions d'appel</h2>
             </div>
             <div class="divide-y divide-white/5">
                 <div th:each="session : ${sessions}" class="p-3 md:p-4 flex items-center justify-between">
@@ -170,5 +242,20 @@
 
     </div>
 </div>
+
+<script>
+    function toggleAll(checked) {
+        document.querySelectorAll('input[name="etudiantIdsPresents"]').forEach(cb => cb.checked = checked);
+    }
+
+    document.getElementById('form-check-manuel')?.addEventListener('submit', function(e) {
+        const nbCoches = document.querySelectorAll('input[name="etudiantIdsPresents"]:checked').length;
+        if (nbCoches === 0 && document.querySelectorAll('input[name="etudiantIdsPresents"]').length > 0) {
+            e.preventDefault();
+            alert('⚠️ Veuillez sélectionner au moins un étudiant présent.');
+        }
+    });
+</script>
+
 </body>
 </html>

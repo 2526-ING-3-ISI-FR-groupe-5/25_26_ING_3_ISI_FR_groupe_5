@@ -17,27 +17,22 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // RECHERCHES PAR PLAGE HORAIRE
     // ═══════════════════════════════════════════════════════════
 
+    @Query("SELECT s FROM SessionAppel s WHERE s.plageHoraire.classe.id = :classeId AND s.actif = true")
+    Optional<SessionAppel> findActiveByClasseId(@Param("classeId") Long classeId);
 
     List<SessionAppel> findByPlageHoraireId(Long plageHoraireId);
 
-    List<SessionAppel> findByPlageHoraireIdOrderByDateGenerationDesc(Long plageHoraireId);
-
     // Session active d'une plage horaire
     Optional<SessionAppel> findByPlageHoraireIdAndActifTrue(Long plageHoraireId);
-
-    // Session active par méthode
-    Optional<SessionAppel> findByPlageHoraireIdAndActifTrueAndCoursTermineFalse(Long plageHoraireId);
 
     // ═══════════════════════════════════════════════════════════
     // RECHERCHES PAR ENSEIGNANT
     // ═══════════════════════════════════════════════════════════
 
-    List<SessionAppel> findByEnseignantIdOrderByDateGenerationDesc(Long enseignantId);
-
     @Query("""
-        SELECT s FROM SessionAppel s 
-        WHERE s.enseignant.id = :enseignantId 
-        AND s.dateGeneration BETWEEN :debut AND :fin 
+        SELECT s FROM SessionAppel s
+        WHERE s.enseignant.id = :enseignantId
+        AND s.dateGeneration BETWEEN :debut AND :fin
         ORDER BY s.dateGeneration DESC
     """)
     List<SessionAppel> findByEnseignantAndPeriode(
@@ -50,8 +45,8 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // ═══════════════════════════════════════════════════════════
 
     @Query("""
-        SELECT s FROM SessionAppel s 
-        WHERE s.actif = true 
+        SELECT s FROM SessionAppel s
+        WHERE s.actif = true
         AND s.dateExpiration < :now
     """)
     List<SessionAppel> findSessionsExpirees(@Param("now") LocalDateTime now);
@@ -60,7 +55,6 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // STATISTIQUES
     // ═══════════════════════════════════════════════════════════
 
-    long countByPlageHoraireId(Long plageHoraireId);
 
     long countByPlageHoraireIdAndCoursTermineTrue(Long plageHoraireId);
 
@@ -69,8 +63,8 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // ═══════════════════════════════════════════════════════════
 
     @Query("""
-        SELECT s FROM SessionAppel s 
-        WHERE s.plageHoraire.classe.niveau.filiere.ecole.institut.id = :institutId 
+        SELECT s FROM SessionAppel s
+        WHERE s.plageHoraire.classe.niveau.filiere.ecole.institut.id = :institutId
         ORDER BY s.dateGeneration DESC
     """)
     List<SessionAppel> findByInstitutId(@Param("institutId") Long institutId);

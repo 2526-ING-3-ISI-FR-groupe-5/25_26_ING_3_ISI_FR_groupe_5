@@ -151,7 +151,7 @@ public class SecurityConfig {
 
                         // ✅ Assistant
                         .requestMatchers("/assistant/**")
-                        .hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT","ENSEIGNANT")
 
                         // ✅ Dashboard
                         .requestMatchers("/dashboard").authenticated()
