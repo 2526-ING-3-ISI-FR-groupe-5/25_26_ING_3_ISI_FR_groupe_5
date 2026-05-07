@@ -14,13 +14,14 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.Statut
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InscriptionRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.InterfaceInscription;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class InscriptionService {
+public class InscriptionService implements InterfaceInscription {
 
     private final InscriptionRepository inscriptionRepo;
     private final EtudiantService etudiantService;
@@ -100,6 +101,21 @@ public class InscriptionService {
         return inscriptionRepo.findByEtudiantIdOrderByAnneeAcademiqueNomDesc(etudiantId);
     }
 
+    @Override
+    public Inscription inscrire(Long etudiantId, Long classeId, Long anneeId) {
+        return null;
+    }
+
+    @Override
+    public Inscription changerStatut(Long inscriptionId, StatutInscription statut) {
+        return null;
+    }
+
+    @Override
+    public Inscription enregistrerDecision(Long inscriptionId, String decision) {
+        return null;
+    }
+
     public List<Inscription> getByClasseAndAnnee(Long classeId, Long anneeId) {
         // Si classeId est null, on filtre par institut
         if (classeId == null) {
@@ -122,6 +138,13 @@ public class InscriptionService {
         }
 
         return inscriptionRepo.findByClasseIdAndAnneeAcademiqueId(classeId, anneeId);
+    }
+
+
+
+    @Override
+    public List<Inscription> getActifsByClasseAndAnnee(Long classeId, Long anneeId) {
+        return List.of();
     }
 
     public List<Inscription> getEtudiantsActifsByClasse(Long classeId, Long anneeId) {
@@ -151,13 +174,5 @@ public class InscriptionService {
         throw new RuntimeException("Impossible de déterminer l'institut de l'inscription");
     }
 
-    private Long getInstitutIdFromClasse(Classe classe) {
-        if (classe.getNiveau() != null
-                && classe.getNiveau().getFiliere() != null
-                && classe.getNiveau().getFiliere().getEcole() != null
-                && classe.getNiveau().getFiliere().getEcole().getInstitut() != null) {
-            return classe.getNiveau().getFiliere().getEcole().getInstitut().getId();
-        }
-        throw new RuntimeException("Impossible de déterminer l'institut de la classe");
-    }
+
 }

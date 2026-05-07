@@ -95,54 +95,6 @@ public interface IJournalActionService {
     List<JournalEchecResponse> getStatsByEchecs();
     List<IpSuspecteResponse> getIpsSuspectes(LocalDateTime depuis, Long seuil);
 
-
-
-    // ═══════════════════════════════════════════════════════════
-    // APPELS (méthodes default)
-    // ═══════════════════════════════════════════════════════════
-
-
-
-    default void journaliserClotureAppel(Utilisateur auteur, Long appelId, int nbPresents, int nbAbsents) {
-        journaliserSucces(auteur, TypeAction.APPEL_CLOTURE,
-                "Appels", appelId,
-                String.format("Appel clôturé : %d présents, %d absents", nbPresents, nbAbsents));
-    }
-
-    default void journaliserEchecAppel(Utilisateur auteur, Long appelId, String erreur) {
-        journaliserEchec(auteur, TypeAction.APPEL_LANCE,
-                "Appels", appelId,
-                "Échec de l'appel : " + erreur);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // JUSTIFICATIFS (méthodes default)
-    // ═══════════════════════════════════════════════════════════
-
-
-
-    default void journaliserValidationJustificatif(Utilisateur auteur, Long justificatifId) {
-        journaliserSucces(auteur, TypeAction.JUSTIFICATIF_VALIDE,
-                "Justificatif", justificatifId,
-                "Justificatif validé");
-    }
-
-
-
-    default void journaliserSuppressionJustificatif(Utilisateur auteur, Long justificatifId) {
-        journaliserSucces(auteur, TypeAction.JUSTIFICATIF_SUPPRIME,
-                "Justificatif", justificatifId,
-                "Justificatif supprimé");
-    }
-
-    default void journaliserEchecJustificatif(Utilisateur auteur, Long justificatifId, TypeAction type, String erreur) {
-        journaliserEchec(auteur, type,
-                "Justificatif", justificatifId,
-                "Échec : " + erreur);
-    }
-
-
-
     // ============================================
     // ✅ Méthodes raccourcies — Authentification
     // ============================================

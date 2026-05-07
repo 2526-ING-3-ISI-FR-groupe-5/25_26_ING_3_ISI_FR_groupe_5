@@ -42,8 +42,8 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
     }
 
     @Transactional
-    public Annee_academique creerAvecInstitut(String nom, LocalDate dateDebut, LocalDate dateFin,
-                                              boolean active, Long institutId, Utilisateur acteur) {
+    public void creerAvecInstitut(String nom, LocalDate dateDebut, LocalDate dateFin,
+                                  boolean active, Long institutId, Utilisateur acteur) {
         try {
             if (!securityService.canManageInstitut(acteur, institutId)) {
                 throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
@@ -78,9 +78,8 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
             Annee_academique saved = anneeRepo.save(annee);
 
+            // ✅ Journalisation
             journalService.journaliserCreationAnnee(acteur, saved.getId(), saved.getNom());
-
-            return saved;
 
         } catch (ANNEEACDEMIQUEEXISTEXCEPTION e) {
             journalService.journaliserEchec(acteur, TypeAction.ANNEE_ACADEMIQUE_CREEE,
@@ -171,6 +170,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             nouvelleAnnee.setActive(true);
             Annee_academique saved = anneeRepo.save(nouvelleAnnee);
 
+            // ✅ Journalisation
             journalService.journaliserActivationAnnee(acteur, saved.getId(), saved.getNom());
 
             return saved;
@@ -275,6 +275,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
             anneeRepo.delete(annee);
 
+            // ✅ Journalisation
             journalService.journaliserSuppressionAnnee(acteur, anneeId, annee.getNom());
 
         } catch (IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU e) {

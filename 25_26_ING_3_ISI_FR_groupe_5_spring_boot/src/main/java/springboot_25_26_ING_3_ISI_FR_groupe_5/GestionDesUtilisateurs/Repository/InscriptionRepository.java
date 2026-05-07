@@ -25,7 +25,6 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     List<Inscription> findByClasseId(Long classeId);
 
     Optional<Inscription> findByEtudiantIdAndAnneeAcademiqueId(Long etudiantId, Long anneeId);
-
     List<Inscription> findByClasseIdAndAnneeAcademiqueId(Long classeId, Long anneeId);
 
     boolean existsByEtudiantIdAndAnneeAcademiqueId(Long etudiantId, Long anneeId);
@@ -47,6 +46,7 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
 
     List<Inscription> findByAnneeAcademiqueIdAndStatut(Long anneeId, StatutInscription statut);
 
+    // ✅ Méthode pour les étudiants actifs d'une classe
     List<Inscription> findByClasseIdAndAnneeAcademiqueIdAndStatut(Long classeId, Long anneeId, StatutInscription statut);
 
     // ═══════════════════════════════════════════════════════════
