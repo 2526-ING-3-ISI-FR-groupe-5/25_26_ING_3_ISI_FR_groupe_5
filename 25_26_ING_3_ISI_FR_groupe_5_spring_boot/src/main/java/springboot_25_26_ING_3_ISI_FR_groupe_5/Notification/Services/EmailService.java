@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.Notification.Services.EmailInterface;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 @Service("NotificationEmailService")
 @RequiredArgsConstructor

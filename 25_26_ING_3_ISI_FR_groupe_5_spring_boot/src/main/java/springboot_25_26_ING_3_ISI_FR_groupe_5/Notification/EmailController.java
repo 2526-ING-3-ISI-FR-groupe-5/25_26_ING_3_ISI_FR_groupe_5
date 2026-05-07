@@ -4,6 +4,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.Notification;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.RestController;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 
 @RestController // RestController est plus simple pour un test direct
 public class EmailController {

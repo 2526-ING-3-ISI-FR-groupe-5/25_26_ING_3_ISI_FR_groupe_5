@@ -1,6 +1,7 @@
-package CarnetRouge.CarnetRouge.GDU.Enum;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum;
 
 import lombok.Getter;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
 
 @Getter
 public enum TypeSemestre {

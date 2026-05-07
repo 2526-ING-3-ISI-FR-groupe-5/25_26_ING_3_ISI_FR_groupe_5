@@ -2,7 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Resque
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeRole;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeRole;
 
 import java.util.ArrayList;
 import java.util.Date;

@@ -18,8 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.util.Arrays;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Surveillant;
 
 @Configuration
 @EnableWebSecurity
@@ -29,7 +30,6 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
-    // ✅ @Qualifier pour indiquer quel bean utiliser
     @Qualifier("customUserDetailsService")
     private final UserDetailsService userDetailsService;
 
@@ -77,7 +77,6 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ✅ IF Thymeleaf → IF_REQUIRED au lieu de STATELESS
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
@@ -86,12 +85,25 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendRedirect("/login")
                         )
-                        .accessDeniedPage("/notFound")
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendRedirect("/accessDenied")
+                        )
                 )
 
-                // ═══════════════════════════════════════════════
-                // DÉCONNEXION
-                // ═══════════════════════════════════════════════
+                // ✅ AJOUT OBLIGATOIRE — sans ça, permitAll() ne fonctionne pas
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PUBLIC_URL).permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/journal/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/enseignant/**").hasAnyRole("ENSEIGNANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/etudiant/**").hasAnyRole("ETUDIANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/surveillant/**").hasAnyRole("SURVEILLANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/assistant/**").hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/dashboard").authenticated()
+                        .requestMatchers("/api/instituts/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .anyRequest().authenticated()
+                )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .deleteCookies("JWT_TOKEN", "REFRESH_TOKEN")

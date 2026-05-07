@@ -12,6 +12,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEn
 
 import java.time.LocalDate;
 import java.util.Date;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Getter
 @Setter

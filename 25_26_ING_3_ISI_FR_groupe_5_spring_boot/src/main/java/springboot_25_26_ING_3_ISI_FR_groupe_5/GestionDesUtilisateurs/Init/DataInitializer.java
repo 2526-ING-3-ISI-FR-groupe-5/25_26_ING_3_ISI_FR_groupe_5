@@ -1,4 +1,3 @@
-/*
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Init;
 
 import lombok.RequiredArgsConstructor;
@@ -8,20 +7,58 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeCycle;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Enums.TypeSemestre;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeCycle;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeSemestre;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.DecisionFinAnnee;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeContrat;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Cycle;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Ecole;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Filiere;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Specialite;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.AnneeAcademiqueRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.CycleRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.EcoleRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.FiliereRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.NiveauRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SemestreRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SpecialiteRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.UERepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Entity.Justificatif;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.ProgrammationUERepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Permission;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Surveillant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEnseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InscriptionRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.PermissionRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.RoleRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
 
 @Component
 @Order(1)
@@ -33,7 +70,6 @@ public class DataInitializer implements ApplicationRunner {
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Repositories pour les entités métier
     private final InstitutRepository institutRepository;
     private final EcoleRepository ecoleRepository;
     private final CycleRepository cycleRepository;
@@ -49,11 +85,16 @@ public class DataInitializer implements ApplicationRunner {
     private final EtudiantRepository etudiantRepository;
     private final InscriptionRepository inscriptionRepository;
 
+    private Institut ucad;
+    private Institut ugb;
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
 
-        System.out.println("🚀 Début de l'initialisation des données...");
+        System.out.println("\n" + "=".repeat(80));
+        System.out.println("🚀 DÉMARRAGE DE L'INITIALISATION DES DONNÉES DU CARNET ROUGE");
+        System.out.println("=".repeat(80));
 
         // ============================================
         // 1. PERMISSIONS
@@ -69,24 +110,49 @@ public class DataInitializer implements ApplicationRunner {
         Permission nRead = createOrUpdatePermission("note:read", "Voir les notes");
         Permission nWrite = createOrUpdatePermission("note:write", "Saisir / modifier les notes");
 
+        Permission institutRead = createOrUpdatePermission("institut:read", "Voir les instituts");
+        Permission institutWrite = createOrUpdatePermission("institut:write", "Gérer les instituts");
+        Permission institutDelete = createOrUpdatePermission("institut:delete", "Supprimer les instituts");
+
+        Permission appelRead = createOrUpdatePermission("appel:read", "Voir les appels");
+        Permission appelWrite = createOrUpdatePermission("appel:write", "Faire l'appel");
+        Permission appelManage = createOrUpdatePermission("appel:manage", "Gérer les appels");
+
+        Permission justifRead = createOrUpdatePermission("justificatif:read", "Voir les justificatifs");
+        Permission justifWrite = createOrUpdatePermission("justificatif:write", "Soumettre un justificatif");
+        Permission justifManage = createOrUpdatePermission("justificatif:manage", "Gérer les justificatifs");
+
+        Permission presenceRead = createOrUpdatePermission("presence:read", "Voir ses présences");
+
         // ============================================
         // 2. ROLES
         // ============================================
-        Role roleAdmin = createOrUpdateRole("ADMIN", "Administrateur", true,
-                Set.of(pRead, pWrite, pDelete, eRead, eWrite, eDelete, nRead, nWrite));
+        Role roleSuperAdmin = createOrUpdateRole("SUPER_ADMIN", "Super Administrateur - Tous les instituts", true,
+                Set.of(pRead, pWrite, pDelete, eRead, eWrite, eDelete, nRead, nWrite,
+                        institutRead, institutWrite, institutDelete,
+                        appelRead, appelWrite, appelManage,
+                        justifRead, justifWrite, justifManage, presenceRead));
+
+        Role roleAdminInstitut = createOrUpdateRole("ADMIN_INSTITUT", "Administrateur d'institut", true,
+                Set.of(pRead, pWrite, pDelete, eRead, eWrite, eDelete, nRead, nWrite,
+                        appelRead, appelManage, justifRead, justifManage, presenceRead));
+
         Role roleEnseignant = createOrUpdateRole("ENSEIGNANT", "Enseignant", true,
-                Set.of(eRead, nRead, nWrite));
+                Set.of(eRead, nRead, nWrite, appelRead, appelWrite, appelManage,
+                        justifRead, presenceRead));
+
         Role roleEtudiant = createOrUpdateRole("ETUDIANT", "Étudiant", true,
-                Set.of(nRead));
+                Set.of(nRead, presenceRead, justifRead, justifWrite, appelRead));
+
         Role roleAssistant = createOrUpdateRole("ASSISTANT", "Assistant administratif / pédagogique", true,
-                Set.of(eRead, nRead));
+                Set.of(eRead, nRead, justifRead, justifManage, presenceRead));
 
         // ============================================
         // 3. INSTITUTS
         // ============================================
-        Institut ucad = createInstitut("Université Cheikh Anta Diop", "Dakar", "Dakar, Sénégal",
+        ucad = createInstitut("Université Cheikh Anta Diop", "Dakar", "Dakar, Sénégal",
                 "contact@ucad.sn", "+221 33 123 45 67", "Fann");
-        Institut ugb = createInstitut("Université Gaston Berger", "Saint-Louis", "Saint-Louis, Sénégal",
+        ugb = createInstitut("Université Gaston Berger", "Saint-Louis", "Saint-Louis, Sénégal",
                 "contact@ugb.sn", "+221 33 123 45 68", "Sanar");
 
         // ============================================
@@ -148,79 +214,98 @@ public class DataInitializer implements ApplicationRunner {
         Classe l3B = createClasse("L3-B", licence3);
 
         // ============================================
-        // 10. ANNEES ACADEMIQUES (une seule active)
+        // 10. ANNEES ACADEMIQUES
         // ============================================
-        // Désactiver toute année existante
         anneeRepository.findAll().forEach(a -> a.setActive(false));
 
-        Annee_academique annee2024 = createAnneeAcademique("2024-2025",
-                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 6, 30), true);
-        Annee_academique annee2025 = createAnneeAcademique("2025-2026",
-                LocalDate.of(2025, 10, 1), LocalDate.of(2026, 6, 30), false);
+        Annee_academique annee2024_UCAD = createAnneeAcademique("2024-2025",
+                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 6, 30), true, ucad);
+        Annee_academique annee2025_UCAD = createAnneeAcademique("2025-2026",
+                LocalDate.of(2025, 10, 1), LocalDate.of(2026, 6, 30), false, ucad);
+
+        Annee_academique annee2024_UGB = createAnneeAcademique("2024-2025",
+                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 6, 30), true, ugb);
+        Annee_academique annee2025_UGB = createAnneeAcademique("2025-2026",
+                LocalDate.of(2025, 10, 1), LocalDate.of(2026, 6, 30), false, ugb);
 
         // ============================================
         // 11. SEMESTRES
         // ============================================
-        Semestre s1_2024 = createSemestre(TypeSemestre.SEMESTRE_1,
-                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 1, 31), true, annee2024);
-        Semestre s2_2024 = createSemestre(TypeSemestre.SEMESTRE_2,
-                LocalDate.of(2025, 2, 1), LocalDate.of(2025, 6, 30), false, annee2024);
+        Semestre s1_2024_UCAD = createSemestre(TypeSemestre.SEMESTRE_1,
+                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 1, 31), true, annee2024_UCAD);
+        Semestre s2_2024_UCAD = createSemestre(TypeSemestre.SEMESTRE_2,
+                LocalDate.of(2025, 2, 1), LocalDate.of(2025, 6, 30), false, annee2024_UCAD);
+
+        Semestre s1_2024_UGB = createSemestre(TypeSemestre.SEMESTRE_1,
+                LocalDate.of(2024, 10, 1), LocalDate.of(2025, 1, 31), true, annee2024_UGB);
+        Semestre s2_2024_UGB = createSemestre(TypeSemestre.SEMESTRE_2,
+                LocalDate.of(2025, 2, 1), LocalDate.of(2025, 6, 30), false, annee2024_UGB);
 
         // ============================================
-        // 12. UE (Unités d'Enseignement)
+        // 12. UE
         // ============================================
-        UE algo = createUE("Algorithmique Avancée", "ALGO401", "Algorithmes et structures de données",
-                "Advanced Algorithms", ia);
-        UE java = createUE("Java EE", "JEE501", "Développement d'applications Java EE",
-                "Java Enterprise Edition", ia);
-        UE python = createUE("Python Avancé", "PYT402", "Programmation Python avancée",
-                "Advanced Python", ia);
-        UE adminsys = createUE("Administration Systeme sous LINUX", "RES301", "Administration Systeme sous LINUX",
-                "Computer Networks", ia);
-        UE sql = createUE("Bases de Données", "SQL302", "Bases de données relationnelles",
-                "Relational Databases", ia);
-        UE devWeb = createUE("Développement Web", "WEB403", "Développement web full-stack",
-                "Full-stack Web Development", ia);
+        UE algo = createUE("Algorithmique Avancée", "ALGO401", "Algorithmes et structures de données", "Advanced Algorithms", ia);
+        UE java = createUE("Java EE", "JEE501", "Développement d'applications Java EE", "Java Enterprise Edition", ia);
+        UE python = createUE("Python Avancé", "PYT402", "Programmation Python avancée", "Advanced Python", ia);
+        UE adminsys = createUE("Administration Systeme sous LINUX", "RES301", "Administration Systeme sous LINUX", "Computer Networks", ia);
+        UE sql = createUE("Bases de Données", "SQL302", "Bases de données relationnelles", "Relational Databases", ia);
+        UE devWeb = createUE("Développement Web", "WEB403", "Développement web full-stack", "Full-stack Web Development", ia);
 
         // ============================================
-        // 13. PROGRAMMATIONS UE
+        // 13. UTILISATEURS DE BASE
         // ============================================
-        // Récupérer les enseignants existants ou en créer
-        List<Enseignant> enseignants = enseignantRepository.findAll();
-        if (!enseignants.isEmpty()) {
-            Enseignant enseignant1 = enseignants.get(0);
+        createSuperAdmin(roleSuperAdmin);
+        createAdminInstitut(roleAdminInstitut, ucad);
+        createAdminInstitut(roleAdminInstitut, ugb);
+        createEnseignant(roleEnseignant, ucad);
+        createEnseignant(roleEnseignant, ugb);
+        createEtudiant(roleEtudiant, ucad);
+        createEtudiant(roleEtudiant, ugb);
+
+        // ============================================
+        // 14. UTILISATEURS DE TEST
+        // ============================================
+        createEnseignantTest(roleEnseignant, ucad);
+        createEtudiantTest(roleEtudiant, ucad);
+
+        // ============================================
+        // 15. UTILISATEURS FICTIFS
+        // ============================================
+        createFakeUsers(roleEnseignant, roleAssistant, ucad);
+        createFakeUsers(roleEnseignant, roleAssistant, ugb);
+
+        // ============================================
+        // 16. PROGRAMMATIONS UE
+        // ============================================
+        List<Enseignant> enseignantsUCAD = enseignantRepository.findAll().stream()
+                .filter(e -> e.getInstitut() != null && e.getInstitut().getId().equals(ucad.getId()))
+                .toList();
+
+        if (!enseignantsUCAD.isEmpty()) {
+            Enseignant enseignant1 = enseignantsUCAD.get(0);
             Set<Long> enseignantIds = Set.of(enseignant1.getId());
-
-            createProgrammationUE(algo, s1_2024, ing4A, 45L, 6L, enseignantIds);
-            createProgrammationUE(java, s1_2024, ing4A, 60L, 8L, enseignantIds);
-            createProgrammationUE(python, s2_2024, ing4A, 45L, 6L, enseignantIds);
-            createProgrammationUE(adminsys, s1_2024, ing4B, 45L, 6L, enseignantIds);
-            createProgrammationUE(sql, s2_2024, ing4B, 30L, 4L, enseignantIds);
-            createProgrammationUE(devWeb, s2_2024, ing4B, 45L, 6L, enseignantIds);
+            createProgrammationUE(algo, s1_2024_UCAD, ing4A, 45L, 6L, enseignantIds);
+            createProgrammationUE(java, s1_2024_UCAD, ing4A, 60L, 8L, enseignantIds);
+            createProgrammationUE(python, s2_2024_UCAD, ing4A, 45L, 6L, enseignantIds);
+            createProgrammationUE(adminsys, s1_2024_UCAD, ing4B, 45L, 6L, enseignantIds);
+            createProgrammationUE(sql, s2_2024_UCAD, ing4B, 30L, 4L, enseignantIds);
+            createProgrammationUE(devWeb, s2_2024_UCAD, ing4B, 45L, 6L, enseignantIds);
         }
 
         // ============================================
-        // 14. UTILISATEURS DE BASE
+        // 17. INSCRIPTIONS
         // ============================================
-        createAdminUser(roleAdmin);
-        createEnseignant(roleEnseignant);
-        createEtudiant(roleEtudiant);
+        List<Etudiant> etudiantsUCAD = etudiantRepository.findAll().stream()
+                .filter(e -> e.getInstitut() != null && e.getInstitut().getId().equals(ucad.getId()))
+                .toList();
 
-        // ============================================
-        // 15. INSCRIPTIONS
-        // ============================================
-        List<Etudiant> etudiants = etudiantRepository.findAll();
-        if (!etudiants.isEmpty()) {
-            Etudiant etudiant1 = etudiants.get(0);
-            createInscription(etudiant1, ing4A, annee2024, StatutInscription.ACTIF, null);
+        if (!etudiantsUCAD.isEmpty()) {
+            Etudiant etudiant1 = etudiantsUCAD.get(0);
+            createInscription(etudiant1, ing4A, annee2024_UCAD, StatutInscription.ACTIF, DecisionFinAnnee.ADMIS);
         }
 
-        // ============================================
-        // 16. UTILISATEURS FICTIFS
-        // ============================================
-        createFakeUsers(roleEnseignant, roleAssistant);
-
-        System.out.println("✅ DataInitializer — Toutes les données ont été initialisées avec succès !");
+        System.out.println("\n✅ DataInitializer — Toutes les données ont été initialisées avec succès !");
+        System.out.println("=".repeat(80) + "\n");
     }
 
     // ============================================
@@ -230,49 +315,25 @@ public class DataInitializer implements ApplicationRunner {
     private Permission createOrUpdatePermission(String nom, String description) {
         return permissionRepository.findByNom(nom)
                 .orElseGet(() -> permissionRepository.save(
-                        Permission.builder()
-                                .nom(nom)
-                                .description(description)
-                                .active(true)
-                                .creatAt(LocalDateTime.now())
-                                .build()
-                ));
+                        Permission.builder().nom(nom).description(description).active(true).creatAt(LocalDateTime.now()).build()));
     }
 
     private Role createOrUpdateRole(String nom, String description, boolean active, Set<Permission> permissions) {
         return roleRepository.findByNom(nom)
-                .map(role -> {
-                    role.setPermissions(new HashSet<>(permissions));
-                    role.setActive(active);
-                    return roleRepository.save(role);
-                })
+                .map(role -> { role.setPermissions(new HashSet<>(permissions)); role.setActive(active); return roleRepository.save(role); })
                 .orElseGet(() -> roleRepository.save(
-                        Role.builder()
-                                .nom(nom)
-                                .description(description)
-                                .active(active)
-                                .creatAt(LocalDateTime.now())
-                                .permissions(new HashSet<>(permissions))
-                                .build()
-                ));
+                        Role.builder().nom(nom).description(description).active(active).creatAt(LocalDateTime.now()).permissions(new HashSet<>(permissions)).build()));
     }
 
     private Institut createInstitut(String nom, String ville, String adresse, String email, String telephone, String localite) {
         return institutRepository.findByNomIgnoreCase(nom)
                 .orElseGet(() -> institutRepository.save(
-                        Institut.builder()
-                                .nom(nom)
-                                .ville(ville)
-                                .adresse(adresse)
-                                .email(email)
-                                .telephone(telephone)
-                                .localite(localite)
-                                .build()
-                ));
+                        Institut.builder().nom(nom).ville(ville).adresse(adresse).email(email).telephone(telephone).localite(localite).build()));
     }
 
     private Ecole createEcole(String nom, String adresse, String email, String telephone, Institut institut) {
-        return ecoleRepository.findByNomAndInstitutId(nom, institut.getId())
+        // ✅ Correction : utiliser findByNomAndInstitut_Id avec underscore
+        return ecoleRepository.findByNomAndInstitut_Id(nom, institut.getId())
                 .orElseGet(() -> ecoleRepository.save(
                         Ecole.builder()
                                 .nom(nom)
@@ -280,8 +341,7 @@ public class DataInitializer implements ApplicationRunner {
                                 .email(email)
                                 .telephone(telephone)
                                 .institut(institut)
-                                .build()
-                ));
+                                .build()));
     }
 
     private Cycle createCycle(TypeCycle typeCycle) {
@@ -343,15 +403,6 @@ public class DataInitializer implements ApplicationRunner {
         if (inscriptionRepository.existsByEtudiantIdAndAnneeAcademiqueId(etudiant.getId(), annee.getId())) return null;
         return inscriptionRepository.save(
                 Inscription.builder().etudiant(etudiant).classe(classe).anneeAcademique(annee).statut(statut).decisionFinAnnee(decision).build());
-        Inscription inscription = Inscription.builder()
-                .etudiant(etudiant)
-                .classe(classe)
-                .anneeAcademique(annee)
-                .statut(statut)
-                .decisionFinAnnee(DecisionFinAnnee.valueOf(decisionFinAnnee))
-                .build();
-
-        return inscriptionRepository.save(inscription);
     }
 
     // ============================================
@@ -540,4 +591,4 @@ public class DataInitializer implements ApplicationRunner {
     private record EnseignantData(String nom, String prenom, String email, String grade, String type) {}
     private record AssistantData(String nom, String prenom, String email, String fonction) {}
     private record SurveillantData(String nom, String prenom, String email, String secteur, String typeContrat) {}
-}*/
+}

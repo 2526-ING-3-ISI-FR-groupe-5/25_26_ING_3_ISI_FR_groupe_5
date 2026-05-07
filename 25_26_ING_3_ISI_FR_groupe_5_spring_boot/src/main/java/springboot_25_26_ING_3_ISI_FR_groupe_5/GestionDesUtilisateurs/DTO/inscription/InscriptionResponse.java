@@ -1,11 +1,14 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.inscription;
 
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.DecisionFinAnnee;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 
 @Getter
 @Setter

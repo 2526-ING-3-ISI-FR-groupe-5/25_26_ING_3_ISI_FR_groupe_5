@@ -32,3 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 /node_modules
+
+
+echo ".idea/dataSources.xml" >> 25_26_ING_3_ISI_FR_groupe_5_spring_boot/.gitignore
+echo ".idea/dataSources/" >> 25_26_ING_3_ISI_FR_groupe_5_spring_boot/.gitignore
+echo ".idea/sqldialects.xml" >> 25_26_ING_3_ISI_FR_groupe_5_spring_boot/.gitignore

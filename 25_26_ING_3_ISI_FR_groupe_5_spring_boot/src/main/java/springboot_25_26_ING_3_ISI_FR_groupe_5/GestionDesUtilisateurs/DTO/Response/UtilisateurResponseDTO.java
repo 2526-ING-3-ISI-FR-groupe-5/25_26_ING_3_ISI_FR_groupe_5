@@ -5,6 +5,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 import java.util.Set;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEnseignant;
 
 @Data
 @NoArgsConstructor

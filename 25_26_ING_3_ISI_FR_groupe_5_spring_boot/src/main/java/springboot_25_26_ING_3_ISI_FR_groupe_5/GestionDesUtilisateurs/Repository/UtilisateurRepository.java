@@ -11,6 +11,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Util
 
 import java.util.List;
 import java.util.Optional;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
 
 @Repository
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {

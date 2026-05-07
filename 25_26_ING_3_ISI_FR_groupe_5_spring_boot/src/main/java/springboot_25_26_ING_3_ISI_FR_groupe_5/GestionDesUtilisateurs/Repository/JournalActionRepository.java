@@ -12,6 +12,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAc
 
 import java.time.LocalDateTime;
 import java.util.List;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 @Repository
 public interface JournalActionRepository extends JpaRepository<JournalAction, Long> {

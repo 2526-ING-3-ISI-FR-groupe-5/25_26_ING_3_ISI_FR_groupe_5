@@ -2,10 +2,10 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Etudiant;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.DecisionFinAnnee;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 
 import java.time.LocalDate;

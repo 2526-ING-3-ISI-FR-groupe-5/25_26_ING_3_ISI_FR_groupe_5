@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Annee_academique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.DecisionFinAnnee;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.InscriptionRepository;
@@ -18,6 +18,11 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 
 import java.time.LocalDate;
 import java.util.List;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.ClassesService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 @Service
 @RequiredArgsConstructor
@@ -142,9 +147,20 @@ public class InscriptionService implements InterfaceInscription {
 
 
 
+
     @Override
     public List<Inscription> getActifsByClasseAndAnnee(Long classeId, Long anneeId) {
         return List.of();
+    }
+
+    private Long getInstitutIdFromClasse(Classe classe) {
+        if (classe.getNiveau() != null
+                && classe.getNiveau().getFiliere() != null
+                && classe.getNiveau().getFiliere().getEcole() != null
+                && classe.getNiveau().getFiliere().getEcole().getInstitut() != null) {
+            return classe.getNiveau().getFiliere().getEcole().getInstitut().getId();
+        }
+        throw new RuntimeException("Impossible de déterminer l'institut de la classe");
     }
 
     public List<Inscription> getEtudiantsActifsByClasse(Long classeId, Long anneeId) {

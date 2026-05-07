@@ -2,7 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.etudiant.EtudiantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.etudiant.EtudiantResponse;
 
