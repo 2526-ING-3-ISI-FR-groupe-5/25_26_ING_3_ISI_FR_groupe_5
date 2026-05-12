@@ -6,5 +6,5 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Pare
 
 public enum TypeRole {
 
-    ADMIN, ASSISTANT_PEDAGOGIQUE, ETUDIANT, PARENT, ENSEIGNANT
+    ADMIN, ASSISTANT, ETUDIANT, PARENT, ENSEIGNANT
 }

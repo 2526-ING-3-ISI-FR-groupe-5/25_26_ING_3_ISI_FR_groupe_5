@@ -113,6 +113,8 @@ public class SessionAppel extends Auditable {
         if (latitudeEnseignant == null || longitudeEnseignant == null || perimetreMetres == null) {
             return true;
         }
+
+
         return calculerDistanceMetres(latitudeEnseignant, longitudeEnseignant,
                 latEtudiant, lonEtudiant) <= perimetreMetres;
     }
@@ -204,5 +206,33 @@ public class SessionAppel extends Auditable {
      */
     public boolean isAppelComplet() {
         return appels.stream().noneMatch(Appels::isEnAttente);
+    }
+
+    // Dans SessionAppel.java
+
+    public boolean estDansLePerimetre(Double latEtudiant, Double lonEtudiant) {
+        // Si la géolocalisation n'est pas activée pour cette session, on autorise
+        if (this.latitudeEnseignant == null || this.longitudeEnseignant == null || this.perimetreMetres == null) {
+            return true;
+        }
+
+        // Si l'étudiant n'envoie pas ses coordonnées alors qu'elles sont requises
+        if (latEtudiant == null || lonEtudiant == null) {
+            return false;
+        }
+
+        final int R = 6371000; // Rayon de la terre en mètres
+        double latDistance = Math.toRadians(latEtudiant - this.latitudeEnseignant);
+        double lonDistance = Math.toRadians(lonEtudiant - this.longitudeEnseignant);
+
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(this.latitudeEnseignant)) * Math.cos(Math.toRadians(latEtudiant))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c;
+
+        // Retourne vrai si l'étudiant est à l'intérieur du périmètre (ex: 50 mètres)
+        return distance <= this.perimetreMetres;
     }
 }

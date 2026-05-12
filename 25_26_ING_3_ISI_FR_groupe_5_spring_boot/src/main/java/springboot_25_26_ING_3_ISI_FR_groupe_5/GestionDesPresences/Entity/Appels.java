@@ -20,6 +20,12 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etud
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_appels_etudiant_plage",
+                columnNames = {"etudiant_id", "plage_horaire_id"}
+        )
+)
 public class Appels {
 
     /**

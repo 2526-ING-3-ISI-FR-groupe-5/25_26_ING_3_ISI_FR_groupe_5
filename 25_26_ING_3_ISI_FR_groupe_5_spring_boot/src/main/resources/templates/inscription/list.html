@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Gestion des Inscriptions — CarnetRouge</title>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        .sortable:hover { text-decoration: underline; cursor: pointer; }
+        .sort-indicator { display: inline-block; margin-left: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- EN-TÊTE + ACTIONS -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="font-serif text-2xl font-bold text-gray-900 dark:text-white">
+                    📋 Gestion des Inscriptions
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Consulter, filtrer et gérer les inscriptions des étudiants
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Sélecteur d'institut (SUPER_ADMIN) -->
+                <div sec:authorize="hasRole('SUPER_ADMIN')" class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600 dark:text-gray-400">Institut :</label>
+                    <select id="institutFilter"
+                            class="bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-1.5 px-3 text-sm focus:outline-none focus:border-primary"
+                            onchange="updateFilter('institutId', this.value)">
+                        <option value="">Tous les instituts</option>
+                        <option th:each="inst : ${instituts}"
+                                th:value="${inst.id}"
+                                th:text="${inst.nom}"
+                                th:selected="${selectedInstitutId} == ${inst.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Bouton refresh -->
+                <a th:href="@{/admin/inscriptions}"
+                   class="btn btn-sm btn-outline text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                   title="Actualiser">
+                    🔄
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- FILTRES DE RECHERCHE -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 mb-6 shadow-sm">
+            <form th:action="@{/admin/inscriptions}" method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <!-- Filtre Année -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Année académique</label>
+                    <select name="anneeId"
+                            class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"
+                            onchange="this.form.querySelector('[name=page]').value=0; this.form.submit()">
+                        <option value="">Toutes les années</option>
+                        <option th:each="a : ${annees}"
+                                th:value="${a.id}"
+                                th:text="${a.nom}"
+                                th:selected="${filters?.anneeId} == ${a.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Filtre Classe -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Classe</label>
+                    <select name="classeId"
+                            class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"
+                            onchange="this.form.querySelector('[name=page]').value=0; this.form.submit()">
+                        <option value="">Toutes les classes</option>
+                        <option th:each="c : ${classes}"
+                                th:value="${c.id}"
+                                th:text="${c.nom}"
+                                th:selected="${filters?.classeId} == ${c.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Tri -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Trier par</label>
+                    <div class="flex gap-2">
+                        <select name="sortBy"
+                                class="flex-1 bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"
+                                onchange="this.form.querySelector('[name=page]').value=0; this.form.submit()">
+                            <option value="etudiant.nom" th:selected="${sortBy} == 'etudiant.nom'">Nom étudiant</option>
+                            <option value="classe.nom" th:selected="${sortBy} == 'classe.nom'">Classe</option>
+                            <option value="decisionFinAnnee" th:selected="${sortBy} == 'decisionFinAnnee'">Décision</option>
+                            <option value="dateDecision" th:selected="${sortBy} == 'dateDecision'">Date décision</option>
+                        </select>
+                        <button type="submit" name="sortDir" th:value="${sortDir == 'asc' ? 'desc' : 'asc'}"
+                                class="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                title="${sortDir == 'asc' ? 'Tri croissant' : 'Tri décroissant'}">
+                            <span th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bouton Reset -->
+                <div class="flex items-end">
+                    <a th:href="@{/admin/inscriptions}"
+                       class="w-full py-2 px-4 text-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary border border-gray-300 dark:border-white/10 rounded-lg hover:border-primary transition-colors">
+                        Réinitialiser
+                    </a>
+                </div>
+
+                <!-- Champs cachés pour préserver l'état -->
+                <input type="hidden" name="page" value="0">
+                <input type="hidden" name="size" th:value="${pageSize}">
+                <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
+            </form>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- TABLEAU DES INSCRIPTIONS -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm">
+
+            <!-- En-tête du tableau -->
+            <div class="px-4 py-3 bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span th:text="${inscriptionsPage.totalElements}">0</span> inscription(s) trouvée(s)
+                    <span th:if="${filters?.classeId != null or filters?.anneeId != null}" class="text-gray-400">
+                        (filtres actifs)
+                    </span>
+                </p>
+
+                <!-- Export (optionnel) -->
+                <div class="flex items-center gap-2">
+                    <button class="text-sm text-gray-500 hover:text-primary transition-colors" title="Exporter en CSV">
+                        📥 Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenu du tableau -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-bgsurface text-gray-600 dark:text-gray-400 font-medium">
+                    <tr>
+                        <th class="px-4 py-3 text-left">
+                                <span class="sortable"
+                                      th:onclick="'updateSort(\'etudiant.nom\', \'' + (${sortBy == 'etudiant.nom' and sortDir == 'asc' ? 'desc' : 'asc'}) + '\')'">
+                                    Étudiant
+                                    <span class="sort-indicator"
+                                          th:if="${sortBy == 'etudiant.nom'}"
+                                          th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                </span>
+                        </th>
+                        <th class="px-4 py-3 text-left">
+                                <span class="sortable"
+                                      th:onclick="'updateSort(\'classe.nom\', \'' + (${sortBy == 'classe.nom' and sortDir == 'asc' ? 'desc' : 'asc'}) + '\')'">
+                                    Classe
+                                    <span class="sort-indicator"
+                                          th:if="${sortBy == 'classe.nom'}"
+                                          th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                </span>
+                        </th>
+                        <th class="px-4 py-3 text-left">
+                                <span class="sortable"
+                                      th:onclick="'updateSort(\'decisionFinAnnee\', \'' + (${sortBy == 'decisionFinAnnee' and sortDir == 'asc' ? 'desc' : 'asc'}) + '\')'">
+                                    Décision
+                                    <span class="sort-indicator"
+                                          th:if="${sortBy == 'decisionFinAnnee'}"
+                                          th:text="${sortDir == 'asc' ? '▲' : '▼'}"></span>
+                                </span>
+                        </th>
+                        <th class="px-4 py-3 text-left">Statut</th>
+                        <th class="px-4 py-3 text-left">Date décision</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <!-- Ligne vide si aucune donnée -->
+                    <tr th:if="${#lists.isEmpty(inscriptions)}">
+                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <p class="font-medium">Aucune inscription trouvée</p>
+                            <p class="text-sm mt-1">Essayez de modifier vos filtres de recherche.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Lignes de données -->
+                    <tr th:each="insc : ${inscriptions}" class="hover:bg-gray-50 dark:hover:bg-bgsurface/50 transition-colors fade-in">
+
+                        <!-- Étudiant -->
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xs font-bold">
+                                    <span th:text="${#strings.toUpperCase(#strings.substring(insc.etudiant.nom,0,1))}">J</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white"
+                                       th:text="${insc.etudiant.nom + ' ' + insc.etudiant.prenom}">
+                                        Jean Dupont
+                                    </p>
+                                    <p class="text-xs text-gray-500" th:text="${insc.etudiant.matricule}">MAT-001</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Classe -->
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                            <p th:text="${insc.classe.nom}">L3 Informatique</p>
+                            <p class="text-xs text-gray-400" th:text="${insc.anneeAcademique.nom}">2024-2025</p>
+                        </td>
+
+                        <!-- Décision -->
+                        <td class="px-4 py-3">
+                                <span th:if="${insc.decisionFinAnnee}"
+                                      th:class="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' +
+                                              (${insc.decisionFinAnnee.name} == 'ADMIS' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' :
+                                               ${insc.decisionFinAnnee.name} == 'REDOUBLANT' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400' :
+                                               ${insc.decisionFinAnnee.name} == 'EXCLU' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
+                                               'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400')"
+                                      th:text="${insc.decisionFinAnnee}">
+                                    ADMIS
+                                </span>
+                            <span th:unless="${insc.decisionFinAnnee}"
+                                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                    —
+                                </span>
+                        </td>
+
+                        <!-- Statut -->
+                        <td class="px-4 py-3">
+                                <span th:class="'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ' +
+                                                (${insc.statut?.name} == 'ACTIF' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' :
+                                                 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400')"
+                                      th:text="${insc.statut ?: 'ACTIF'}">
+                                    <span class="w-1.5 h-1.5 rounded-full"
+                                          th:classappend="${insc.statut?.name} == 'ACTIF' ? 'bg-green-500' : 'bg-gray-400'"></span>
+                                    ACTIF
+                                </span>
+                        </td>
+
+                        <!-- Date décision -->
+                        <td class="px-4 py-3 text-gray-500">
+                                <span th:if="${insc.dateDecision}"
+                                      th:text="${#temporals.format(insc.dateDecision, 'dd/MM/yyyy')}">15/06/2024</span>
+                            <span th:unless="${insc.dateDecision}" class="text-gray-400">—</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <a th:href="@{/admin/inscriptions/{id}(id=${insc.id})}"
+                                   class="p-1.5 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                   title="Voir le détail">
+                                    👁️
+                                </a>
+                                <button sec:authorize="hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')"
+                                        th:if="${insc.anneeAcademique.active and insc.decisionFinAnnee == null}"
+                                        class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                                        th:onclick="'openDecisionModal(' + ${insc.id} + ')'"
+                                        title="Définir la décision">
+                                    ✏️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- PAGINATION -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div th:if="${inscriptionsPage.totalPages > 1}"
+             class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+            <!-- Sélecteur de taille de page -->
+            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <span>Afficher :</span>
+                <select class="bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-1 px-2"
+                        onchange="changePageSize(this.value)">
+                    <option th:each="opt : ${PAGE_SIZE_OPTIONS}"
+                            th:value="${opt}"
+                            th:text="${opt}"
+                            th:selected="${pageSize} == ${opt}">
+                    </option>
+                </select>
+                <span>par page</span>
+            </div>
+
+            <!-- Info "X-Y sur Z" -->
+            <div class="text-sm text-gray-500 text-center sm:text-left">
+                Affichage
+                <strong th:text="${inscriptionsPage.number * pageSize + 1}">1</strong>
+                à
+                <strong th:text="${Math.min((inscriptionsPage.number + 1) * pageSize, inscriptionsPage.totalElements)}">20</strong>
+                sur
+                <strong th:text="${inscriptionsPage.totalElements}">150</strong>
+            </div>
+
+            <!-- Boutons de navigation -->
+            <nav class="flex items-center gap-1">
+                <!-- Première page -->
+                <a th:if="${inscriptionsPage.hasPrevious()}"
+                   th:href="@{/admin/inscriptions(page=0, size=${pageSize}, classeId=${filters?.classeId}, anneeId=${filters?.anneeId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    ««
+                </a>
+                <span th:unless="${inscriptionsPage.hasPrevious()}" class="px-3 py-1.5 text-sm text-gray-400">««</span>
+
+                <!-- Page précédente -->
+                <a th:if="${inscriptionsPage.hasPrevious()}"
+                   th:href="@{/admin/inscriptions(page=${currentPage - 1}, size=${pageSize}, classeId=${filters?.classeId}, anneeId=${filters?.anneeId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    «
+                </a>
+                <span th:unless="${inscriptionsPage.hasPrevious()}" class="px-3 py-1.5 text-sm text-gray-400">«</span>
+
+                <!-- Numéros de pages -->
+                <span th:each="p : ${#numbers.sequence(
+                        T(java.lang.Math).max(0, currentPage - 2),
+                        T(java.lang.Math).min(inscriptionsPage.totalPages - 1, currentPage + 2)
+                    )}"
+                      th:if="${p >= 0 and p < inscriptionsPage.totalPages}">
+                    <a th:href="@{/admin/inscriptions(page=${p}, size=${pageSize}, classeId=${filters?.classeId}, anneeId=${filters?.anneeId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                       th:class="'px-3 py-1.5 text-sm rounded-lg transition-colors ' +
+                               (${p == currentPage} ? 'bg-primary text-white font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800')"
+                       th:text="${p + 1}">1</a>
+                </span>
+
+                <!-- Page suivante -->
+                <a th:if="${inscriptionsPage.hasNext()}"
+                   th:href="@{/admin/inscriptions(page=${currentPage + 1}, size=${pageSize}, classeId=${filters?.classeId}, anneeId=${filters?.anneeId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    »
+                </a>
+                <span th:unless="${inscriptionsPage.hasNext()}" class="px-3 py-1.5 text-sm text-gray-400">»</span>
+
+                <!-- Dernière page -->
+                <a th:if="${inscriptionsPage.hasNext()}"
+                   th:href="@{/admin/inscriptions(page=${inscriptionsPage.totalPages - 1}, size=${pageSize}, classeId=${filters?.classeId}, anneeId=${filters?.anneeId}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    »»
+                </a>
+                <span th:unless="${inscriptionsPage.hasNext()}" class="px-3 py-1.5 text-sm text-gray-400">»»</span>
+            </nav>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODAL : DÉFINIR UNE DÉCISION (rapide depuis la liste) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="decisionModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeDecisionModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative bg-white dark:bg-bgcard rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900 dark:text-white">Définir la décision</h3>
+                <button type="button" onclick="closeDecisionModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form th:action="@{/admin/migration/decision/__inscriptionId__}" method="post" id="decisionForm" class="space-y-4">
+                <input type="hidden" name="classeId" th:value="${filters?.classeId}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Décision <span class="text-red-500">*</span></label>
+                    <select name="decision" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm" required>
+                        <option value="">Sélectionner...</option>
+                        <option value="ADMIS">✅ ADMIS</option>
+                        <option value="REDOUBLANT">🔄 REDOUBLANT</option>
+                        <option value="EXCLU">🚫 EXCLU</option>
+                        <option value="DIPLOME">🎓 DIPLÔME</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observations</label>
+                    <textarea name="observations" rows="2" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm resize-none" placeholder="Optionnel..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeDecisionModal()" class="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Annuler</button>
+                    <button type="submit" class="flex-1 py-2 px-4 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium">💾 Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SCRIPTS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // 🔄 Mise à jour d'un filtre et reset page
+    function updateFilter(name, value) {
+        const url = new URL(window.location.href);
+        if (value) {
+            url.searchParams.set(name, value);
+        } else {
+            url.searchParams.delete(name);
+        }
+        url.searchParams.set('page', '0'); // Reset pagination
+        window.location.href = url.toString();
+    }
+
+    // 📊 Mise à jour du tri
+    function updateSort(sortBy, sortDir) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sortBy', sortBy);
+        url.searchParams.set('sortDir', sortDir);
+        url.searchParams.set('page', '0');
+        window.location.href = url.toString();
+    }
+
+    // 📏 Changement de taille de page
+    function changePageSize(newSize) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('size', newSize);
+        url.searchParams.set('page', '0');
+        window.location.href = url.toString();
+    }
+
+    // 🎭 Gestion du modal de décision
+    let currentInscriptionId = null;
+
+    function openDecisionModal(inscriptionId) {
+        currentInscriptionId = inscriptionId;
+        const form = document.getElementById('decisionForm');
+        form.action = form.action.replace('__inscriptionId__', inscriptionId);
+        document.getElementById('decisionModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDecisionModal() {
+        document.getElementById('decisionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        currentInscriptionId = null;
+    }
+
+    // Fermer avec Échap
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDecisionModal(); });
+
+    // ✅ Animation fade-in au chargement
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.fade-in').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(4px)';
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 50 + i * 30);
+        });
+    });
+
+    /*]]>*/
+</script>
+
+</body>
+</html>

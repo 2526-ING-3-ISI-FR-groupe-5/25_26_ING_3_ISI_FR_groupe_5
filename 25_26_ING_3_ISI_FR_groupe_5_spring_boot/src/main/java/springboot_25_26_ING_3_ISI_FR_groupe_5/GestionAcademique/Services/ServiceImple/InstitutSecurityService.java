@@ -245,16 +245,13 @@ public class InstitutSecurityService {
      * Résout l'institut à utiliser en fonction du rôle de l'utilisateur
      * @param user L'utilisateur
      * @param requestedInstitutId L'institut demandé (peut être null)
-     * @return L'ID de l'institut à utiliser
+     * @return L'ID de l'institut à utiliser (null pour tous les instituts)
      * @throws AccessDeniedException si l'utilisateur n'a pas les droits
      */
     public Long resolveInstitutId(Utilisateur user, Long requestedInstitutId) {
-        // SUPER_ADMIN : peut choisir n'importe quel institut
+        // SUPER_ADMIN : peut choisir n'importe quel institut ou null pour tous
         if (isSuperAdmin(user)) {
-            if (requestedInstitutId != null) {
-                return requestedInstitutId;
-            }
-            throw new AccessDeniedException("Veuillez sélectionner un institut");
+            return requestedInstitutId;
         }
 
         // ADMIN_INSTITUT et autres : forcé à leur institut

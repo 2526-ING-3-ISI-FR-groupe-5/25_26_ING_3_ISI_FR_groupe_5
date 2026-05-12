@@ -1,13 +1,17 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.inscription.DecisionHistory;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.JournalAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutInscription;
@@ -17,12 +21,14 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.InterfaceInscription;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.ClassesService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 @Service
 @RequiredArgsConstructor
@@ -121,6 +127,10 @@ public class InscriptionService implements InterfaceInscription {
         return null;
     }
 
+
+
+
+
     public List<Inscription> getByClasseAndAnnee(Long classeId, Long anneeId) {
         // Si classeId est null, on filtre par institut
         if (classeId == null) {
@@ -144,6 +154,11 @@ public class InscriptionService implements InterfaceInscription {
 
         return inscriptionRepo.findByClasseIdAndAnneeAcademiqueId(classeId, anneeId);
     }
+
+
+
+
+
 
 
 
@@ -191,4 +206,104 @@ public class InscriptionService implements InterfaceInscription {
     }
 
 
+
+
+
+
+
+
+    /**
+     * Récupère les inscriptions filtrées par classe et année avec pagination
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Inscription> getByClasseAndAnneePaginated(
+            Long classeId,
+            Long anneeId,
+            Pageable pageable
+    ) {
+        if (anneeId == null) {
+            throw new IllegalArgumentException("L'année académique est obligatoire");
+        }
+
+        Long institutCible = securityService.getInstitutIdCourant();
+
+        if (classeId == null) {
+            // ✅ Toutes les classes
+            return (institutCible == null)
+                    ? inscriptionRepo.findByAnneeAcademiqueIdPaginated(anneeId, pageable)
+                    : inscriptionRepo.findByAnneeAcademiqueIdAndInstitutIdPaginated(anneeId, institutCible, pageable);
+        } else {
+            // ✅ Classe spécifique : vérification sécurité d'abord
+            Classe classe = classesService.findById(classeId);
+            Long classeInstitutId = getInstitutIdFromClasse(classe);
+
+            if (!securityService.canAccessInstitut(classeInstitutId)) {
+                throw new AccessDeniedException("Vous n'avez pas accès à cette classe");
+            }
+
+            // Vérification supplémentaire pour ADMIN_INSTITUT
+            if (institutCible != null && !institutCible.equals(classeInstitutId)) {
+                throw new AccessDeniedException("Cette classe n'appartient pas à votre institut");
+            }
+
+            return inscriptionRepo.findByClasseIdAndAnneeAcademiqueIdPaginated(classeId, anneeId, pageable);
+        }
+    }
+
+
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DecisionHistory> getDecisionHistory(Long inscriptionId) {
+        // 1. Vérification de sécurité
+        findById(inscriptionId);
+
+        // 2. Récupération depuis le journal
+        List<JournalAction> logs = journalService.findByEntiteConcerneeAndEntiteId(
+                "Inscription",  // ← Nom exact utilisé dans entiteConcernee
+                inscriptionId
+        );
+
+        // 3. Si pas de logs, retourner la décision actuelle
+        if (logs == null || logs.isEmpty()) {
+            Inscription inscription = inscriptionRepo.findById(inscriptionId).orElseThrow();
+            if (inscription.getDecisionFinAnnee() != null) {
+                return List.of(DecisionHistory.builder()
+                        .decision(inscription.getDecisionFinAnnee())
+                        .date(inscription.getDateDecision() != null
+                                ? inscription.getDateDecision().atStartOfDay()
+                                : LocalDateTime.now())
+                        .observations(inscription.getObservations())
+                        .acteur("Administration")
+                        .build());
+            }
+            return Collections.emptyList();
+        }
+
+        // 4. Mapping vers DTO
+        return logs.stream()
+                .map(log -> DecisionHistory.builder()
+                        .decision(parseDecisionFromLog(log))
+                        .date(log.getDateAction())
+                        .observations(log.getDescription()) // ou log.getDetails() selon ton usage
+                        .acteur(log.getUtilisateur() != null
+                                ? log.getUtilisateur().getNom() + " " + log.getUtilisateur().getPrenom()
+                                : "Système")
+                        .build())
+                .sorted(Comparator.comparing(DecisionHistory::getDate).reversed())
+                .toList();
+    }
+//  "Inscription"
+    // Utilitaire pour parser la décision depuis le log
+    private DecisionFinAnnee parseDecisionFromLog(JournalAction log) {
+        // Si tu stockes la décision dans typeAction ou description, adapte ici
+        try {
+            return DecisionFinAnnee.valueOf(log.getTypeAction().name());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

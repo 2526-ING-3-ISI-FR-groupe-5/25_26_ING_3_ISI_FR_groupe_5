@@ -2614,6 +2614,9 @@
   .h-2 {
     height: calc(var(--spacing) * 2);
   }
+  .h-2\.5 {
+    height: calc(var(--spacing) * 2.5);
+  }
   .h-3 {
     height: calc(var(--spacing) * 3);
   }
@@ -2836,6 +2839,9 @@
   .max-w-\[150px\] {
     max-width: 150px;
   }
+  .max-w-\[200px\] {
+    max-width: 200px;
+  }
   .max-w-\[220px\] {
     max-width: 220px;
   }
@@ -2844,6 +2850,9 @@
   }
   .max-w-\[380px\] {
     max-width: 380px;
+  }
+  .max-w-\[800px\] {
+    max-width: 800px;
   }
   .max-w-\[1100px\] {
     max-width: 1100px;
@@ -3137,6 +3146,9 @@
   .rounded-\[24px\] {
     border-radius: 24px;
   }
+  .rounded-\[32px\] {
+    border-radius: 32px;
+  }
   .rounded-box {
     border-radius: var(--radius-box);
   }
@@ -3429,6 +3441,12 @@
     background-color: color-mix(in srgb, #181b22 30%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-bgsurface) 30%, transparent);
+    }
+  }
+  .bg-bgsurface\/50 {
+    background-color: color-mix(in srgb, #181b22 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-bgsurface) 50%, transparent);
     }
   }
   .bg-blue-50 {
@@ -3866,6 +3884,9 @@
   .py-8 {
     padding-block: calc(var(--spacing) * 8);
   }
+  .py-10 {
+    padding-block: calc(var(--spacing) * 10);
+  }
   .py-12 {
     padding-block: calc(var(--spacing) * 12);
   }
@@ -4228,6 +4249,12 @@
   .text-emerald-400 {
     color: var(--color-emerald-400);
   }
+  .text-emerald-400\/70 {
+    color: color-mix(in srgb, oklch(76.5% 0.177 163.223) 70%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-emerald-400) 70%, transparent);
+    }
+  }
   .text-emerald-500 {
     color: var(--color-emerald-500);
   }
@@ -4473,6 +4500,10 @@
     --tw-duration: 300ms;
     transition-duration: 300ms;
   }
+  .duration-1000 {
+    --tw-duration: 1000ms;
+    transition-duration: 1000ms;
+  }
   .ease-in-out {
     --tw-ease: var(--ease-in-out);
     transition-timing-function: var(--ease-in-out);
@@ -4649,6 +4680,11 @@
       @supports (color: color-mix(in lab, red, red)) {
         background-color: color-mix(in oklab, var(--color-black) 70%, transparent);
       }
+    }
+  }
+  .last\:mb-0 {
+    &:last-child {
+      margin-bottom: calc(var(--spacing) * 0);
     }
   }
   .checked\:border-emerald-500 {
@@ -4908,6 +4944,13 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-gray-200);
+      }
+    }
+  }
+  .hover\:bg-primary {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-primary);
       }
     }
   }
@@ -5456,6 +5499,11 @@
   .md\:grid-cols-3 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .md\:grid-cols-4 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
   .md\:grid-cols-5 {

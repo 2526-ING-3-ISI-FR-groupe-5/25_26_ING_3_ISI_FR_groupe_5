@@ -119,9 +119,24 @@ public class ProgrammationUEController {
     @GetMapping("/creer")
     public String formulaireCreer(
             @RequestParam(required = false) Long classeId,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
-        Annee_academique anneeActive = anneeService.getAnneeActive();
+        // ✅ Validation stricte : une année académique DOIT être active
+        Annee_academique anneeActive = null;
+        try {
+            anneeActive = anneeService.getAnneeActive();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+            return "redirect:/admin/programmations";
+        }
+
+        if (anneeActive == null) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique disponible. Veuillez en créer une");
+            return "redirect:/admin/programmations";
+        }
 
         model.addAttribute("form", new ProgrammationRequest());
         model.addAttribute("ues",
@@ -150,8 +165,23 @@ public class ProgrammationUEController {
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        // ✅ Validation stricte : une année académique DOIT être active
+        Annee_academique anneeActive = null;
+        try {
+            anneeActive = anneeService.getAnneeActive();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+            return "redirect:/admin/programmations";
+        }
+
+        if (anneeActive == null) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique disponible. Veuillez en créer une");
+            return "redirect:/admin/programmations";
+        }
+
         if (result.hasErrors()) {
-            Annee_academique anneeActive = anneeService.getAnneeActive();
             model.addAttribute("ues",
                     ueMapper.toResponseList(ueService.getByAnnee(anneeActive.getId())));
             model.addAttribute("semestres",

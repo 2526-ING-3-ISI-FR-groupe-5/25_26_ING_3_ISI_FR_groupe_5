@@ -337,4 +337,33 @@ public interface PlageHoraireRepository
             @Param("classeId") Long classeId,
             @Param("semestreId") Long semestreId
     );
+
+
+    // Calcule la somme des heures des cours EFFECTUÉS (sessions terminées) pour une programmation
+    @Query("""
+    SELECT SUM(p.heureFin - p.heureDebut) 
+    FROM PlageHoraire p
+    JOIN p.sessions s
+    WHERE p.programmationUE.id = :progId
+    AND s.coursTermine = true
+""")
+    Double sumHeuresRealiseesByProgrammation(@Param("progId") Long progId);
+
+    // Pour l'étudiant : Somme des heures de présence effective
+    @Query("""
+    SELECT SUM(a.nbHeuresPresent) 
+    FROM Appels a
+    WHERE a.etudiant.id = :etudiantId
+    AND a.plageHoraire.semestre.actif = true
+""")
+    Double sumHeuresPresentEtudiant(@Param("etudiantId") Long etudiantId);
+
+
+    @Query("""
+        SELECT p FROM PlageHoraire p
+        JOIN p.sessions s
+        WHERE p.programmationUE.id = :progId
+        AND s.coursTermine = true
+    """)
+    List<PlageHoraire> findPlagesTermineesByProgrammation(@Param("progId") Long progId);
 }

@@ -9,13 +9,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Session
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Ecole;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Filiere;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Repository
 public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long> {
@@ -61,7 +54,6 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // ═══════════════════════════════════════════════════════════
     // STATISTIQUES
     // ═══════════════════════════════════════════════════════════
-
 
     long countByPlageHoraireIdAndCoursTermineTrue(Long plageHoraireId);
 

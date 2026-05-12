@@ -1,9 +1,11 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IAppelsService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.appel.AppelRetardRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.appel.AppelsCheckManuelRequest;
@@ -14,255 +16,225 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Session
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeValidation;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.PlageHoraireService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EtudiantService;
+
+import java.time.LocalTime;
+import java.util.*;
+
+import static springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AppelsService {
+public class AppelsService implements IAppelsService {
 
     private final AppelsRepository appelsRepository;
     private final EtudiantService etudiantService;
+    private final EtudiantRepository etudiantRepository;
     private final EnseignantService enseignantService;
     private final PlageHoraireService plageHoraireService;
     private final SessionAppelService sessionAppelService;
 
-    // ══════════════════════════════════════════
-    // GET
-    // ══════════════════════════════════════════
+    // ── RECHERCHE ──
 
     @Transactional(readOnly = true)
     public Appels findById(Long id) {
-        return appelsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appel introuvable : " + id));
+        return appelsRepository.findById(id).orElseThrow(() -> new RuntimeException("Appel introuvable"));
     }
 
     @Transactional(readOnly = true)
-    public List<Appels> getByPlageHoraire(Long plageHoraireId) {
-        return appelsRepository.findByPlageHoraireId(plageHoraireId);
-    }
+    public List<Appels> getByPlageHoraire(Long id) { return appelsRepository.findByPlageHoraireId(id); }
 
     @Transactional(readOnly = true)
-    public List<Appels> getByEtudiant(Long etudiantId) {
-        return appelsRepository.findByEtudiantId(etudiantId);
-    }
+    public List<Appels> getByEtudiant(Long id) { return appelsRepository.findByEtudiantId(id); }
 
     @Transactional(readOnly = true)
-    public List<Appels> getBySession(Long sessionId) {
-        return appelsRepository.findBySessionAppelId(sessionId);
-    }
+    public List<Appels> getBySession(Long id) { return appelsRepository.findBySessionAppelId(id); }
 
     @Transactional(readOnly = true)
-    public List<Appels> getRetardsByPlage(Long plageHoraireId) {
-        return appelsRepository.findByPlageHoraireIdAndStatut(plageHoraireId, RETARD);
-    }
+    public List<Appels> getRetardsByPlage(Long id) { return appelsRepository.findByPlageHoraireIdAndStatut(id, RETARD); }
 
-    // ══════════════════════════════════════════
-    // POST — Appel unitaire
-    // ══════════════════════════════════════════
+    // ── ACTIONS ──
 
     public Appels creer(AppelsRequest req) {
-        Etudiant etudiant     = etudiantService.findById(req.getEtudiantId());
-        PlageHoraire plage = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        Etudiant etu = etudiantService.findById(req.getEtudiantId());
+        PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        Enseignant ens = req.getEnseignantId() != null ? enseignantService.findById(req.getEnseignantId()) : null;
 
-        Enseignant enseignant = req.getEnseignantId() != null
-                ? enseignantService.findById(req.getEnseignantId()) : null;
-        SessionAppel session  = req.getSessionAppelId() != null
-                ? sessionAppelService.findById(req.getSessionAppelId()) : null;
+        Appels appel = appelsRepository.findByEtudiantIdAndPlageHoraireId(etu.getId(), ph.getId())
+                .orElse(Appels.builder().etudiant(etu).plageHoraire(ph).build());
 
-        Appels appel = Appels.builder()
-                .etudiant(etudiant)
-                .plageHoraire(plage)
-                .enseignant(enseignant)
-                .sessionAppel(session)
-                .statut(StatutPresence.EN_ATTENTE)
-                .synchronise(true)
-                .build();
-
-        // Appliquer le statut fourni
-        if (req.getStatut() != null) {
-            appliquerStatut(appel, req, plage, enseignant);
-        }
-
+        appliquerStatutDepuisRequest(appel, req, ens);
         return appelsRepository.save(appel);
     }
 
-    // ══════════════════════════════════════════
-    // POST — Appel manuel en lot (check list)
-    // ══════════════════════════════════════════
-
     public List<Appels> enregistrerAppelManuel(AppelsCheckManuelRequest req) {
-        PlageHoraire plage = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        Enseignant ens = enseignantService.findById(req.getEnseignantId());
+        SessionAppel session = getSessionActiveOrNull(ph.getId());
 
-        Enseignant enseignant = enseignantService.findById(req.getEnseignantId());
-
-        // Récupérer tous les appels existants pour cette plage
-        List<Appels> appelsExistants = appelsRepository.findByPlageHoraireId(req.getPlageHoraireId());
+        initialiserAppelsPourPlage(ph, ens, session);
+        List<Appels> tousLesAppels = appelsRepository.findByPlageHoraireId(ph.getId());
         List<Appels> resultats = new ArrayList<>();
+        Set<Long> traites = new HashSet<>();
 
-        // ── Présents ──
+        // 1. Présents
         if (req.getEtudiantIdsPresents() != null) {
-            for (Long etudiantId : req.getEtudiantIdsPresents()) {
-                Appels appel = trouverOuCreer(appelsExistants, etudiantId, plage, enseignant);
-                appel.marquerPresent(enseignant, MethodeValidation.MANUELLE);
-                resultats.add(appelsRepository.save(appel));
-            }
+            req.getEtudiantIdsPresents().forEach(id -> {
+                Appels a = trouverDansListe(tousLesAppels, id);
+                a.marquerPresent(ens, MethodeValidation.MANUELLE);
+                resultats.add(appelsRepository.save(a));
+                traites.add(id);
+            });
         }
 
-        // ── Partiels ──
+        // 2. Partiels
         if (req.getPresencesPartielles() != null) {
-            for (var pp : req.getPresencesPartielles()) {
-                Appels appel = trouverOuCreer(appelsExistants, pp.getEtudiantId(), plage, enseignant);
-                appel.marquerPartiel(pp.getNbHeuresPresent(), enseignant);
-                resultats.add(appelsRepository.save(appel));
-            }
+            req.getPresencesPartielles().forEach(pp -> {
+                Appels a = trouverDansListe(tousLesAppels, pp.getEtudiantId());
+                a.marquerPartiel(pp.getNbHeuresPresent(), ens);
+                resultats.add(appelsRepository.save(a));
+                traites.add(pp.getEtudiantId());
+            });
         }
 
-        // ── Retards — uniquement premier cours du matin ──
+        // 3. Retards
         if (req.getRetards() != null) {
-            for (var r : req.getRetards()) {
-                Appels appel = trouverOuCreer(appelsExistants, r.getEtudiantId(), plage, enseignant);
-                // marquerRetard() lève IllegalStateException si non autorisé
-                appel.marquerRetard(r.getHeureArrivee(), enseignant);
-                if (r.getCommentaire() != null) appel.setCommentaire(r.getCommentaire());
-                resultats.add(appelsRepository.save(appel));
-            }
+            req.getRetards().forEach(r -> {
+                validerHeureArrivee(r.getHeureArrivee(), ph);
+                Appels a = trouverDansListe(tousLesAppels, r.getEtudiantId());
+                a.marquerRetard(r.getHeureArrivee(), ens);
+                a.setCommentaire(r.getCommentaire());
+                resultats.add(appelsRepository.save(a));
+                traites.add(r.getEtudiantId());
+            });
         }
 
-        // ── Absents — tous ceux encore EN_ATTENTE après traitement ──
-        appelsExistants.stream()
-                .filter(Appels::isEnAttente)
-                .filter(a -> resultats.stream().noneMatch(r -> r.getId().equals(a.getId())))
-                .forEach(a -> {
-                    a.marquerAbsent(enseignant);
-                    resultats.add(appelsRepository.save(a));
-                });
+        // 4. Absents (ceux non mentionnés dans la requête)
+        tousLesAppels.stream().filter(a -> !traites.contains(a.getEtudiant().getId())).forEach(a -> {
+            a.marquerAbsent(ens);
+            resultats.add(appelsRepository.save(a));
+        });
 
         return resultats;
     }
 
-    // ══════════════════════════════════════════
-    // POST — Marquer retard seul (depuis UI enseignant)
-    // ══════════════════════════════════════════
-
     public Appels marquerRetard(AppelRetardRequest req) {
-        PlageHoraire plage = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
+        validerHeureArrivee(req.getHeureArrivee(), ph);
 
-        Enseignant enseignant = enseignantService.findById(req.getEnseignantId());
+        Appels a = appelsRepository.findByEtudiantIdAndPlageHoraireId(req.getEtudiantId(), ph.getId())
+                .orElseThrow(() -> new RuntimeException("Appel non initialisé"));
 
-        List<Appels> existants = appelsRepository.findByPlageHoraireId(req.getPlageHoraireId());
-        Appels appel = trouverOuCreer(existants, req.getEtudiantId(), plage, enseignant);
-
-        // La règle métier est encapsulée dans l'entité
-        appel.marquerRetard(req.getHeureArrivee(), enseignant);
-        if (req.getCommentaire() != null) appel.setCommentaire(req.getCommentaire());
-
-        return appelsRepository.save(appel);
+        a.marquerRetard(req.getHeureArrivee(), enseignantService.findById(req.getEnseignantId()));
+        a.setCommentaire(req.getCommentaire());
+        return appelsRepository.save(a);
     }
-
-    // ══════════════════════════════════════════
-    // PUT — Modifier un appel existant
-    // ══════════════════════════════════════════
 
     public Appels modifier(Long id, AppelsRequest req) {
-        Appels appel = findById(id);
-        PlageHoraire plage = appel.getPlageHoraire();
-        Enseignant enseignant = req.getEnseignantId() != null
-                ? enseignantService.findById(req.getEnseignantId())
-                : appel.getEnseignant();
+        Appels a = findById(id);
+        Enseignant ens = req.getEnseignantId() != null ? enseignantService.findById(req.getEnseignantId()) : a.getEnseignant();
+        appliquerStatutDepuisRequest(a, req, ens);
+        if (req.getCommentaire() != null) a.setCommentaire(req.getCommentaire());
+        return appelsRepository.save(a);
+    }
 
-        if (req.getStatut() != null) {
-            appliquerStatut(appel, req, plage, enseignant);
+    public void supprimer(Long id) { appelsRepository.delete(findById(id)); }
+
+@Transactional
+@Override
+public void ajusterHeures(Long appelId, int nbHeuresPresent) {
+        Appels appel = appelsRepository.findById(appelId)
+                .orElseThrow(() -> new EntityNotFoundException("Appel non trouvé : " + appelId));
+
+        // Validation : pas moins de 0, pas plus que la durée du cours
+        if (nbHeuresPresent < 0) {
+            throw new IllegalArgumentException("Le nombre d'heures ne peut pas être négatif");
         }
-        if (req.getCommentaire() != null) appel.setCommentaire(req.getCommentaire());
+        int dureeHeures = (int) appel.getPlageHoraire().getDureeHeures();
+        if (nbHeuresPresent > dureeHeures) {
+            throw new IllegalArgumentException("Le nombre d'heures ne peut pas dépasser la durée du cours");
+        }
 
-        return appelsRepository.save(appel);
+        appel.setNbHeuresPresent(nbHeuresPresent);
+        appel.setStatut(nbHeuresPresent > 0 ? StatutPresence.PARTIEL : StatutPresence.ABSENT);
+        appelsRepository.save(appel);
     }
+    // ── HELPERS ──
 
-    // ══════════════════════════════════════════
-    // DELETE
-    // ══════════════════════════════════════════
-
-    public void supprimer(Long id) {
-        appelsRepository.delete(findById(id));
-    }
-
-    // ══════════════════════════════════════════
-    // PRIVÉ — Helpers
-    // ══════════════════════════════════════════
-
-    /**
-     * Trouve l'appel existant pour un étudiant sur une plage,
-     * ou en crée un nouveau s'il n'existe pas encore.
-     */
-    private Appels trouverOuCreer(List<Appels> existants, Long etudiantId,
-                                  PlageHoraire plage, Enseignant enseignant) {
-        return existants.stream()
-                .filter(a -> a.getEtudiant().getId().equals(etudiantId))
-                .findFirst()
-                .orElseGet(() -> {
-                    Etudiant etudiant = etudiantService.findById(etudiantId);
-                    return Appels.builder()
-                            .etudiant(etudiant)
-                            .plageHoraire(plage)
-                            .enseignant(enseignant)
-                            .statut(StatutPresence.EN_ATTENTE)
-                            .synchronise(true)
-                            .build();
-                });
-    }
-
-    /**
-     * Applique le statut demandé en déléguant aux méthodes métier de l'entité.
-     */
-    private void appliquerStatut(Appels appel, AppelsRequest req,
-                                 PlageHoraire plage, Enseignant enseignant) {
+    private void appliquerStatutDepuisRequest(Appels a, AppelsRequest req, Enseignant ens) {
+        if (req.getStatut() == null) return;
         switch (req.getStatut()) {
-            case PRESENT -> appel.marquerPresent(enseignant,
-                    req.getMethode() != null ? req.getMethode() : MethodeValidation.MANUELLE);
-            case ABSENT  -> appel.marquerAbsent(enseignant);
-            case PARTIEL -> appel.marquerPartiel(req.getNbHeuresPresent(), enseignant);
-            case RETARD  -> appel.marquerRetard(req.getHeureArrivee(), enseignant);
-            default      -> { /* EN_ATTENTE / JUSTIFIE → géré ailleurs */ }
+            case PRESENT -> a.marquerPresent(ens, req.getMethode() != null ? req.getMethode() : MethodeValidation.MANUELLE);
+            case ABSENT  -> a.marquerAbsent(ens);
+            case PARTIEL -> a.marquerPartiel(req.getNbHeuresPresent(), ens);
+            case RETARD  -> {
+                validerHeureArrivee(req.getHeureArrivee(), a.getPlageHoraire());
+                a.marquerRetard(req.getHeureArrivee(), ens);
+            }
         }
     }
 
-    // ══════════════════════════════════════════
-    // VALIDATION QR / PIN (inchangée)
-    // ══════════════════════════════════════════
+    private void validerHeureArrivee(LocalTime heure, PlageHoraire ph) {
+        if (heure == null) throw new IllegalArgumentException("Heure d'arrivée requise");
+        if (heure.isBefore(ph.getHeureDebut())) throw new IllegalArgumentException("L'étudiant n'est pas en retard");
+        if (heure.isAfter(ph.getHeureFin())) throw new IllegalArgumentException("Cours terminé, mettre Absent");
+    }
 
-    public Appels validerParCode(AppelsRequest req) {
+    private Appels trouverDansListe(List<Appels> liste, Long etuId) {
+        return liste.stream().filter(a -> a.getEtudiant().getId().equals(etuId)).findFirst()
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé dans la liste"));
+    }
+
+    private void initialiserAppelsPourPlage(PlageHoraire ph, Enseignant ens, SessionAppel s) {
+        etudiantRepository.findByClasseIdAndActiveTrue(ph.getClasse().getId()).forEach(etu -> {
+            if (appelsRepository.findByEtudiantIdAndPlageHoraireId(etu.getId(), ph.getId()).isEmpty()) {
+                appelsRepository.save(Appels.builder().etudiant(etu).plageHoraire(ph).enseignant(ens).sessionAppel(s).statut(EN_ATTENTE).build());
+            }
+        });
+    }
+
+    private SessionAppel getSessionActiveOrNull(Long phId) {
+        try { return sessionAppelService.getSessionActive(phId); } catch (Exception e) { return null; }
+    }
+// Dans AppelsService.java
+
+    /**
+     * Récupère tous les retards d'un étudiant spécifique.
+     */
+    @Transactional(readOnly = true)
+    public List<Appels> getRetardsByEtudiant(Long etudiantId) {
+        return appelsRepository.findByEtudiantIdAndStatut(etudiantId, StatutPresence.RETARD);
+    }
+
+
+
+    public Appels validerParCode(AppelsRequest req, Long etudiantId) {
         SessionAppel session = sessionAppelService.findById(req.getSessionAppelId());
 
-        if (!session.isValide()) throw new RuntimeException("Session expirée ou invalide.");
-        if (!session.getCode().equals(req.getCodeSaisi()))
-            throw new RuntimeException("Code invalide.");
+        // 1. Vérification de la validité temporelle et du code
+        if (!session.isValide()) throw new RuntimeException("Session expirée ou fermée.");
+        if (!session.getCode().equals(req.getCodeSaisi())) throw new RuntimeException("Code invalide.");
 
-        // Vérification géolocalisation si périmètre défini
-        if (req.getLatitudeEtudiant() != null && req.getLongitudeEtudiant() != null) {
-            boolean dansPerimetre = session.estDansLePerimetre(
-                    req.getLatitudeEtudiant(), req.getLongitudeEtudiant());
-            if (!dansPerimetre) throw new RuntimeException("Étudiant hors périmètre autorisé.");
+        // 2. VÉRIFICATION DU PÉRIMÈTRE
+        if (session.getPerimetreMetres() != null) {
+            boolean estPresentPhysiquement = session.estDansLePerimetre(req.getLatitudeEtudiant(), req.getLongitudeEtudiant());
+
+            if (!estPresentPhysiquement) {
+                throw new RuntimeException("Validation impossible : vous n'êtes pas dans l'enceinte de l'établissement (Hors périmètre).");
+            }
         }
 
-        PlageHoraire plage    = session.getPlageHoraire();
-        Enseignant enseignant = session.getEnseignant();
-        List<Appels> existants = appelsRepository.findByPlageHoraireId(plage.getId());
+        // 3. Enregistrement de la présence
+        Appels appel = appelsRepository.findByEtudiantIdAndPlageHoraireId(etudiantId, session.getPlageHoraire().getId())
+                .orElseThrow(() -> new RuntimeException("Appel non initialisé."));
 
-        Appels appel = trouverOuCreer(existants, req.getEtudiantId(), plage, enseignant);
-        appel.marquerPresent(enseignant, req.getMethode() != null ? req.getMethode() : session.getMethode());
-        appel.setCodeUtilise(req.getCodeSaisi());
+        appel.marquerPresent(session.getEnseignant(), session.getMethode());
         appel.setLatitudeEtudiant(req.getLatitudeEtudiant());
         appel.setLongitudeEtudiant(req.getLongitudeEtudiant());
         appel.setDansLePerimetre(true);
-        appel.setSessionAppel(session);
 
         return appelsRepository.save(appel);
     }

@@ -2,7 +2,9 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.I
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.JournalAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
@@ -60,9 +62,10 @@ public interface IJournalActionService {
     }
 
 
+    @Transactional(readOnly = true)
+    List<JournalAction> findByEntityTypeAndEntityId(String entityType, Long entityId);
 
-
-// Dans IJournalActionService.java
+    // Dans IJournalActionService.java
     void journaliserAppel(Utilisateur acteur, Long appelId, String description);
     void journaliserJustificatif(Utilisateur acteur, Long justificatifId, TypeAction type, String description);
 
@@ -547,4 +550,8 @@ public interface IJournalActionService {
         journaliserSucces(acteur, TypeAction.ANNEE_ACADEMIQUE_DESACTIVEE,
                 "Annee_academique", id,
                 "Année académique désactivée : " + nom);
-    }};
+    }
+
+    @Transactional(readOnly = true)
+    List<JournalAction> findByEntiteConcerneeAndEntiteId(String entiteConcernee, Long entiteId);
+};

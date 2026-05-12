@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.InterfaceService.IClassesService;
 
 import java.util.List;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
@@ -16,7 +17,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Insc
 
 @Service
 @RequiredArgsConstructor
-public class ClassesService {
+public class ClassesService implements IClassesService {
 
     private final ClassesRepository classesRepo;
     private final NiveauService niveauService;

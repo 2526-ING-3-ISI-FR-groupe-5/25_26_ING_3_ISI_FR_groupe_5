@@ -1,6 +1,5 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -10,8 +9,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 import jakarta.servlet.http.HttpServletRequest;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.IpSuspecteResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalActionResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalEchecResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalStatsResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.JournalAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.StatutAction;
@@ -23,14 +26,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 
 import java.time.LocalDateTime;
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Entity.Justificatif;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.IpSuspecteResponse;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalActionResponse;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalEchecResponse;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.journal.JournalStatsResponse;
 
 @Slf4j
 @Service
@@ -40,72 +35,20 @@ public class JournalActionService implements IJournalActionService {
     private final JournalActionRepository journalActionRepository;
     private final JournalActionMapper journalActionMapper;
 
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // 🆕 MÉTHODE CRITIQUE : Historique par entité (CORRIGÉE)
+    // ═══════════════════════════════════════════════════════════
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<JournalAction> findByEntiteConcerneeAndEntiteId(String entiteConcernee, Long entiteId) {
+        return journalActionRepository
+                .findByEntiteConcerneeAndEntiteIdOrderByDateDesc(entiteConcernee, entiteId);
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // Journalisation principale
-    // ============================================
-
-// ═══════════════════════════════════════════════════════════
-// APPELS (implémentation dans le service)
-// ═══════════════════════════════════════════════════════════
-
-    @Override
-    @Transactional
-    public void journaliserAppel(Utilisateur acteur, Long appelId, String description) {
-        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId, description, StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserLancementAppel(Utilisateur acteur, Long appelId, String plageInfo) {
-        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
-                "Appel lancé pour : " + plageInfo, StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserClotureAppel(Utilisateur acteur, Long appelId, int nbPresents, int nbAbsents) {
-        journaliser(acteur, TypeAction.APPEL_CLOTURE, "Appels", appelId,
-                String.format("Appel clôturé : %d présents, %d absents", nbPresents, nbAbsents),
-                StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserEchecAppel(Utilisateur acteur, Long appelId, String erreur) {
-        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
-                "Échec de l'appel : " + erreur, StatutAction.ECHEC);
-    }
-
-// ═══════════════════════════════════════════════════════════
-// JUSTIFICATIFS (implémentation dans le service)
-// ═══════════════════════════════════════════════════════════
-
-    @Override
-    @Transactional
-    public void journaliserJustificatif(Utilisateur acteur, Long justificatifId, TypeAction type, String description) {
-        journaliser(acteur, type, "Justificatif", justificatifId, description, StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserSoumissionJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
-        journaliser(acteur, TypeAction.JUSTIFICATIF_SOUMIS, "Justificatif", justificatifId,
-                "Justificatif soumis : " + motif, StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserValidationJustificatif(Utilisateur acteur, Long justificatifId) {
-        journaliser(acteur, TypeAction.JUSTIFICATIF_VALIDE, "Justificatif", justificatifId,
-                "Justificatif validé", StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserRefusJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
-        journaliser(acteur, TypeAction.JUSTIFICATIF_REFUSE, "Justificatif", justificatifId,
-                "Justificatif refusé : " + motif, StatutAction.SUCCES);
-    }
-
-    @Transactional
-    public void journaliserSuppressionJustificatif(Utilisateur acteur, Long justificatifId) {
-        journaliser(acteur, TypeAction.JUSTIFICATIF_SUPPRIME, "Justificatif", justificatifId,
-                "Justificatif supprimé", StatutAction.SUCCES);
-    }
+    // ═══════════════════════════════════════════════════════════
 
     @Override
     @Transactional
@@ -147,8 +90,7 @@ public class JournalActionService implements IJournalActionService {
             Long entiteId,
             String description) {
 
-        journaliser(utilisateur, typeAction, entiteConcernee,
-                entiteId, description, StatutAction.SUCCES);
+        journaliser(utilisateur, typeAction, entiteConcernee, entiteId, description, StatutAction.SUCCES);
     }
 
     @Override
@@ -169,7 +111,7 @@ public class JournalActionService implements IJournalActionService {
                     .description(description)
                     .adresseIp(getClientIp())
                     .navigateur(getUserAgent())
-                    .statut(StatutAction.ECHEC)  // ← statut forcé à ECHEC
+                    .statut(StatutAction.ECHEC)
                     .build();
 
             journalActionRepository.save(journal);
@@ -179,138 +121,79 @@ public class JournalActionService implements IJournalActionService {
         }
     }
 
-    // ============================================
-    // Consultation — retourne des DTOs ✅
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES SPÉCIALISÉES : APPELS
+    // ═══════════════════════════════════════════════════════════
 
     @Override
-    public JournalActionResponse getById(Long id) {
-        JournalAction journal = journalActionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Action introuvable"
-                ));
-        return journalActionMapper.toResponse(journal);
+    public List<JournalAction> findByEntityTypeAndEntityId(String entityType, Long entityId) {
+        // Redirige vers la méthode correcte avec les bons noms de champs
+        return findByEntiteConcerneeAndEntiteId(entityType, entityId);
     }
 
     @Override
-    public Page<JournalActionResponse> getByUtilisateur(
-            Long utilisateurId,
-            Pageable pageable) {
-
-        return journalActionRepository
-                .findByUtilisateurId(utilisateurId, pageable)
-                .map(journalActionMapper::toResponse); // ✅ map → DTO
+    @Transactional
+    public void journaliserAppel(Utilisateur acteur, Long appelId, String description) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId, description, StatutAction.SUCCES);
     }
+
+    @Transactional
+    public void journaliserLancementAppel(Utilisateur acteur, Long appelId, String plageInfo) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
+                "Appel lancé pour : " + plageInfo, StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserClotureAppel(Utilisateur acteur, Long appelId, int nbPresents, int nbAbsents) {
+        journaliser(acteur, TypeAction.APPEL_CLOTURE, "Appels", appelId,
+                String.format("Appel clôturé : %d présents, %d absents", nbPresents, nbAbsents),
+                StatutAction.SUCCES);
+    }
+
+    @Transactional
+    public void journaliserEchecAppel(Utilisateur acteur, Long appelId, String erreur) {
+        journaliser(acteur, TypeAction.APPEL_LANCE, "Appels", appelId,
+                "Échec de l'appel : " + erreur, StatutAction.ECHEC);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES SPÉCIALISÉES : JUSTIFICATIFS
+    // ═══════════════════════════════════════════════════════════
 
     @Override
-    public Page<JournalActionResponse> getByTypeAction(
-            TypeAction typeAction,
-            Pageable pageable) {
-
-        return journalActionRepository
-                .findByTypeAction(typeAction, pageable)
-                .map(journalActionMapper::toResponse); // ✅ map → DTO
+    @Transactional
+    public void journaliserJustificatif(Utilisateur acteur, Long justificatifId, TypeAction type, String description) {
+        journaliser(acteur, type, "Justificatif", justificatifId, description, StatutAction.SUCCES);
     }
 
-    @Override
-    public Page<JournalActionResponse> search(
-            Long utilisateurId,
-            TypeAction typeAction,
-            StatutAction statut,
-            LocalDateTime debut,
-            LocalDateTime fin,
-            Pageable pageable) {
-
-        if (debut != null && fin != null && debut.isAfter(fin)) {
-            throw new IllegalArgumentException(
-                    "La date de début ne peut pas être après la date de fin"
-            );
-        }
-
-        // ✅ Ajout de null comme premier paramètre (institutId)
-        return journalActionRepository
-                .search(null, utilisateurId, typeAction, statut, debut, fin, pageable)
-                .map(journalActionMapper::toResponse);
+    @Transactional
+    public void journaliserSoumissionJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_SOUMIS, "Justificatif", justificatifId,
+                "Justificatif soumis : " + motif, StatutAction.SUCCES);
     }
 
-    // ============================================
-    // Statistiques — retourne des DTOs ✅
-    // ============================================
-
-    @Override
-    public List<JournalStatsResponse> getStatsByType() {
-        return journalActionRepository.countByTypeAction()
-                .stream()
-                .map(journalActionMapper::toStatsResponse) // ✅ map → DTO
-                .toList();
+    @Transactional
+    public void journaliserValidationJustificatif(Utilisateur acteur, Long justificatifId) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_VALIDE, "Justificatif", justificatifId,
+                "Justificatif validé", StatutAction.SUCCES);
     }
 
-    @Override
-    public List<JournalEchecResponse> getStatsByEchecs() {
-        return journalActionRepository.countEchecByUtilisateur()
-                .stream()
-                .map(journalActionMapper::toEchecResponse) // ✅ map → DTO
-                .toList();
+    @Transactional
+    public void journaliserRefusJustificatif(Utilisateur acteur, Long justificatifId, String motif) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_REFUSE, "Justificatif", justificatifId,
+                "Justificatif refusé : " + motif, StatutAction.SUCCES);
     }
 
-    @Override
-    public List<IpSuspecteResponse> getIpsSuspectes(
-            LocalDateTime depuis,
-            Long seuil) {
-
-        return journalActionRepository.findIpsSuspectes(depuis, seuil)
-                .stream()
-                .map(journalActionMapper::toIpSuspecteResponse) // ✅ map → DTO
-                .toList();
+    @Transactional
+    public void journaliserSuppressionJustificatif(Utilisateur acteur, Long justificatifId) {
+        journaliser(acteur, TypeAction.JUSTIFICATIF_SUPPRIME, "Justificatif", justificatifId,
+                "Justificatif supprimé", StatutAction.SUCCES);
     }
 
-    // ============================================
-    // Utilitaires — IP et User-Agent
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // MÉTHODES SPÉCIALISÉES : ANNÉE ACADÉMIQUE
+    // ═══════════════════════════════════════════════════════════
 
-    private String getClientIp() {
-        try {
-            ServletRequestAttributes attributes =
-                    (ServletRequestAttributes) RequestContextHolder
-                            .getRequestAttributes();
-
-            if (attributes == null) return "SYSTEM";
-
-            HttpServletRequest request = attributes.getRequest();
-
-            String ip = request.getHeader("X-Forwarded-For");
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
-                ip = request.getHeader("Proxy-Client-IP");
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
-                ip = request.getHeader("WL-Proxy-Client-IP");
-            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
-                ip = request.getRemoteAddr();
-            if (ip != null && ip.contains(","))
-                ip = ip.split(",")[0].trim();
-
-            return ip;
-
-        } catch (Exception e) {
-            log.warn("Impossible de récupérer l'IP : {}", e.getMessage());
-            return "UNKNOWN";
-        }
-    }
-
-    private String getUserAgent() {
-        try {
-            ServletRequestAttributes attributes =
-                    (ServletRequestAttributes) RequestContextHolder
-                            .getRequestAttributes();
-
-            if (attributes == null) return "SYSTEM";
-
-            return attributes.getRequest().getHeader("User-Agent");
-
-        } catch (Exception e) {
-            log.warn("Impossible de récupérer le User-Agent : {}", e.getMessage());
-            return "UNKNOWN";
-        }
-    }
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void journaliserDesactivationAnnee(Utilisateur acteur, Long anneeId, String nom) {
@@ -333,4 +216,113 @@ public class JournalActionService implements IJournalActionService {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // Consultation — retourne des DTOs
+    // ═══════════════════════════════════════════════════════════
+
+    @Override
+    public JournalActionResponse getById(Long id) {
+        JournalAction journal = journalActionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Action introuvable"));
+        return journalActionMapper.toResponse(journal);
+    }
+
+    @Override
+    public Page<JournalActionResponse> getByUtilisateur(Long utilisateurId, Pageable pageable) {
+        return journalActionRepository
+                .findByUtilisateurId(utilisateurId, pageable)
+                .map(journalActionMapper::toResponse);
+    }
+
+    @Override
+    public Page<JournalActionResponse> getByTypeAction(TypeAction typeAction, Pageable pageable) {
+        return journalActionRepository
+                .findByTypeAction(typeAction, pageable)
+                .map(journalActionMapper::toResponse);
+    }
+
+    @Override
+    public Page<JournalActionResponse> search(
+            Long utilisateurId,
+            TypeAction typeAction,
+            StatutAction statut,
+            LocalDateTime debut,
+            LocalDateTime fin,
+            Pageable pageable) {
+
+        if (debut != null && fin != null && debut.isAfter(fin)) {
+            throw new IllegalArgumentException("La date de début ne peut pas être après la date de fin");
+        }
+
+        return journalActionRepository
+                .search(null, utilisateurId, typeAction, statut, debut, fin, pageable)
+                .map(journalActionMapper::toResponse);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Statistiques — retourne des DTOs
+    // ═══════════════════════════════════════════════════════════
+
+    @Override
+    public List<JournalStatsResponse> getStatsByType() {
+        return journalActionRepository.countByTypeAction()
+                .stream()
+                .map(journalActionMapper::toStatsResponse)
+                .toList();
+    }
+
+    @Override
+    public List<JournalEchecResponse> getStatsByEchecs() {
+        return journalActionRepository.countEchecByUtilisateur()
+                .stream()
+                .map(journalActionMapper::toEchecResponse)
+                .toList();
+    }
+
+    @Override
+    public List<IpSuspecteResponse> getIpsSuspectes(LocalDateTime depuis, Long seuil) {
+        return journalActionRepository.findIpsSuspectes(depuis, seuil)
+                .stream()
+                .map(journalActionMapper::toIpSuspecteResponse)
+                .toList();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Utilitaires — IP et User-Agent
+    // ═══════════════════════════════════════════════════════════
+
+    private String getClientIp() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes == null) return "SYSTEM";
+
+            HttpServletRequest request = attributes.getRequest();
+            String ip = request.getHeader("X-Forwarded-For");
+
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
+                ip = request.getHeader("Proxy-Client-IP");
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
+                ip = request.getHeader("WL-Proxy-Client-IP");
+            if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip))
+                ip = request.getRemoteAddr();
+            if (ip != null && ip.contains(","))
+                ip = ip.split(",")[0].trim();
+
+            return ip;
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer l'IP : {}", e.getMessage());
+            return "UNKNOWN";
+        }
+    }
+
+    private String getUserAgent() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes == null) return "SYSTEM";
+            return attributes.getRequest().getHeader("User-Agent");
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer le User-Agent : {}", e.getMessage());
+            return "UNKNOWN";
+        }
+    }
 }

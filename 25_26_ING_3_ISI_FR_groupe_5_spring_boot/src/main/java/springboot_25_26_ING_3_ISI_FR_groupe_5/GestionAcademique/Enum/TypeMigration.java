@@ -14,5 +14,5 @@ public enum TypeMigration {
     UE,          // Une UE spécifique
     CLASSE,      // Une classe spécifique
     FILIERE,     // Une filière spécifique
-    NIVEAU       // Un niveau spécifique
+    SIMULATION, NIVEAU       // Un niveau spécifique
 }

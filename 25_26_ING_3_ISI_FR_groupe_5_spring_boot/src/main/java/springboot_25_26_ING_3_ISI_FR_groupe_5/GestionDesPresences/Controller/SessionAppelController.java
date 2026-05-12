@@ -12,16 +12,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.sessionAppel.SessionAppelRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.sessionAppel.SessionAppelResponse;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Mappers.SessionAppelMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.SessionAppelService;
-
-import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions-appel")
@@ -38,7 +35,7 @@ public class SessionAppelController {
 
     /**
      * GET /api/sessions-appel/{id}
-     * Détail d'une session - Accessible Enseignant + Assistant
+     * Détail d'une session - Enseignant, Assistant, Admins
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
@@ -48,7 +45,7 @@ public class SessionAppelController {
 
     /**
      * GET /api/sessions-appel/plage/{plageHoraireId}
-     * Historique des sessions d'une plage - Enseignant + Assistant
+     * Historique des sessions d'une plage - Enseignant, Assistant, Admins
      */
     @GetMapping("/plage/{plageHoraireId}")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
@@ -58,15 +55,18 @@ public class SessionAppelController {
 
     /**
      * GET /api/sessions-appel/plage/{plageHoraireId}/active
-     * ✅ Session active - ÉTUDIANT (pour valider) + Enseignant + Assistant (corrigé)
+     * Session active - Tous les rôles (code masqué pour les étudiants)
      */
     @GetMapping("/plage/{plageHoraireId}/active")
     @PreAuthorize("hasAnyRole('ETUDIANT', 'ENSEIGNANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
-    public ResponseEntity<SessionAppelResponse> getSessionActive(@PathVariable Long plageHoraireId) {
+    public ResponseEntity<SessionAppelResponse> getSessionActive(
+            @PathVariable Long plageHoraireId,
+            @AuthenticationPrincipal Utilisateur utilisateur) {
         try {
-            return ResponseEntity.ok(
-                    sessionAppelMapper.toResponse(sessionAppelService.getSessionActive(plageHoraireId))
-            );
+            var response = sessionAppelMapper.toResponse(
+                    sessionAppelService.getSessionActive(plageHoraireId));
+            masquerCodePourEtudiant(response, utilisateur);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.noContent().build();
         }
@@ -74,11 +74,14 @@ public class SessionAppelController {
 
     /**
      * GET /api/sessions-appel/classe/{classeId}/active
-     * Session active pour une classe - ÉTUDIANT + Enseignant + Assistant
+     * Session active pour une classe - Tous les rôles (code masqué pour les étudiants)
      */
     @GetMapping("/classe/{classeId}/active")
     @PreAuthorize("hasAnyRole('ETUDIANT', 'ENSEIGNANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
-    public ResponseEntity<SessionAppelResponse> getSessionActivePourClasse(@PathVariable Long classeId) {
+    public ResponseEntity<SessionAppelResponse> getSessionActivePourClasse(
+            @PathVariable Long classeId,
+            @AuthenticationPrincipal Utilisateur utilisateur) {
+
         var session = sessionAppelService.getSessionActivePourClasse(classeId);
 
         if (session == null) {
@@ -87,19 +90,23 @@ public class SessionAppelController {
 
         SessionAppelResponse response = sessionAppelMapper.toResponse(session);
 
-        // Si expirée, masquer le code
+        // Si expirée, masquer le code pour tout le monde
         if (session.isExpire()) {
             response.setCode(null);
         }
+        masquerCodePourEtudiant(response, utilisateur);
 
         return ResponseEntity.ok(response);
     }
 
     // ══════════════════════════════════════════
     // POST — Créer une session
-    // ✅ ENSEIGNANT uniquement (corrigé)
     // ══════════════════════════════════════════
 
+    /**
+     * POST /api/sessions-appel
+     * Créer une session d'appel - ENSEIGNANT uniquement
+     */
     @PostMapping
     @PreAuthorize("hasRole('ENSEIGNANT')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -115,10 +122,13 @@ public class SessionAppelController {
     }
 
     // ══════════════════════════════════════════
-    // PUT — Renouveler le code QR/PIN
-    // ✅ ENSEIGNANT uniquement (corrigé)
+    // PUT — Actions sur une session
     // ══════════════════════════════════════════
 
+    /**
+     * PUT /api/sessions-appel/{id}/renouveler
+     * Renouveler le code QR/PIN - ENSEIGNANT uniquement
+     */
     @PutMapping("/{id}/renouveler")
     @PreAuthorize("hasRole('ENSEIGNANT')")
     public SessionAppelResponse renouvelerCode(
@@ -131,11 +141,10 @@ public class SessionAppelController {
                 sessionAppelService.renouvelerCode(id, dureeMinutes));
     }
 
-    // ══════════════════════════════════════════
-    // PUT — Terminer le cours
-    // ✅ ENSEIGNANT uniquement (corrigé)
-    // ══════════════════════════════════════════
-
+    /**
+     * PUT /api/sessions-appel/{id}/terminer
+     * Terminer le cours - ENSEIGNANT uniquement
+     */
     @PutMapping("/{id}/terminer")
     @PreAuthorize("hasRole('ENSEIGNANT')")
     public SessionAppelResponse terminerCours(@PathVariable Long id) {
@@ -143,28 +152,43 @@ public class SessionAppelController {
         return sessionAppelMapper.toResponse(sessionAppelService.terminerCours(id));
     }
 
-    // ══════════════════════════════════════════
-    // PUT — Arrêter la session (sans terminer le cours)
-    // ✅ ENSEIGNANT uniquement
-    // ══════════════════════════════════════════
-
+    /**
+     * PUT /api/sessions-appel/{id}/arreter
+     * Arrêter la session sans terminer le cours - ENSEIGNANT uniquement
+     */
     @PutMapping("/{id}/arreter")
     @PreAuthorize("hasRole('ENSEIGNANT')")
     public SessionAppelResponse arreterSession(@PathVariable Long id) {
         log.info("ENSEIGNANT arrête la session {}", id);
-        var session = sessionAppelService.findById(id);
-        session.setActif(false);
-        return sessionAppelMapper.toResponse(sessionAppelService.findById(id));
+        return sessionAppelMapper.toResponse(sessionAppelService.arreterSession(id));
     }
 
     // ══════════════════════════════════════════
-    // DELETE — Admin uniquement
+    // DELETE — Suppression
     // ══════════════════════════════════════════
 
+    /**
+     * DELETE /api/sessions-appel/{id}
+     * Supprimer une session - Admins uniquement
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
     public ResponseEntity<Void> supprimer(@PathVariable Long id) {
-        log.warn("Suppression session {}", id);
+        log.warn("ADMIN supprime la session {}", id);
+        sessionAppelService.supprimer(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ══════════════════════════════════════════
+    // MÉTHODES PRIVÉES
+    // ══════════════════════════════════════════
+
+    /**
+     * Masque le code d'accès pour les étudiants (sécurité)
+     */
+    private void masquerCodePourEtudiant(SessionAppelResponse response, Utilisateur utilisateur) {
+        if (utilisateur instanceof Etudiant) {
+            response.setCode(null);
+        }
     }
 }

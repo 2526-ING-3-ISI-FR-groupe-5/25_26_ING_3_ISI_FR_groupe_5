@@ -8,9 +8,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Repository
 public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE, Long> {
@@ -68,7 +65,6 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
             @Param("anneeId") Long anneeId
     );
 
-    // ✅ CORRIGÉ : Query orpheline supprimée, la méthode garde sa génération automatique
     // Vérifier si une UE est déjà programmée dans une classe pour un semestre
     boolean existsByUeIdAndClasseIdAndSemestreId(
             Long ueId, Long classeId, Long semestreId
@@ -106,7 +102,6 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
     // PAR UE
     // ══════════════════════════════════════════
 
-    // ✅ CORRIGÉ : Query orpheline maintenant attachée à la bonne méthode
     @Query("""
         SELECT p FROM ProgrammationUE p
         WHERE p.ue.id = :ueId
@@ -130,4 +125,18 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
     // ══════════════════════════════════════════
 
     List<ProgrammationUE> findBySemestreId(Long semestreId);
+
+    @Query("""
+        SELECT p FROM ProgrammationUE p 
+        JOIN p.enseignants e 
+        WHERE e.id = :enseignantId 
+        AND p.semestre.actif = true
+    """)
+    List<ProgrammationUE> findByEnseignantsIdAndSemestreActifTrue(
+            @Param("enseignantId") Long enseignantId
+    );
+
+    // ✅ CORRIGÉ : Suppression de la méthode findCoursEnseignantAujourdhui
+    // qui retournait des PlageHoraire au lieu de ProgrammationUE
+    // Cette méthode existe déjà dans PlageHoraireRepository
 }

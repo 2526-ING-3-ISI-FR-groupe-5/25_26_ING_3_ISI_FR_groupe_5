@@ -12,52 +12,49 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAc
 
 import java.time.LocalDateTime;
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 @Repository
 public interface JournalActionRepository extends JpaRepository<JournalAction, Long> {
 
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
     // RECHERCHES SIMPLES
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
 
     Page<JournalAction> findByUtilisateurId(Long utilisateurId, Pageable pageable);
     Page<JournalAction> findByTypeAction(TypeAction typeAction, Pageable pageable);
     Page<JournalAction> findByStatut(StatutAction statut, Pageable pageable);
     Page<JournalAction> findByEntiteConcernee(String entiteConcernee, Pageable pageable);
+
+    // ✅ Méthode paginée pour entité + ID
     Page<JournalAction> findByEntiteConcerneeAndEntiteId(String entiteConcernee, Long entiteId, Pageable pageable);
 
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
     // RECHERCHES PAR PÉRIODE
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
 
     Page<JournalAction> findByDateActionBetween(LocalDateTime debut, LocalDateTime fin, Pageable pageable);
     Page<JournalAction> findByUtilisateurIdAndDateActionBetween(Long utilisateurId, LocalDateTime debut, LocalDateTime fin, Pageable pageable);
 
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
     // RECHERCHES COMBINÉES
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
 
     Page<JournalAction> findByUtilisateurIdAndTypeAction(Long utilisateurId, TypeAction typeAction, Pageable pageable);
     Page<JournalAction> findByUtilisateurIdAndStatut(Long utilisateurId, StatutAction statut, Pageable pageable);
     Page<JournalAction> findByTypeActionAndStatut(TypeAction typeAction, StatutAction statut, Pageable pageable);
 
-    // ============================================
-    // 🆕 RECHERCHES PAR INSTITUT
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // RECHERCHES PAR INSTITUT
+    // ═══════════════════════════════════════════════════════════
 
     Page<JournalAction> findByInstitutId(Long institutId, Pageable pageable);
-
     Page<JournalAction> findByInstitutIdAndTypeAction(Long institutId, TypeAction typeAction, Pageable pageable);
-
     Page<JournalAction> findByInstitutIdAndStatut(Long institutId, StatutAction statut, Pageable pageable);
-
     Page<JournalAction> findByInstitutIdAndDateActionBetween(Long institutId, LocalDateTime debut, LocalDateTime fin, Pageable pageable);
 
-    // ============================================
-    // RECHERCHE AVANCÉE (avec institut)
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // RECHERCHE AVANCÉE (avec filtres optionnels)
+    // ═══════════════════════════════════════════════════════════
 
     @Query("""
         SELECT j FROM JournalAction j
@@ -79,9 +76,28 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
             Pageable pageable
     );
 
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // 🆕 MÉTHODE CRITIQUE CORRIGÉE : Historique par entité (List)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Récupère l'historique des actions pour une entité donnée (ex: "Inscription", ID: 123)
+     * ✅ Correction : j.entiteConcernee (et NON j.entiteType qui n'existe pas)
+     */
+    @Query("""
+        SELECT j FROM JournalAction j 
+        WHERE j.entiteConcernee = :entiteConcernee 
+        AND j.entiteId = :entiteId 
+        ORDER BY j.dateAction DESC
+    """)
+    List<JournalAction> findByEntiteConcerneeAndEntiteIdOrderByDateDesc(
+            @Param("entiteConcernee") String entiteConcernee,
+            @Param("entiteId") Long entiteId
+    );
+
+    // ═══════════════════════════════════════════════════════════
     // STATISTIQUES
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
 
     @Query("SELECT j.typeAction, COUNT(j) FROM JournalAction j GROUP BY j.typeAction ORDER BY COUNT(j) DESC")
     List<Object[]> countByTypeAction();
@@ -136,9 +152,9 @@ public interface JournalActionRepository extends JpaRepository<JournalAction, Lo
     """)
     boolean isUtilisateurActifDepuis(@Param("utilisateurId") Long utilisateurId, @Param("depuis") LocalDateTime depuis);
 
-    // ============================================
-    // 🆕 NETTOYAGE (optionnel)
-    // ============================================
+    // ═══════════════════════════════════════════════════════════
+    // NETTOYAGE (optionnel)
+    // ═══════════════════════════════════════════════════════════
 
     void deleteByDateActionBefore(LocalDateTime date);
 }

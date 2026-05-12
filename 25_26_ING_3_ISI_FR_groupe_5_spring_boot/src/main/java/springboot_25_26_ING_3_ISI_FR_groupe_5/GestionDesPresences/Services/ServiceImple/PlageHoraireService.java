@@ -679,4 +679,11 @@ public class PlageHoraireService implements IPlageHoraireService {
     }
 
 
+    /**
+     * Récupère la liste des cours (hors pauses/évènements)
+     * d'un enseignant pour une date donnée.
+     */
+    public List<PlageHoraire> findCoursEnseignantAujourdhui(Long ensId, LocalDate date) {
+        return plageHoraireRepository.findCoursEnseignantAujourdhui(ensId, date);
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IAssistantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.AssistantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.RoleRepository;
 
@@ -19,7 +20,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Secu
 
 @Service
 @RequiredArgsConstructor
-public class AssistantService {
+public class AssistantService implements IAssistantService {
 
     private final AssistantRepository assistantRepo;
     private final ClassesService classeService;  // ✅ Correction : ClasseService au lieu de CycleService
@@ -100,7 +101,7 @@ public class AssistantService {
                 .orElseThrow(() -> new RuntimeException("Assistant introuvable"));
     }
 
-    // ══════════════════════════════════════════
+    // ═══���══════════════════════════════════════
     // RECHERCHER
     // ══════════════════════════════════════════
     public Page<AssistantPedagogique> rechercher(String recherche, Pageable pageable) {

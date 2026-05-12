@@ -101,6 +101,9 @@ public class SecurityConfig {
                         .requestMatchers("/assistant/**").hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
                         .requestMatchers("/dashboard").authenticated()
                         .requestMatchers("/api/instituts/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/api/appels/**").hasAnyRole("ENSEIGNANT", "ASSISTANT", "ADMIN_INSTITUT")
+                        .requestMatchers("/api/sessions-appel/**").hasAnyRole("ETUDIANT", "ENSEIGNANT", "ASSISTANT", "ADMIN_INSTITUT")
+                        .requestMatchers("/emploisDeTemps/**").hasAnyRole("SUPER_ADMIN", "ASSISTANT")
                         .anyRequest().authenticated()
                 )
 

@@ -5,16 +5,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Mappers.AppelsMapper;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.AppelsService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.SessionAppelService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.etudiant.EtudiantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.ClassesMapper;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EtudiantMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.InscriptionMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
@@ -40,7 +48,10 @@ public class EtudiantController {
     private final ClassesService classesService;
     private final ClassesMapper classesMapper;
     private final AnneeAcademiqueService anneeService;
-
+private final SessionAppelService sessionAppelService;
+private final AppelsService appelsService;
+private final AppelsRepository appelsRepository;
+private final AppelsMapper appelsMapper;
     // ══════════════════════════════════════════
     // LISTE avec filtre + année
     // ══════════════════════════════════════════
@@ -230,5 +241,26 @@ public class EtudiantController {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
         return "redirect:/etudiants/" + id;
+    }
+
+    @GetMapping("/mon-espace")
+    public String dashboardEtudiant(Model model, @AuthenticationPrincipal Utilisateur utilisateur) {
+        Long etudiantId = ((Etudiant) utilisateur).getId();
+        Long classeId = ((Etudiant) utilisateur).getClasse().getId();
+
+        // 1. Chercher la session active pour sa classe
+        SessionAppel session = sessionAppelService.getSessionActivePourClasse(classeId);
+        model.addAttribute("sessionActive", session);
+
+        // 2. Statistiques (Tu peux ajouter des méthodes dans ton AppelsService)
+        model.addAttribute("nbAbsencesNJ", appelsRepository.countAbsencesNonJustifieesByEtudiant(etudiantId));
+        model.addAttribute("nbRetards", appelsService.getRetardsByEtudiant(etudiantId).size());
+        // ... calcul taux présence ...
+
+        // 3. Historique récent
+        List<Appels> historique = appelsService.getByEtudiant(etudiantId);
+        model.addAttribute("appels", appelsMapper.toResponseList(historique));
+
+        return "etudiants/dashboard";
     }
 }

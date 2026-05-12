@@ -59,6 +59,8 @@ public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
     @Query("SELECT e FROM Etudiant e WHERE e.institut.id = :institutId")
     List<Etudiant> findByInstitutId(@Param("institutId") Long institutId);
 
+    List<Etudiant> findByClasseIdAndActiveTrue(Long classeId);
+
     // 🆕 Version Pageable (listes paginées)
     @Query("SELECT e FROM Etudiant e WHERE e.institut.id = :institutId")
     Page<Etudiant> findByInstitutId(@Param("institutId") Long institutId, Pageable pageable);

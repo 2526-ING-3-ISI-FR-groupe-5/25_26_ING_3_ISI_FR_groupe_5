@@ -23,4 +23,7 @@ public interface InstitutRepository extends JpaRepository<Institut, Long> {
             "LOWER(i.ville) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(i.email) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Institut> search(@Param("search") String search, Pageable pageable);
+
+
+
 }

@@ -71,10 +71,14 @@
                     </p>
                 </div>
                 <div class="flex gap-2">
+                    <!-- ✅ CSRF ajouté -->
                     <form th:action="@{/enseignant/appels/{id}/arreter-session/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button class="btn btn-sm btn-ghost border border-white/10 text-gray-400 rounded-lg h-8 text-xs">Arrêter</button>
                     </form>
+                    <!-- ✅ CSRF ajouté -->
                     <form th:action="@{/enseignant/appels/{id}/terminer/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post" onsubmit="return confirm('⚠️ Terminer le cours ? Cette action est irréversible.')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button class="btn btn-sm bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-lg h-8 text-xs">Terminer le cours</button>
                     </form>
                 </div>
@@ -84,7 +88,9 @@
         <!-- Actions rapides (QR ou PIN, pas les deux) -->
         <div th:unless="${sessionActive != null}" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <!-- QR -->
+            <!-- ✅ CSRF ajouté -->
             <form th:action="@{/enseignant/appels/{id}/lancer-session(id=${plageHoraire.id})}" method="post" class="bg-bgcard border border-white/5 rounded-[16px] p-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="methode" value="QR_CODE">
                 <input type="hidden" name="dureeMinutes" value="3">
                 <h4 class="font-medium text-gray-200 text-sm mb-2">📱 QR Code</h4>
@@ -92,7 +98,9 @@
                 <button type="submit" class="btn btn-sm bg-primary hover:bg-primaryhover border-none text-white w-full rounded-lg h-8 text-xs">Générer QR</button>
             </form>
             <!-- PIN -->
+            <!-- ✅ CSRF ajouté -->
             <form th:action="@{/enseignant/appels/{id}/lancer-session(id=${plageHoraire.id})}" method="post" class="bg-bgcard border border-white/5 rounded-[16px] p-4">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="methode" value="CODE_PIN">
                 <input type="hidden" name="dureeMinutes" value="3">
                 <h4 class="font-medium text-gray-200 text-sm mb-2">🔢 Code PIN</h4>
@@ -102,7 +110,8 @@
         </div>
 
         <!-- ═══ SECTION RETARDS (premier cours du matin ≤ 08:30) ═══ -->
-        <div th:if="${plageHoraire.heureDebut <= T(java.time.LocalTime).of(8, 30)}" class="bg-bgcard border border-amber-500/20 rounded-[22px] overflow-hidden mb-6">
+        <!-- ✅ Correction : utiliser une variable côté serveur -->
+        <div th:if="${estPremierCoursMatin}" class="bg-bgcard border border-amber-500/20 rounded-[22px] overflow-hidden mb-6">
             <div class="flex items-center justify-between p-4 md:p-5 border-b border-amber-500/10 bg-amber-500/5">
                 <div>
                     <h2 class="text-[15px] font-semibold text-amber-400">⏰ Gestion des retards</h2>
@@ -131,10 +140,12 @@
 
                     <div class="flex items-center gap-2 shrink-0">
                         <th:block th:if="${appel.statut.name() != 'RETARD'}">
+                            <!-- ✅ CSRF ajouté + ID enseignant supprimé -->
                             <form th:action="@{/enseignant/appels/{id}/marquer-retard(id=${plageHoraire.id})}" method="post" class="flex items-center gap-1.5">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <input type="hidden" name="etudiantId" th:value="${appel.etudiantId}">
                                 <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
-                                <input type="hidden" name="enseignantId" th:value="${#authentication.principal.id}">
+                                <!-- ✅ ID enseignant supprimé → à récupérer côté serveur -->
                                 <input type="time" name="heureArrivee" required
                                        class="bg-bgsubtle border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 w-24 focus:border-amber-500/50 focus:outline-none"
                                        th:min="${plageHoraire.heureDebut}" th:max="${plageHoraire.heureFin}">
@@ -162,9 +173,11 @@
                 </div>
             </div>
 
+            <!-- ✅ CSRF ajouté + ID enseignant supprimé -->
             <form th:action="@{/enseignant/appels/{id}/check-manuel(id=${plageHoraire.id})}" method="post" id="form-check-manuel">
-                <input type="hidden" name="enseignantId" th:value="${#authentication.principal.id}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
+                <!-- ✅ ID enseignant supprimé → à récupérer côté serveur via @AuthenticationPrincipal -->
 
                 <div class="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
                     <div th:each="appel : ${appels}" class="flex items-center justify-between p-3 md:p-4 hover:bg-bgsurface/30 transition-colors">
@@ -188,12 +201,16 @@
                         <div class="flex items-center gap-2 shrink-0">
                             <!-- Ajustement heures (présence partielle) -->
                             <div th:if="${appel.statut.name() == 'PARTIEL' || appel.nbHeuresPresent > 0}" class="flex items-center gap-1 bg-bgsubtle rounded-lg p-1">
+                                <!-- ✅ CSRF ajouté -->
                                 <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent - 1}">
                                     <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6" th:disabled="${appel.nbHeuresPresent <= 0}">−</button>
                                 </form>
                                 <span class="text-[13px] font-mono font-medium text-gray-200 w-8 text-center" th:text="${appel.nbHeuresPresent + 'h'}"></span>
+                                <!-- ✅ CSRF ajouté -->
                                 <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent + 1}">
                                     <button type="submit" class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6" th:disabled="${appel.nbHeuresPresent >= plageHoraire.nbHeure}">+</button>
                                 </form>

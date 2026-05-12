@@ -1,5 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -101,4 +103,39 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
             @Param("anneeId") Long anneeId,
             @Param("institutId") Long institutId
     );
+
+/* Récupère les inscriptions par année avec pagination
+     * Utilisé pour : migration complète, simulation, liste sans décision
+     */
+    @Query("SELECT i FROM Inscription i WHERE i.anneeAcademique.id = :anneeId")
+    Page<Inscription> findByAnneeAcademiqueIdPaginated(
+            @Param("anneeId") Long anneeId,
+            Pageable pageable);
+
+    /**
+     * Récupère les inscriptions par classe + année avec pagination
+     * Utilisé pour : migration sélective de classe/filière/niveau
+     */
+    @Query("SELECT i FROM Inscription i WHERE i.classe.id = :classeId AND i.anneeAcademique.id = :anneeId")
+    Page<Inscription> findByClasseIdAndAnneeAcademiqueIdPaginated(
+            @Param("classeId") Long classeId,
+            @Param("anneeId") Long anneeId,
+            Pageable pageable);
+
+    @Query("""
+    SELECT i FROM Inscription i 
+    WHERE i.anneeAcademique.id = :anneeId 
+    AND i.classe.niveau.filiere.ecole.institut.id = :institutId
+""")
+    Page<Inscription> findByAnneeAcademiqueIdAndInstitutIdPaginated(
+            @Param("anneeId") Long anneeId,
+            @Param("institutId") Long institutId,
+            Pageable pageable
+    );
+
+
+    
+
+
+
 }

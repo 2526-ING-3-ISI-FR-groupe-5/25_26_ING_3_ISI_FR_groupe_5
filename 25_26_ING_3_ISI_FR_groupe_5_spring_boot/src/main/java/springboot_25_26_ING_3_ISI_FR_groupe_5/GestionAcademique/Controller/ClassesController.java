@@ -65,7 +65,8 @@ public class ClassesController {
             @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) Long niveauId,
             @RequestParam(required = false) Long anneeId,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
         Annee_academique annee = null;
         try {
@@ -73,7 +74,17 @@ public class ClassesController {
                     ? anneeService.findById(anneeId)
                     : anneeService.getAnneeActive();
         } catch (Exception e) {
-            // Pas d'année active
+            // ✅ Validation stricte : redirection si aucune année academique n'est disponible
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+            return "redirect:/admin/annees";
+        }
+
+        // ✅ Validation : annee ne doit pas être null
+        if (annee == null) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique disponible. Veuillez en créer une");
+            return "redirect:/admin/annees";
         }
 
         List<Classe> classesList = new ArrayList<>();
@@ -107,11 +118,26 @@ public class ClassesController {
     public String detail(
             @PathVariable Long id,
             @RequestParam(required = false) Long anneeId,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
-        Annee_academique annee = anneeId != null
-                ? anneeService.findById(anneeId)
-                : anneeService.getAnneeActive();
+        // ✅ Validation stricte : vérifier qu'une année academique est active
+        Annee_academique annee = null;
+        try {
+            annee = anneeId != null
+                    ? anneeService.findById(anneeId)
+                    : anneeService.getAnneeActive();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+            return "redirect:/enseignant/classes";
+        }
+
+        if (annee == null) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique disponible");
+            return "redirect:/enseignant/classes";
+        }
 
         Classe classe = classesService.findById(id);
         List<Inscription> inscriptions = inscriptionService.getByClasseAndAnnee(id, annee.getId());
@@ -153,7 +179,21 @@ public class ClassesController {
 
     @GetMapping("/{id}/modifier")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
-    public String formulaireModifier(@PathVariable Long id, Model model) {
+    public String formulaireModifier(
+            @PathVariable Long id,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        // ✅ Validation: vérifier qu'une année academique est active
+        try {
+            Annee_academique annee = anneeService.getAnneeActive();
+            model.addAttribute("anneeActive", annee);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erreur",
+                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+            return "redirect:/enseignant/classes";
+        }
+
         Classe classe = classesService.findById(id);
         ClassesRequest form = new ClassesRequest();
         form.setNom(classe.getNom());

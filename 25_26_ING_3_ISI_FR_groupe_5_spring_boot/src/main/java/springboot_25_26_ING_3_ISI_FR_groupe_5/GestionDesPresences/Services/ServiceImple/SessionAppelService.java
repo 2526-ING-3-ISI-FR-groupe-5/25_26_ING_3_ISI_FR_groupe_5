@@ -1,13 +1,19 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.sessionAppel.SessionAppelRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.ISessionAppelService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeValidation;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.PlageHoraireRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.SessionAppelRepository;
 
@@ -18,13 +24,17 @@ import java.util.UUID;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.PlageHoraireService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class SessionAppelService {
+@Slf4j
+public class SessionAppelService implements ISessionAppelService {
     private final PlageHoraireRepository plageHoraireRepository;
     private final SessionAppelRepository sessionAppelRepository;
+    private final AppelsRepository appelsRepository;
+    private final EtudiantRepository etudiantRepository;
     private final PlageHoraireService plageHoraireService;
     private final EnseignantService enseignantService;
 
@@ -92,7 +102,9 @@ public class SessionAppelService {
                 .perimetreMetres(req.getPerimetreMetres())
                 .build();
 
-        return sessionAppelRepository.save(session);
+        SessionAppel savedSession = sessionAppelRepository.save(session);
+        initialiserAppelsEtudiants(savedSession);
+        return savedSession;
     }
 
     // ══════════════════════════════════════════
@@ -101,9 +113,16 @@ public class SessionAppelService {
 
     public SessionAppel terminerCours(Long sessionId) {
         SessionAppel session = findById(sessionId);
+        cloturerAppelsEnAttente(session);
         session.setCoursTermine(true);
         session.setActif(false);
         session.setHeureFinReelle(LocalDateTime.now());
+        return sessionAppelRepository.save(session);
+    }
+
+    public SessionAppel arreterSession(Long sessionId) {
+        SessionAppel session = findById(sessionId);
+        session.setActif(false);
         return sessionAppelRepository.save(session);
     }
 
@@ -133,4 +152,53 @@ public class SessionAppelService {
         };
     }
 
+    private void initialiserAppelsEtudiants(SessionAppel session) {
+        if (session.getPlageHoraire() == null || session.getPlageHoraire().getClasse() == null) {
+            return;
+        }
+
+        Long classeId = session.getPlageHoraire().getClasse().getId();
+        etudiantRepository.findByClasseIdAndActiveTrue(classeId).forEach(etudiant -> {
+            appelsRepository.findByEtudiantIdAndPlageHoraireId(
+                    etudiant.getId(), session.getPlageHoraire().getId()
+            ).ifPresentOrElse(appel -> {
+                appel.setSessionAppel(session);
+                if (appel.getEnseignant() == null) appel.setEnseignant(session.getEnseignant());
+                appelsRepository.save(appel);
+            }, () -> appelsRepository.save(Appels.builder()
+                            .etudiant(etudiant)
+                            .plageHoraire(session.getPlageHoraire())
+                            .enseignant(session.getEnseignant())
+                            .sessionAppel(session)
+                            .statut(StatutPresence.EN_ATTENTE)
+                            .synchronise(true)
+                            .build()));
+        });
+    }
+
+    private void cloturerAppelsEnAttente(SessionAppel session) {
+        appelsRepository.findBySessionAppelIdAndStatut(session.getId(), StatutPresence.EN_ATTENTE)
+                .forEach(appel -> {
+                    appel.marquerAbsent(session.getEnseignant());
+                    appelsRepository.save(appel);
+                });
+    }
+
+    @Transactional
+    public void supprimer(Long id) {
+        SessionAppel session = sessionAppelRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Session d'appel non trouvée avec l'ID : " + id));
+
+        // Optionnel : Supprimer les appels associés
+        List<Appels> appels = appelsRepository.findBySessionAppelId(id);
+        if (!appels.isEmpty()) {
+            appelsRepository.deleteAll(appels);
+            log.info("{} appels supprimés pour la session {}", appels.size(), id);
+        }
+
+        // Supprimer la session
+        sessionAppelRepository.delete(session);
+        log.warn("Session d'appel {} supprimée définitivement avec tous ses appels", id);
+    }
 }
