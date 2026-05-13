@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Debug - Informations Utilisateur</title>
+    <style>
+        .debug-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .debug-section {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .debug-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .debug-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+        .debug-item:last-child {
+            border-bottom: none;
+        }
+        .debug-label {
+            font-weight: bold;
+            color: #333;
+            min-width: 200px;
+        }
+        .debug-value {
+            color: #666;
+            word-break: break-all;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .diagnostic {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #333;
+        }
+        .alert-info {
+            padding: 1rem;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            color: #0c5460;
+            margin-bottom: 1.5rem;
+        }
+        .alert-danger {
+            padding: 1rem;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div class="debug-container">
+        <h1>🔍 Débogage - Informations Utilisateur</h1>
+
+        <!-- Message principal -->
+        <div th:if="${message.contains('connecté')}" class="alert-info" th:text="${message}"></div>
+        <div th:if="${!message.contains('connecté')}" class="alert-danger" th:text="${message}"></div>
+
+        <!-- Informations Utilisateur -->
+        <div th:if="${email}" class="debug-section">
+            <h3>👤 Informations Utilisateur</h3>
+            <div class="debug-item">
+                <span class="debug-label">Email:</span>
+                <span class="debug-value" th:text="${email}"></span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Nom:</span>
+                <span class="debug-value" th:text="${nom}"></span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Prénom:</span>
+                <span class="debug-value" th:text="${prenom}"></span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Type:</span>
+                <span class="debug-value" th:text="${type}"></span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Actif:</span>
+                <span class="debug-value">
+                    <span th:if="${active}" class="badge badge-success">OUI</span>
+                    <span th:unless="${active}" class="badge badge-danger">NON</span>
+                </span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Institut:</span>
+                <span class="debug-value" th:text="${institut}"></span>
+            </div>
+        </div>
+
+        <!-- Rôles en Base de Données -->
+        <div th:if="${rolesDb}" class="debug-section">
+            <h3>🗂️ Rôles en Base de Données</h3>
+            <div class="debug-item">
+                <span class="debug-label">Rôles:</span>
+                <span class="debug-value">
+                    <div th:if="${rolesDb.isEmpty()}">
+                        <span class="badge badge-danger">AUCUN RÔLE</span>
+                    </div>
+                    <div th:unless="${rolesDb.isEmpty()}">
+                        <span th:each="role : ${rolesDb}" class="badge badge-info" th:text="${role}"></span>
+                    </div>
+                </span>
+            </div>
+        </div>
+
+        <!-- Authorities Spring Security -->
+        <div th:if="${authorities}" class="debug-section">
+            <h3>🔐 Authorities Spring Security</h3>
+            <div class="debug-item">
+                <span class="debug-label">Authorities:</span>
+                <span class="debug-value">
+                    <div th:if="${authorities.isEmpty()}">
+                        <span class="badge badge-danger">AUCUNE AUTORITÉ</span>
+                    </div>
+                    <div th:unless="${authorities.isEmpty()}">
+                        <span th:each="auth : ${authorities}" class="badge badge-success" th:text="${auth}"></span>
+                    </div>
+                </span>
+            </div>
+        </div>
+
+        <!-- Vérifications d'Accès -->
+        <div th:if="${hasSuperAdminRole != null}" class="debug-section">
+            <h3>✅ Vérifications d'Accès</h3>
+            <div class="debug-item">
+                <span class="debug-label">hasRole('SUPER_ADMIN'):</span>
+                <span class="debug-value">
+                    <span th:if="${hasSuperAdminRole}" class="badge badge-success">OUI</span>
+                    <span th:unless="${hasSuperAdminRole}" class="badge badge-danger">NON</span>
+                </span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">hasAuthority('ROLE_SUPER_ADMIN'):</span>
+                <span class="debug-value">
+                    <span th:if="${hasSuperAdminAuth}" class="badge badge-success">OUI</span>
+                    <span th:unless="${hasSuperAdminAuth}" class="badge badge-danger">NON</span>
+                </span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">hasRole('ADMIN_INSTITUT'):</span>
+                <span class="debug-value">
+                    <span th:if="${hasAdminInstitutRole}" class="badge badge-success">OUI</span>
+                    <span th:unless="${hasAdminInstitutRole}" class="badge badge-danger">NON</span>
+                </span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">hasAuthority('ROLE_ADMIN_INSTITUT'):</span>
+                <span class="debug-value">
+                    <span th:if="${hasAdminInstitutAuth}" class="badge badge-success">OUI</span>
+                    <span th:unless="${hasAdminInstitutAuth}" class="badge badge-danger">NON</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Diagnostic -->
+        <div th:if="${diagnostic}" class="debug-section">
+            <h3>📋 Diagnostic de Sécurité</h3>
+            <div class="diagnostic" th:text="${diagnostic}"></div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="debug-section">
+            <h3>📚 Instructions pour Résoudre les Problèmes</h3>
+            <p><strong>Si vous avez un 403 sur /admin/inscriptions ou /admin/migration:</strong></p>
+            <ol>
+                <li>Vérifiez ci-dessus que <strong>hasRole('SUPER_ADMIN')</strong> ou <strong>hasRole('ADMIN_INSTITUT')</strong> est OUI</li>
+                <li>Si NON, il faut assigner le rôle en base de données (voir ci-dessous)</li>
+                <li>Si OUI mais vous avez quand même un 403, effacez les cookies et reconnectez-vous</li>
+            </ol>
+
+            <p style="margin-top: 1.5rem;"><strong>Pour modifier les rôles en PostgreSQL:</strong></p>
+            <pre><code>-- Assigner SUPER_ADMIN à un utilisateur
+INSERT INTO utilisateurs_role (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateur u, role r
+WHERE u.email = 'votre.email@example.com'
+  AND r.nom = 'SUPER_ADMIN'
+  AND NOT EXISTS (
+    SELECT 1 FROM utilisateurs_role ur
+    WHERE ur.utilisateur_id = u.id AND ur.role_id = r.id
+  );
+
+-- Ou assigner ADMIN_INSTITUT
+INSERT INTO utilisateurs_role (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateur u, role r
+WHERE u.email = 'votre.email@example.com'
+  AND r.nom = 'ADMIN_INSTITUT'
+  AND NOT EXISTS (
+    SELECT 1 FROM utilisateurs_role ur
+    WHERE ur.utilisateur_id = u.id AND ur.role_id = r.id
+  );</code></pre>
+        </div>
+
+        <!-- Lien de retour -->
+        <div style="margin-top: 2rem; text-align: center;">
+            <a href="/" class="btn btn-primary">← Retour à l'accueil</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+

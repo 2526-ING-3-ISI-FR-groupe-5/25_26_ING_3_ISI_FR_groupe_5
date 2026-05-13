@@ -9,7 +9,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_aca
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.AnneeAcademiqueRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SemestreRepository;
@@ -18,12 +17,11 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 
 import java.time.LocalDate;
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
+
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEACADEMIQUEACTIVER;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEACADEMIQUENOTFOUND;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEEACDEMIQUEEXISTEXCEPTION;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 @Slf4j
 @Service

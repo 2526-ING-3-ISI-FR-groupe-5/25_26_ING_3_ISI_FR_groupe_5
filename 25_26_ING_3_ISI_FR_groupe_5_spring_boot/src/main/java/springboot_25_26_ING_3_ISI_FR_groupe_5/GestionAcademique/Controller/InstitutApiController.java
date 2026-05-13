@@ -10,8 +10,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.Institut
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutService;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 /**
  * Contrôleur REST pour les instituts.

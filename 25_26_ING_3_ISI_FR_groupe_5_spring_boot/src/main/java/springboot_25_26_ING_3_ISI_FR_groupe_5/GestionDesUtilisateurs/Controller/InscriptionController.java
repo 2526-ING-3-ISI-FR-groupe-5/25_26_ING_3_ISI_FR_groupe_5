@@ -28,7 +28,6 @@ import java.util.List;
 @RequestMapping("/admin/inscriptions")
 @RequiredArgsConstructor
 
-// @PreAuthorize("hasAnyAuthority('SUPER_ADMIN','ADMIN_INSTITUT')")
 @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')")
 public class InscriptionController {
 

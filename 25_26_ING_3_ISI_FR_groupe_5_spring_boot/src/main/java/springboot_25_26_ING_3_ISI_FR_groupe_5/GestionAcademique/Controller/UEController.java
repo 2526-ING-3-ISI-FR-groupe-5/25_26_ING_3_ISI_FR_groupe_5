@@ -9,7 +9,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.ue.UERequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
@@ -20,8 +19,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Service
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.UEService;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Controller
 @RequestMapping("/admin/ues")

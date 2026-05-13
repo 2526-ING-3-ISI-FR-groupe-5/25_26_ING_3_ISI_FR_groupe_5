@@ -13,14 +13,11 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_aca
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.programmation.ProgrammationRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.semestre.SemestreResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
+
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.ClassesMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.SemestreMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.UEMapper;
@@ -30,7 +27,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Service
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.UEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Mappers.ProgrammationUEMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.ProgrammationUEService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EnseignantMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 

@@ -17,8 +17,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Localisation;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 @SuperBuilder
 @Getter

@@ -30,11 +30,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.UEMapper
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.ue.UEResponse;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
 
 @Controller
 @RequestMapping("/enseignant")

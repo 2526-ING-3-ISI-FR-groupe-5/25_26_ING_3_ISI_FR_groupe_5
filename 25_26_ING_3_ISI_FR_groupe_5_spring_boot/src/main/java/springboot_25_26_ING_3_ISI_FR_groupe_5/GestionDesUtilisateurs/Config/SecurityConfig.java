@@ -35,11 +35,12 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_URL = {
             "/login",
-            "/refresh-token",
-            "/notFound",
-            "/accessDenied",
+            "/refresh-token/**",
+            "/notFound/**",
+            "/accessDenied/**",
             "/sessionExpired",
-            "/error",
+            "/error/**",
+            "/admin1/**",
             "/api/v1/auth/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",

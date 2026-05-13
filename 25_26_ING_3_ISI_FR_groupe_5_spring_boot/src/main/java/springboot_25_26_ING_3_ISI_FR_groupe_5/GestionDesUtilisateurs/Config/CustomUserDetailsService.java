@@ -1,16 +1,18 @@
-package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config;
+/*package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 // ✅ Nom explicite pour éviter le conflit de beans
 @Service("customUserDetailsService")
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UtilisateurRepository utilisateurRepository;
@@ -22,5 +24,35 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Utilisateur non trouvé : " + email
                 ));
+    }
+}
+
+*/
+
+package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
+
+@Service("customUserDetailsService")
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UtilisateurRepository utilisateurRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+        return utilisateurRepository
+                .findByEmailWithRoles(email)  // ← ✅ Méthode avec JOIN FETCH
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Utilisateur non trouvé ou inactif : " + email));
     }
 }

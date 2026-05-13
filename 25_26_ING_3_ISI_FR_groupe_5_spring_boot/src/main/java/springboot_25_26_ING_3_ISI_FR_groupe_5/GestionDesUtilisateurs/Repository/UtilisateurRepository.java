@@ -31,6 +31,15 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
             Pageable pageable
     );
 
+    // UtilisateurRepository.java
+    @Query("""
+    SELECT DISTINCT u FROM Utilisateur u
+    LEFT JOIN FETCH u.roles r
+    LEFT JOIN FETCH r.permissions
+    WHERE u.email = :email AND u.active = true
+""")
+    Optional<Utilisateur> findByEmailWithRoles(@Param("email") String email);
+
     Optional<Utilisateur> findByEmail(String email);
 
     boolean existsByEmail(String email);

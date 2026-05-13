@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Debug - Logs</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div style="max-width: 900px; margin: 2rem auto; padding: 2rem;">
+        <h1>📋 Logs de Débogage</h1>
+
+        <div style="background: #f0f0f0; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <p th:text="${message}"></p>
+        </div>
+
+        <h3>📝 Où regarder les logs?</h3>
+        <ul>
+            <li><strong>Console de l'IDE (IntelliJ):</strong> Onglet "Services" ou "Run"</li>
+            <li><strong>Terminal où Maven s'exécute:</strong> Cherchez les lignes avec "🔍" ou "👤"</li>
+            <li><strong>Fichier de logs:</strong> S'il existe, regardez dans <code>logs/</code> ou <code>target/logs/</code></li>
+        </ul>
+
+        <h3>🔎 Recherchez ces patterns:</h3>
+        <pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+🔍 Appel debug endpoint
+👤 Utilisateur:
+🔑 Authorities:</pre>
+
+        <div style="margin-top: 2rem;">
+            <a href="/debug/user-info" class="btn btn-primary">← Retour aux infos utilisateur</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+

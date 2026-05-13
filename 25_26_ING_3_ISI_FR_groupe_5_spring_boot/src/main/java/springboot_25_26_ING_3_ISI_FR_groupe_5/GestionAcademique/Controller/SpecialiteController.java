@@ -19,8 +19,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Service
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SpecialiteService;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Config.Security;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Controller
 @RequestMapping("/admin/specialites")
