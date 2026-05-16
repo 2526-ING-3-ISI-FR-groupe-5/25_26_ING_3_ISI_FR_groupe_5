@@ -162,9 +162,9 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             }
 
             anneeRepo.findByInstitutIdAndActiveTrue(institutId).ifPresent(ancienne -> {
-                semestreRepo.findByAnneeAcademiqueIdAndActifTrue(ancienne.getId())
+                semestreRepo.findByAnneeAcademiqueIdAndActiveTrue(ancienne.getId())
                         .ifPresent(semestre -> {
-                            semestre.setActif(false);
+                            semestre.setActive(false);
                             semestreRepo.save(semestre);
                         });
                 ancienne.setActive(false);
@@ -199,11 +199,10 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
             anneeADesactiver.setActive(false);
 
-            semestreRepo.findByAnneeAcademiqueIdAndActifTrue(anneeId)
-                    .ifPresent(semestre -> {
-                        semestre.setActif(false);
-                        semestreRepo.save(semestre);
-                    });
+            semestreRepo.findByAnneeAcademiqueIdAndActiveTrue(anneeId).ifPresent(semestre -> {
+                semestre.setActive(false);
+                semestreRepo.save(semestre);
+            });
 
             Annee_academique saved = anneeRepo.save(anneeADesactiver);
             journalService.journaliserDesactivationAnnee(acteur, saved.getId(), saved.getNom());

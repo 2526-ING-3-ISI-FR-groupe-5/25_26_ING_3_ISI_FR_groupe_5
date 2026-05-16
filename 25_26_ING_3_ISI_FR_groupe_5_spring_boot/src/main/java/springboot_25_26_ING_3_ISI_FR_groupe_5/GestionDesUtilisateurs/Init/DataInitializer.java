@@ -7,6 +7,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeCycle;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeSemestre;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
@@ -18,26 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Cycle;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Ecole;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Filiere;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Specialite;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.AnneeAcademiqueRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.CycleRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.EcoleRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.FiliereRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.NiveauRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SemestreRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SpecialiteRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.UERepository;
+
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.ProgrammationUERepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
@@ -59,11 +42,12 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
+    // ✅ Repositories
+    private final InstitutContexteActifRepository institutContexteActifRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final PasswordEncoder passwordEncoder;
-
     private final InstitutRepository institutRepository;
     private final EcoleRepository ecoleRepository;
     private final CycleRepository cycleRepository;
@@ -121,24 +105,24 @@ public class DataInitializer implements ApplicationRunner {
         // ============================================
         // 2. ROLES
         // ============================================
-        Role roleSuperAdmin = createOrUpdateRole("SUPER_ADMIN", "Super Administrateur - Tous les instituts", true,
+        Role roleSuperAdmin = createOrUpdateRole("SUPER_ADMIN", "Super Administrateur - Tous les instituts",
                 Set.of(pRead, pWrite, pDelete, eRead, eWrite, eDelete, nRead, nWrite,
                         institutRead, institutWrite, institutDelete,
                         appelRead, appelWrite, appelManage,
                         justifRead, justifWrite, justifManage, presenceRead));
 
-        Role roleAdminInstitut = createOrUpdateRole("ADMIN_INSTITUT", "Administrateur d'institut", true,
+        Role roleAdminInstitut = createOrUpdateRole("ADMIN_INSTITUT", "Administrateur d'institut",
                 Set.of(pRead, pWrite, pDelete, eRead, eWrite, eDelete, nRead, nWrite,
                         appelRead, appelManage, justifRead, justifManage, presenceRead));
 
-        Role roleEnseignant = createOrUpdateRole("ENSEIGNANT", "Enseignant", true,
+        Role roleEnseignant = createOrUpdateRole("ENSEIGNANT", "Enseignant",
                 Set.of(eRead, nRead, nWrite, appelRead, appelWrite, appelManage,
                         justifRead, presenceRead));
 
-        Role roleEtudiant = createOrUpdateRole("ETUDIANT", "Étudiant", true,
+        Role roleEtudiant = createOrUpdateRole("ETUDIANT", "Étudiant",
                 Set.of(nRead, presenceRead, justifRead, justifWrite, appelRead));
 
-        Role roleAssistant = createOrUpdateRole("ASSISTANT", "Assistant administratif / pédagogique", true,
+        Role roleAssistant = createOrUpdateRole("ASSISTANT", "Assistant administratif / pédagogique",
                 Set.of(eRead, nRead, justifRead, justifManage, presenceRead));
 
         // ============================================
@@ -210,7 +194,7 @@ public class DataInitializer implements ApplicationRunner {
         // ============================================
         // 10. ANNEES ACADEMIQUES
         // ============================================
-        anneeRepository.findAll().forEach(a -> a.setActive(false));
+        // ✅ LIGNE DANGEREUSE SUPPRIMÉE : anneeRepository.findAll().forEach(a -> a.setActive(false));
 
         Annee_academique annee2024_UCAD = createAnneeAcademique("2024-2025",
                 LocalDate.of(2024, 10, 1), LocalDate.of(2025, 6, 30), true, ucad);
@@ -234,6 +218,10 @@ public class DataInitializer implements ApplicationRunner {
                 LocalDate.of(2024, 10, 1), LocalDate.of(2025, 1, 31), true, annee2024_UGB);
         Semestre s2_2024_UGB = createSemestre(TypeSemestre.SEMESTRE_2,
                 LocalDate.of(2025, 2, 1), LocalDate.of(2025, 6, 30), false, annee2024_UGB);
+
+        // ✅ INITIALISATION DU CONTEXTE ACTIF (après création des années/semestres)
+        initialiserContexteActif(ucad, annee2024_UCAD, s1_2024_UCAD);
+        initialiserContexteActif(ugb, annee2024_UGB, s1_2024_UGB);
 
         // ============================================
         // 12. UE
@@ -309,14 +297,14 @@ public class DataInitializer implements ApplicationRunner {
     private Permission createOrUpdatePermission(String nom, String description) {
         return permissionRepository.findByNom(nom)
                 .orElseGet(() -> permissionRepository.save(
-                        Permission.builder().nom(nom).description(description).active(true).creatAt(LocalDateTime.now()).build()));
+                        Permission.builder().nom(nom).description(description).active(true).createdAt(LocalDateTime.now()).build()));
     }
 
-    private Role createOrUpdateRole(String nom, String description, boolean active, Set<Permission> permissions) {
+    private Role createOrUpdateRole(String nom, String description, Set<Permission> permissions) {
         return roleRepository.findByNom(nom)
-                .map(role -> { role.setPermissions(new HashSet<>(permissions)); role.setActive(active); return roleRepository.save(role); })
+                .map(role -> { role.setPermissions(new HashSet<>(permissions)); role.setActive(true); return roleRepository.save(role); })
                 .orElseGet(() -> roleRepository.save(
-                        Role.builder().nom(nom).description(description).active(active).creatAt(LocalDateTime.now()).permissions(new HashSet<>(permissions)).build()));
+                        Role.builder().nom(nom).description(description).active(true).createdAt(LocalDateTime.now()).permissions(new HashSet<>(permissions)).build()));
     }
 
     private Institut createInstitut(String nom, String ville, String adresse, String email, String telephone, String localite) {
@@ -326,7 +314,6 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private Ecole createEcole(String nom, String adresse, String email, String telephone, Institut institut) {
-        // ✅ Correction : utiliser findByNomAndInstitut_Id avec underscore
         return ecoleRepository.findByNomAndInstitut_Id(nom, institut.getId())
                 .orElseGet(() -> ecoleRepository.save(
                         Ecole.builder()
@@ -375,7 +362,7 @@ public class DataInitializer implements ApplicationRunner {
     private Semestre createSemestre(TypeSemestre typeSemestre, LocalDate dateDebut, LocalDate dateFin, boolean actif, Annee_academique annee) {
         return semestreRepository.findByAnneeAcademiqueIdAndTypeSemestre(annee.getId(), typeSemestre)
                 .orElseGet(() -> semestreRepository.save(
-                        Semestre.builder().typeSemestre(typeSemestre).dateDebut(dateDebut).dateFin(dateFin).actif(actif).anneeAcademique(annee).build()));
+                        Semestre.builder().typeSemestre(typeSemestre).dateDebut(dateDebut).dateFin(dateFin).active(actif).anneeAcademique(annee).build()));
     }
 
     private UE createUE(String nom, String code, String libelle, String libelleAnglais, Specialite specialite) {
@@ -582,6 +569,34 @@ public class DataInitializer implements ApplicationRunner {
                 .replace("à", "a").replace("â", "a").replace("ô", "o").replace(" ", ".").replace("'", "");
     }
 
+    // ============================================
+    // ✅ NOUVELLE MÉTHODE : INITIALISATION CONTEXTE ACTIF
+    // (Placée STRICTEMENT au niveau de la classe, après run())
+    // ============================================
+    private void initialiserContexteActif(Institut institut, Annee_academique annee, Semestre semestre) {
+        if (semestre == null || annee == null || institut == null) return;
+
+        var contexteOpt = institutContexteActifRepository.findByInstitutId(institut.getId());
+
+        if (contexteOpt.isPresent()) {
+            var ctx = contexteOpt.get();
+            ctx.setAnneeAcademique(annee);
+            ctx.setSemestre(semestre);
+            ctx.setDerniereBascule(LocalDateTime.now());
+            institutContexteActifRepository.save(ctx);
+        } else {
+            institutContexteActifRepository.save(InstitutContexteActif.builder()
+                    .institut(institut)
+                    .anneeAcademique(annee)
+                    .semestre(semestre)
+                    .derniereBascule(LocalDateTime.now())
+                    .build());
+        }
+    }
+
+    // ============================================
+    // RECORDS POUR UTILISATEURS FICTIFS
+    // ============================================
     private record EnseignantData(String nom, String prenom, String email, String grade, String type) {}
     private record AssistantData(String nom, String prenom, String email, String fonction) {}
     private record SurveillantData(String nom, String prenom, String email, String secteur, String typeContrat) {}

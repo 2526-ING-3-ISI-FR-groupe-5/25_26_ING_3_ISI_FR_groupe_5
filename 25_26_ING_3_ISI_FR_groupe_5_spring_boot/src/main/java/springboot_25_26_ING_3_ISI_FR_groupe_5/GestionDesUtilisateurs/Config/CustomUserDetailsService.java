@@ -49,10 +49,19 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        System.err.println("\n🔍 DEBUG: loadUserByUsername called for: " + email);
 
-        return utilisateurRepository
+        Utilisateur user = utilisateurRepository
                 .findByEmailWithRoles(email)  // ← ✅ Méthode avec JOIN FETCH
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Utilisateur non trouvé ou inactif : " + email));
+
+        System.err.println("✅ DEBUG: User loaded from DB: " + user.getEmail());
+        System.err.println("   Roles in DB: " + user.getRoles().size());
+        user.getRoles().forEach(role ->
+            System.err.println("   └─ Role: " + role.getNom() + ", Active: " + role.getActive())
+        );
+
+        return user;
     }
 }

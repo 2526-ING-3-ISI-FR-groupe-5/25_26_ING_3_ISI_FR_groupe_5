@@ -2,22 +2,22 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.InstitutContexteActif;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutContexteActifRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.programmation.ProgrammationRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.semestre.SemestreResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.ClassesMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.SemestreMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.UEMapper;
@@ -25,15 +25,22 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Service
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.ClassesService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SemestreService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.UEService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Mappers.ProgrammationUEMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.ProgrammationUEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.EnseignantMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+@Slf4j
 @Controller
 @RequestMapping("/admin/programmations")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')")
 public class ProgrammationUEController {
 
     private final ProgrammationUEService programmationService;
@@ -48,20 +55,36 @@ public class ProgrammationUEController {
     private final EnseignantMapper enseignantMapper;
     private final AnneeAcademiqueService anneeService;
 
+    // ✅ NOUVEAU : Injection du contexte actif et sécurité
+    private final InstitutContexteActifRepository contexteRepo;
+    private final InstitutSecurityService securityService;
+
     @GetMapping
     public String liste(
             @RequestParam(required = false) Long classeId,
             @RequestParam(required = false) Long anneeId,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur utilisateur
     ) {
+        // ✅ Résolution contexte multi-institut
+        Long institutCible = securityService.resolveInstitutId(utilisateur, null);
+
+        // ✅ Année par défaut via contexte actif (plus de getAnneeActive() global)
+        if (anneeId == null && institutCible != null) {
+            anneeId = contexteRepo.findByInstitutId(institutCible)
+                    .map(InstitutContexteActif::getAnneeAcademique)
+                    .map(Annee_academique::getId)
+                    .orElse(null);
+        }
+
         Annee_academique annee = null;
-        try {
-            annee = anneeId != null
-                    ? anneeService.findById(anneeId)
-                    : anneeService.getAnneeActive();
-        } catch (Exception e) {
-            model.addAttribute("anneeActive", null);
+        if (anneeId != null) {
+            try {
+                annee = anneeService.findById(anneeId);
+            } catch (Exception e) {
+                log.warn("Année introuvable : {}", anneeId);
+            }
         }
 
         if (annee != null) {
@@ -72,7 +95,7 @@ public class ProgrammationUEController {
                     .toResponseList(semestreService.getByAnnee(annee.getId()));
             model.addAttribute("semestres", semestres);
 
-            // ✅ Semestre actif pré-sélectionné
+            // ✅ Semestre actif pré-sélectionné (via contexte)
             try {
                 model.addAttribute("semestreActif",
                         semestreMapper.toResponse(
@@ -82,7 +105,7 @@ public class ProgrammationUEController {
                 model.addAttribute("semestreActif", null);
             }
 
-            // Programmations filtrées
+            // Programmations filtrées (avec sécurité multi-institut)
             List<ProgrammationUE> programmations = classeId != null
                     ? programmationService.getByClasseAndAnnee(classeId, annee.getId())
                     : new ArrayList<>();
@@ -91,23 +114,35 @@ public class ProgrammationUEController {
                     programmationMapper.toResponseList(programmations));
         }
 
-        model.addAttribute("annees", anneeService.getAll());
+        model.addAttribute("annees",
+                (institutCible != null)
+                        ? anneeService.getByInstitut(institutCible)
+                        : anneeService.getAll());
         model.addAttribute("classes",
                 classesMapper.toResponseList(
                         classesService.getByAnnee(
                                 annee != null ? annee.getId() : null,
-                                null, PageRequest.of(0, 100)
+                                String.valueOf(institutCible),
+                                PageRequest.of(0, 100)
                         ).getContent()
                 ));
         model.addAttribute("ues",
                 ueMapper.toResponseList(
-                        ueService.getAll()
+                        (institutCible != null)
+                                ? ueService.getByInstitut(institutCible)
+                                : ueService.getAll()
                 ));
         model.addAttribute("enseignants",
-                enseignantMapper.toResponseList(enseignantService.getAll()));
+                enseignantMapper.toResponseList(
+                        enseignantService.rechercher(
+                                annee != null ? annee.getId() : null,
+                                String.valueOf(institutCible),
+                                PageRequest.of(0, 100)
+                        ).getContent()));
         model.addAttribute("classeIdSelectionne", classeId);
         model.addAttribute("pageTitle", "Programmation des UE");
         model.addAttribute("currentPage", "programmations");
+        model.addAttribute("selectedInstitutId", institutCible);
 
         return "programmation/liste";
     }
@@ -116,21 +151,22 @@ public class ProgrammationUEController {
     public String formulaireCreer(
             @RequestParam(required = false) Long classeId,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur utilisateur
     ) {
         // ✅ Validation stricte : une année académique DOIT être active
+        Long institutCible = securityService.resolveInstitutId(utilisateur, null);
         Annee_academique anneeActive = null;
-        try {
-            anneeActive = anneeService.getAnneeActive();
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
-            return "redirect:/admin/programmations";
+
+        if (institutCible != null) {
+            anneeActive = contexteRepo.findByInstitutId(institutCible)
+                    .map(InstitutContexteActif::getAnneeAcademique)
+                    .orElse(null);
         }
 
         if (anneeActive == null) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique disponible. Veuillez en créer une");
+                    "Aucune année académique active. Veuillez en activer une depuis les paramètres");
             return "redirect:/admin/programmations";
         }
 
@@ -159,21 +195,22 @@ public class ProgrammationUEController {
             @Valid @ModelAttribute("form") ProgrammationRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur utilisateur
     ) {
         // ✅ Validation stricte : une année académique DOIT être active
+        Long institutCible = securityService.resolveInstitutId(utilisateur, null);
         Annee_academique anneeActive = null;
-        try {
-            anneeActive = anneeService.getAnneeActive();
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
-            return "redirect:/admin/programmations";
+
+        if (institutCible != null) {
+            anneeActive = contexteRepo.findByInstitutId(institutCible)
+                    .map(InstitutContexteActif::getAnneeAcademique)
+                    .orElse(null);
         }
 
         if (anneeActive == null) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique disponible. Veuillez en créer une");
+                    "Aucune année académique disponible. Veuillez en créer une");
             return "redirect:/admin/programmations";
         }
 
@@ -269,7 +306,7 @@ public class ProgrammationUEController {
     // ✅ Endpoint JSON pour la modale d'édition
     @GetMapping("/{id}/json")
     @ResponseBody
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')")
     public ProgrammationRequest getProgrammationJson(@PathVariable Long id) {
         ProgrammationUE p = programmationService.findById(id);
         ProgrammationRequest request = new ProgrammationRequest();

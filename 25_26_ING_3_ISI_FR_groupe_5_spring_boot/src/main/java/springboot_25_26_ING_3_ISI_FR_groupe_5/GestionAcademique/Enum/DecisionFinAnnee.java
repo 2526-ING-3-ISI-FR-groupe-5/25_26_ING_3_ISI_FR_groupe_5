@@ -5,5 +5,5 @@ public enum DecisionFinAnnee {
     REDOUBLANT,
     EXCLU,
     DIPLOME,
-    EN_COURS,
+    EN_COURS, ABANDON,
 }

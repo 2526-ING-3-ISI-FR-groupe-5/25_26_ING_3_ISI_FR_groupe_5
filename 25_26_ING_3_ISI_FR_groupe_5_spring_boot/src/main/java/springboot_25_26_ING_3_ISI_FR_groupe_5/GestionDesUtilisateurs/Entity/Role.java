@@ -37,7 +37,7 @@ public class Role {
     private Boolean active;
     @CreatedDate
     @Column(updatable = false, nullable = false)
-    protected LocalDateTime creatAt;
+    protected LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(insertable = false)

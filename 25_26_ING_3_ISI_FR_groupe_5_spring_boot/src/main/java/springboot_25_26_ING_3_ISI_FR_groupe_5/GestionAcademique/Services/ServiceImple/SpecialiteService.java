@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Servic
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.groovy.runtime.StreamGroovyMethods;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Specialite;
@@ -100,6 +101,11 @@ public class SpecialiteService implements ISpecialiteService {
     }
 
     @Override
+    public List<Specialite> getByInstitut(Long institutId) {
+        return specialiteRepository.findByInstitutId(institutId);
+    }
+
+    @Override
     @Transactional
     public void supprimer(Long id, Utilisateur acteur) {
         try {
@@ -125,4 +131,6 @@ public class SpecialiteService implements ISpecialiteService {
             throw new RuntimeException("Erreur lors de la suppression de la spécialité", e);
         }
     }
+
+
 }

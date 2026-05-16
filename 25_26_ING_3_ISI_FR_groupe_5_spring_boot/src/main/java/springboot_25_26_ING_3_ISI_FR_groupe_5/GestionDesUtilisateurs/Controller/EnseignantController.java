@@ -65,7 +65,7 @@ public class EnseignantController {
         model.addAttribute("totalClasses", classes.size());
         model.addAttribute("totalUE", programmations.size());
 
-        return "enseignant/dashboard";
+        return "dashboardEnseignant";
     }
 
     @GetMapping("/classe/{id}")

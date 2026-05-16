@@ -10,11 +10,11 @@ import java.util.Collection;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 @Entity
 // ✅ Contrainte unicité code par filière
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_specialite_code_filiere",

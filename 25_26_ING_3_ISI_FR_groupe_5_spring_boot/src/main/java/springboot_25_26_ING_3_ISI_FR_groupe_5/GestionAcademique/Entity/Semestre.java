@@ -33,7 +33,9 @@ public class Semestre extends Auditable {
     @Enumerated(EnumType.STRING)
     private TypeSemestre typeSemestre;
 
-    private boolean actif;
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active=false;
 
     private LocalDate dateDebut;
     private LocalDate dateFin;

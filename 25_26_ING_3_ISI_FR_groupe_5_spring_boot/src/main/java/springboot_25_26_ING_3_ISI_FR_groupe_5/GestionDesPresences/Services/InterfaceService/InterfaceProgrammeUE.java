@@ -63,6 +63,9 @@ public interface InterfaceProgrammeUE {
     @Transactional
     void dupliquerEnseignantVersNouvelleAnnee(Long enseignantId, Long ancienneAnneeId, Long nouvelleAnneeId);
 
+    @Transactional(readOnly = true)
+    ProgrammationUE findById(Long id);
+
     List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId);
 
     @Transactional

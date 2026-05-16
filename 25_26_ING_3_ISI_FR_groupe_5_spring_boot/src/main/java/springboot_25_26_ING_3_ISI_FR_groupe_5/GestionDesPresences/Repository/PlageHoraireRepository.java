@@ -30,7 +30,7 @@ public interface PlageHoraireRepository
 
     @Query("""
         SELECT p FROM PlageHoraire p
-        WHERE p.semestre.actif = true
+        WHERE p.semestre.active = true
         AND p.semestre.anneeAcademique.active = true
         ORDER BY p.jour, p.heureDebut
     """)
@@ -354,7 +354,7 @@ public interface PlageHoraireRepository
     SELECT SUM(a.nbHeuresPresent) 
     FROM Appels a
     WHERE a.etudiant.id = :etudiantId
-    AND a.plageHoraire.semestre.actif = true
+    AND a.plageHoraire.semestre.active = true
 """)
     Double sumHeuresPresentEtudiant(@Param("etudiantId") Long etudiantId);
 

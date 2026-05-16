@@ -36,6 +36,9 @@ public interface InterfaceInscription {
 
     List<Inscription> getHistoriqueEtudiant(Long etudiantId);
 
+    @Transactional
+    Inscription enregistrerDecison(Long inscriptionId, String decisionStr);
+
     Inscription findById(Long id);
 
     List<DecisionHistory> getDecisionHistory(Long id);

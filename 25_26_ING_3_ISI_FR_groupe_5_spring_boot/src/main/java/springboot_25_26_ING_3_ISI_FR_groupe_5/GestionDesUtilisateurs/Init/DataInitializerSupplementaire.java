@@ -508,7 +508,7 @@ public class DataInitializerSupplementaire implements ApplicationRunner {
     private Semestre createSemestre(TypeSemestre typeSemestre, LocalDate dateDebut, LocalDate dateFin, boolean actif, Annee_academique annee) {
         return semestreRepository.findByAnneeAcademiqueIdAndTypeSemestre(annee.getId(), typeSemestre)
                 .orElseGet(() -> semestreRepository.save(
-                        Semestre.builder().typeSemestre(typeSemestre).dateDebut(dateDebut).dateFin(dateFin).actif(actif).anneeAcademique(annee).build()));
+                        Semestre.builder().typeSemestre(typeSemestre).dateDebut(dateDebut).dateFin(dateFin).active(actif).anneeAcademique(annee).build()));
     }
 
     private UE createUE(String nom, String code, String libelle, String libelleAnglais, Specialite specialite) {

@@ -77,7 +77,7 @@ private  final  ClassesRepository classeRepository;
                 .toList();
 
         Semestre s1 = semestres.stream()
-                .filter(s -> s.getTypeSemestre() == TypeSemestre.SEMESTRE_1 && s.isActif())
+                .filter(s -> s.getTypeSemestre() == TypeSemestre.SEMESTRE_1 && s.isActive())
                 .findFirst()
                 .orElseGet(() -> semestres.stream()
                         .filter(s -> s.getTypeSemestre() == TypeSemestre.SEMESTRE_1)

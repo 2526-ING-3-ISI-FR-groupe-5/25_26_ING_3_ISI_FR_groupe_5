@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Mon Espace Enseignant — CarnetRouge</title>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .progress-bar { transition: width 1s ease-in-out; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-[1100px] mx-auto px-4 py-6">
+        <div class="mb-8">
+            <h1 class="text-3xl font-serif text-white">Mon Espace Enseignant</h1>
+            <p class="text-gray-400 text-sm">Suivi des cours et progression pédagogique</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-bgcard border border-white/5 rounded-xl p-4 text-center hover:border-primary/30 transition-colors">
+                <p class="text-[10px] text-gray-500 uppercase">UEs en cours</p>
+                <p class="text-xl font-bold text-white" th:text="${#lists.size(uesProgression)}">0</p>
+            </div>
+            <div class="bg-bgcard border border-white/5 rounded-xl p-4 text-center hover:border-primary/30 transition-colors">
+                <p class="text-[10px] text-gray-500 uppercase">Cours aujourd'hui</p>
+                <p class="text-xl font-bold text-white" th:text="${#lists.size(coursAujourdhui)}">0</p>
+            </div>
+            <div class="bg-bgcard border border-white/5 rounded-xl p-4 text-center hover:border-primary/30 transition-colors">
+                <p class="text-[10px] text-gray-500 uppercase">Taux moyen</p>
+                <p class="text-xl font-bold text-primary" th:if="${not #lists.isEmpty(uesProgression)}"
+                   th:text="${#numbers.formatDecimal(uesProgression.![progression].average(), 0, 0) + '%'}">0%</p>
+                <p class="text-xl font-bold text-primary" th:unless="${not #lists.isEmpty(uesProgression)}">0%</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-bgcard border border-white/5 rounded-[24px] p-6">
+                    <h2 class="text-lg font-semibold text-gray-100 mb-6 flex items-center gap-2">📊 Progression de mes enseignements</h2>
+                    <div th:if="${#lists.isEmpty(uesProgression)}" class="py-10 text-center text-gray-500">
+                        <p>Aucune UE programmée pour ce semestre.</p>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(uesProgression)}">
+                        <div th:each="stat, iter : ${uesProgression}" class="mb-8 last:mb-0 animate-fade-in" th:style="'animation-delay:' + ${iter.index*100} + 'ms'">
+                            <div class="flex justify-between items-end mb-2">
+                                <div>
+                                    <h3 class="text-[15px] font-medium text-gray-200" th:text="${stat.ueLibelle}">UE</h3>
+                                    <p class="text-[11px] text-gray-500" th:text="${stat.ueCode + ' · ' + stat.classeNom}">CODE · CLASSE</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-sm font-bold text-primary" th:text="${stat.progression + '%'}">0%</span>
+                                    <p class="text-[11px] text-gray-500" th:text="${stat.heuresRealisees + 'h / ' + stat.heuresPrevues + 'h'}">0/45h</p>
+                                </div>
+                            </div>
+                            <div class="w-full bg-white/5 rounded-full h-2.5 overflow-hidden">
+                                <div class="bg-primary h-full rounded-full progress-bar" th:style="'width:' + ${stat.progression} + '%'"></div>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-[10px] text-emerald-400/70" th:if="${stat.progression >= 100}">✅ Terminé</span>
+                                <span class="text-[10px] text-amber-400/70" th:unless="${stat.progression >= 100}" th:text="${stat.heuresRestantes + 'h restantes'}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-bgcard border border-white/5 rounded-[24px] p-5">
+                    <h2 class="text-lg font-semibold text-gray-100 mb-4">📅 Aujourd'hui</h2>
+                    <div th:if="${#lists.isEmpty(coursAujourdhui)}" class="py-8 text-center text-gray-500 italic text-sm">Pas de cours prévu aujourd'hui.</div>
+                    <div th:unless="${#lists.isEmpty(coursAujourdhui)}" class="space-y-3">
+                        <div th:each="cours : ${coursAujourdhui}" class="p-4 bg-bgsurface/50 border border-white/5 rounded-xl hover:border-primary/30 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[11px] font-mono text-primary" th:text="${cours.heureDebut + ' - ' + cours.heureFin}">08:00-10:00</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-gray-400" th:text="${cours.typeSeance}">CM</span>
+                            </div>
+                            <h4 class="text-[14px] font-medium text-gray-200 mb-1" th:text="${cours.titreAffiche != null ? cours.titreAffiche : cours.classe.nom}">Titre</h4>
+                            <p class="text-[11px] text-gray-500 mb-4" th:text="${cours.salle != null ? 'Salle ' + cours.salle : ''}">Salle</p>
+                            <a th:href="@{/enseignant/appels/cours/{id}(id=${cours.id})}" class="btn btn-sm w-full bg-primary/10 hover:bg-primary border border-primary/20 text-primary hover:text-white rounded-lg h-8 text-[11px] transition-all">Faire l'appel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script layout:fragment="scripts">
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            const w = bar.style.width; bar.style.width = '0%';
+            setTimeout(() => bar.style.width = w, 200);
+        });
+    });
+</script>
+</body>
+</html>

@@ -21,7 +21,7 @@ public interface RoleMapper {
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "nom",        ignore = true)
     @Mapping(target = "description", ignore = true)
-    @Mapping(target = "creatAt",     ignore = true)
+    @Mapping(target = "createdAt",     ignore = true)
     @Mapping(target = "updateAt",    ignore = true)
     @Mapping(target = "permissions", ignore = true)
     void updateRoleFromDTO(ActiveRoleDTORequest activeRoleDTORequest, @MappingTarget Role role);

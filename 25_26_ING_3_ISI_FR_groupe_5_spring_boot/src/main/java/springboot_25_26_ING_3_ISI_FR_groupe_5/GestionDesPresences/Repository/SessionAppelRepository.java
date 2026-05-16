@@ -17,8 +17,17 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // RECHERCHES PAR PLAGE HORAIRE
     // ═══════════════════════════════════════════════════════════
 
-    @Query("SELECT s FROM SessionAppel s WHERE s.plageHoraire.classe.id = :classeId AND s.actif = true")
+    @Query("""
+    SELECT DISTINCT s FROM SessionAppel s 
+    JOIN FETCH s.plageHoraire 
+    WHERE s.plageHoraire.classe.id = :classeId 
+    AND s.actif = true
+""")
     Optional<SessionAppel> findActiveByClasseId(@Param("classeId") Long classeId);
+
+
+//    @Query("SELECT s FROM SessionAppel s WHERE s.plageHoraire.classe.id = :classeId AND s.actif = true")
+//    Optional<SessionAppel> findActiveByClasseId(@Param("classeId") Long classeId);
 
     List<SessionAppel> findByPlageHoraireId(Long plageHoraireId);
 
@@ -67,4 +76,8 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
         ORDER BY s.dateGeneration DESC
     """)
     List<SessionAppel> findByInstitutId(@Param("institutId") Long institutId);
+
+
 }
+
+

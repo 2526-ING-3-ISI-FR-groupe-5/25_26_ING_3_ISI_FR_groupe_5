@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -11,50 +12,62 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.ue.UERequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.specialite.SpecialiteResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.SpecialiteMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Mappers.UEMapper;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SpecialiteService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.UEService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequestMapping("/admin/ues")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ENSEIGNANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
-
 public class UEController {
 
     private final UEService ueService;
     private final UEMapper ueMapper;
     private final SpecialiteService specialiteService;
     private final SpecialiteMapper specialiteMapper;
-    private final AnneeAcademiqueService anneeService;
+    private final InstitutSecurityService securityService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ENSEIGNANT')")
     public String liste(
             @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) String recherche,
-            Model model
+            Model model,
+            @AuthenticationPrincipal Utilisateur utilisateur
     ) {
         List<UE> ues;
+        Long institutCible = securityService.resolveInstitutId(utilisateur, null);
 
         if (recherche != null && !recherche.isEmpty()) {
             ues = ueService.rechercher(recherche);
         } else if (specialiteId != null && specialiteId > 0) {
             ues = ueService.getBySpecialite(specialiteId);
         } else {
-            ues = ueService.getAll();
+            // ✅ Filtre automatique par institut si ADMIN_INSTITUT
+            ues = (institutCible != null) ? ueService.getByInstitut(institutCible) : ueService.getAll();
         }
 
+        // ✅ Filtrage des spécialites selon l'institut
+        List<SpecialiteResponse> specialites = (institutCible != null)
+                ? specialiteService.getByInstitut(institutCible).stream()
+                  .map(specialiteMapper::toResponse).toList()
+                : specialiteMapper.toResponseList(specialiteService.getAll());
+
         model.addAttribute("ues", ueMapper.toResponseList(ues));
-        model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
+        model.addAttribute("specialites", specialites);
         model.addAttribute("specialiteIdSelectionne", specialiteId);
         model.addAttribute("recherche", recherche);
         model.addAttribute("form", new UERequest());
+        model.addAttribute("pageTitle", "Gestion des UE");
+        model.addAttribute("currentPage", "ues");
 
         return "ue/liste";
     }
@@ -81,25 +94,17 @@ public class UEController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-
         return "redirect:/admin/ues";
     }
 
     @PostMapping("/{id}/modifier")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public String modifier(
-            @PathVariable Long id,
-            @Valid @ModelAttribute("form") UERequest request,
-            BindingResult result,
-            Model model,
-            RedirectAttributes redirectAttributes,
-            @AuthenticationPrincipal Utilisateur acteur
-    ) {
+    public String modifier(@PathVariable Long id, @Valid @ModelAttribute("form") UERequest request,
+                           BindingResult result, RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("erreur", "Erreur de validation");
             return "redirect:/admin/ues";
         }
-
         try {
             UE data = ueMapper.toEntity(request);
             ueService.modifier(id, data);
@@ -107,17 +112,12 @@ public class UEController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-
         return "redirect:/admin/ues";
     }
 
     @PostMapping("/{id}/supprimer")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public String supprimer(
-            @PathVariable Long id,
-            RedirectAttributes redirectAttributes,
-            @AuthenticationPrincipal Utilisateur acteur
-    ) {
+    public String supprimer(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             ueService.supprimer(id);
             redirectAttributes.addFlashAttribute("succes", "UE supprimée avec succès");
@@ -137,9 +137,7 @@ public class UEController {
         request.setCode(ue.getCode());
         request.setLibelle(ue.getLibelle());
         request.setLibelleAnglais(ue.getLibelleAnglais());
-        if (ue.getSpecialite() != null) {
-            request.setSpecialiteId(ue.getSpecialite().getId());
-        }
+        if (ue.getSpecialite() != null) request.setSpecialiteId(ue.getSpecialite().getId());
         return request;
     }
 }

@@ -92,7 +92,7 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     @Query("""
         SELECT COUNT(a) FROM Appels a 
         WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.actif = true 
+        AND a.plageHoraire.semestre.active = true 
         AND a.statut = :statut
     """)
     long countByEtudiantAndStatutInActiveSemestre(
@@ -103,7 +103,7 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     @Query("""
         SELECT COUNT(a) FROM Appels a 
         WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.actif = true 
+        AND a.plageHoraire.semestre.active = true 
         AND a.statut = :statut
     """)
     long countByEtudiantAndStatutAndSemestreActif(
@@ -115,7 +115,7 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     @Query("""
         SELECT COUNT(a) FROM Appels a 
         WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.actif = true 
+        AND a.plageHoraire.semestre.active = true 
         AND a.statut = 'ABSENT' 
         AND a.justificatif IS NULL
     """)

@@ -137,25 +137,32 @@ public abstract class Utilisateur implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (roles.isEmpty()) return Collections.emptyList();
+        if (roles.isEmpty()) {
+            System.err.println("⚠️ DEBUG: User " + this.email + " has NO roles loaded!");
+            return Collections.emptyList();
+        }
 
         Set<GrantedAuthority> authorities = new HashSet<>();
+        System.err.println("✅ DEBUG: User " + this.email + " has " + roles.size() + " roles");
         for (Role role : roles) {
+            System.err.println("  └─ Role: " + role.getNom() + ", Active: " + role.getActive());
             if (Boolean.TRUE.equals(role.getActive())) {
-                authorities.add(
-                        new SimpleGrantedAuthority("ROLE_" + role.getNom())
-                );
+                SimpleGrantedAuthority roleAuth = new SimpleGrantedAuthority("ROLE_" + role.getNom());
+                authorities.add(roleAuth);
+                System.err.println("     └─ Added authority: " + roleAuth.getAuthority());
+
                 if (role.getPermissions() != null) {
                     for (Permission perm : role.getPermissions()) {
                         if (Boolean.TRUE.equals(perm.getActive())) {
-                            authorities.add(
-                                    new SimpleGrantedAuthority(perm.getNom())
-                            );
+                            SimpleGrantedAuthority permAuth = new SimpleGrantedAuthority(perm.getNom());
+                            authorities.add(permAuth);
+                            System.err.println("     └─ Added permission: " + permAuth.getAuthority());
                         }
                     }
                 }
             }
         }
+        System.err.println("✅ DEBUG: Total authorities for " + this.email + ": " + authorities.size());
         return authorities;
     }
 

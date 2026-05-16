@@ -18,14 +18,12 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// ✅ Contrainte unicité nom par niveau
 @Table(
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_classe_nom_niveau",
                 columnNames = {"nom", "niveau_id"}
         )
 )
-// ✅ Nécessaire pour Auditable
 @EntityListeners(AuditingEntityListener.class)
 public class Classe extends Auditable {
 
@@ -33,17 +31,11 @@ public class Classe extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ============================================
-    // Attributs propres
-    // ============================================
-
     @Column(nullable = false)
     private String nom;
 
-    // ✅ Capacité max de la classe
     private Integer capaciteMax;
 
-    // ✅ Statut actif/inactif
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
@@ -82,7 +74,6 @@ public class Classe extends Auditable {
     }
 
     public Filiere getFiliere() {
-        // ✅ Via spécialité — chemin correct
         Specialite spec = getSpecialite();
         return spec != null ? spec.getFiliere() : null;
     }
@@ -94,7 +85,6 @@ public class Classe extends Auditable {
 
     // ============================================
     // Helpers — multi-instituts
-    // ✅ Chemin correct : niveau → specialite → filiere → ecole → institut
     // ============================================
 
     public Institut getInstitut() {
@@ -116,10 +106,28 @@ public class Classe extends Auditable {
     }
 
     // ============================================
-    // Helpers — étudiants
+    // Helpers — étudiants (CORRIGÉS : filtrés par année)
     // ============================================
 
-    // ✅ Compte uniquement les inscriptions actives
+    /**
+     * ✅ CORRIGÉ — Compte les inscriptions actives/validées pour une année donnée.
+     * Évite de cumuler N et N+1, ce qui faussait isPleine() après migration.
+     */
+    public int getNombreEtudiants(Annee_academique annee) {
+        if (inscriptions == null || annee == null) return 0;
+        return (int) inscriptions.stream()
+                .filter(i -> i.getAnneeAcademique() != null
+                        && i.getAnneeAcademique().getId().equals(annee.getId())
+                        && (i.getStatut() == StatutInscription.ACTIF
+                        || i.getStatut() == StatutInscription.VALIDE))
+                .count();
+    }
+
+    /**
+     * @deprecated Utiliser getNombreEtudiants(Annee_academique).
+     * Conservé uniquement pour les contextes sans année (stats globales admin).
+     */
+    @Deprecated
     public int getNombreEtudiants() {
         if (inscriptions == null) return 0;
         return (int) inscriptions.stream()
@@ -128,15 +136,26 @@ public class Classe extends Auditable {
                 .count();
     }
 
-    // ✅ Total toutes inscriptions
-    public int getNombreTotalInscriptions() {
-        return inscriptions != null ? inscriptions.size() : 0;
+    /**
+     * ✅ CORRIGÉ — Vérifie si la classe est pleine pour une année précise.
+     * Utiliser dans MigrationService pour l'affectation en N+1.
+     */
+    public boolean isPleine(Annee_academique annee) {
+        return capaciteMax != null
+                && getNombreEtudiants(annee) >= capaciteMax;
     }
 
-    // ✅ Vérifie si la classe est pleine
+    /**
+     * @deprecated Utiliser isPleine(Annee_academique) partout où l'année est connue.
+     */
+    @Deprecated
     public boolean isPleine() {
-        return capaciteMax != null
-                && getNombreEtudiants() >= capaciteMax;
+        return capaciteMax != null && getNombreEtudiants() >= capaciteMax;
+    }
+
+    /** Nombre total d'inscriptions toutes années confondues (usage stats/admin). */
+    public int getNombreTotalInscriptions() {
+        return inscriptions != null ? inscriptions.size() : 0;
     }
 
     // ============================================

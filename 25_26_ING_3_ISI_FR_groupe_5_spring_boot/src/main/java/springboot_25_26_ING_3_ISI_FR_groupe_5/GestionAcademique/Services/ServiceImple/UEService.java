@@ -1,6 +1,8 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
@@ -10,9 +12,11 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.D
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.UERepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UEService {
@@ -20,6 +24,7 @@ public class UEService {
     private final UERepository ueRepo;
     private final SpecialiteService specialiteService;
     private final ClassesRepository classesRepo;
+    private final InstitutSecurityService securityService;
 
     @Transactional
     public UE creer(UE ue, Long specialiteId) {
@@ -48,15 +53,10 @@ public class UEService {
                 .orElseThrow(() -> new ResourceNotFoundException("UE", "id", id));
     }
 
+    // ✅ Filtrage automatique selon le rôle
     public List<UE> getAll() {
-        return ueRepo.findAllUes();
-    }
-
-    // ✅ Méthode ajoutée pour résoudre l'erreur
-    public List<UE> getByAnnee(Long anneeId) {
-        // Retourne toutes les UE (indépendamment de l'année)
-        // Tu peux adapter selon ton besoin
-        return ueRepo.findAllUes();
+        Long institutCible = securityService.getInstitutIdCourant();
+        return institutCible != null ? ueRepo.findByInstitutIdWithDetails(institutCible) : ueRepo.findAll();
     }
 
     public List<UE> getBySpecialite(Long specialiteId) {
@@ -69,6 +69,10 @@ public class UEService {
         Specialite specialite = classe.getNiveau() != null ? classe.getNiveau().getSpecialite() : null;
         if (specialite == null) return List.of();
         return ueRepo.findBySpecialiteId(specialite.getId());
+    }
+
+    public List<UE> getByAnnee(Long anneeId) {
+        return ueRepo.findByAnneeAcademiqueId(anneeId);
     }
 
     public List<UE> rechercher(String nom) {
@@ -85,7 +89,10 @@ public class UEService {
         ueRepo.delete(ue);
     }
 
-    public List<UE> getByNiveau(Long id) {
-        return null;
+    public List<UE> getByInstitut(Long institutId) {
+        if (!securityService.canAccessInstitut(institutId)) {
+            throw new AccessDeniedException("Accès refusé à cet institut");
+        }
+        return ueRepo.findByInstitutIdWithDetails(institutId);
     }
 }

@@ -77,7 +77,6 @@ public class EtudiantService implements IEtudiantService {
         etudiant.setPrenom(data.getPrenom());
         etudiant.setTelephone(data.getTelephone());
         etudiant.setDateNaissance(data.getDateNaissance());
-        etudiant.setNiveau(data.getNiveau());
         return etudiantRepo.save(etudiant);
     }
 

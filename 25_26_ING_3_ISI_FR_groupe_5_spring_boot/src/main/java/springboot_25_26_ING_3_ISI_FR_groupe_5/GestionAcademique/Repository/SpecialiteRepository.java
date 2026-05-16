@@ -20,6 +20,9 @@ public interface SpecialiteRepository extends JpaRepository<Specialite, Long> {
 
     List<Specialite> findByFiliereId(Long filiereId);
 
+    @Query("SELECT s FROM Specialite s WHERE s.filiere.ecole.institut.id = :institutId")
+    List<Specialite> findByInstitutId(@Param("institutId") Long institutId);
+
     @Query("SELECT s FROM Specialite s WHERE s.nom LIKE %:keyword% OR s.code LIKE %:keyword%")
     Page<Specialite> search(@Param("keyword") String keyword, Pageable pageable);
 }

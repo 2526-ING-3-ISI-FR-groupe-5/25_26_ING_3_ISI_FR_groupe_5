@@ -81,6 +81,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 log.debug("👤 UserDetails chargé : {}", userDetails.getUsername());
                 log.debug("🔑 Authorities : {}", userDetails.getAuthorities());
 
+                // ✅ ENHANCED LOGGING
+                log.info("🔐 AUTH_DEBUG - Email: {}", email);
+                log.info("🔐 AUTH_DEBUG - Class: {}", userDetails.getClass().getSimpleName());
+                log.info("🔐 AUTH_DEBUG - Total Authorities: {}", userDetails.getAuthorities().size());
+                userDetails.getAuthorities().forEach(auth ->
+                    log.info("🔐 AUTH_DEBUG - Authority: {} ", auth.getAuthority())
+                );
+
                 boolean valid = jwtService.isTokenValid(token, userDetails);
                 log.debug("🔐 Token valide : {}", valid);
 

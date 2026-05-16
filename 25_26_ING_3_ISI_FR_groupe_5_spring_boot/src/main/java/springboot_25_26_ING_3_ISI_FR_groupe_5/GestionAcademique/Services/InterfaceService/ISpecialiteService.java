@@ -17,5 +17,7 @@ public interface ISpecialiteService {
 
     List<Specialite> getByFiliere(Long filiereId);
 
+    List<Specialite> getByInstitut(Long institutId);
+
     void supprimer(Long id, Utilisateur acteur);
 }

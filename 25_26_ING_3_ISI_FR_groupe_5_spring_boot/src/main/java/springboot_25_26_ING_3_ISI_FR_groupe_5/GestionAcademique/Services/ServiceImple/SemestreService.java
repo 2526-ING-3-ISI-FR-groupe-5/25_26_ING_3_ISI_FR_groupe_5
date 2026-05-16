@@ -65,15 +65,15 @@ public class SemestreService {
         semestre.setAnneeAcademique(annee);
         semestre.setDateDebut(dateDebut);
         semestre.setDateFin(dateFin);
-        semestre.setActif(actif);
+        semestre.setActive(actif);
 
         // Si c'est le premier semestre et qu'on veut l'activer, on l'active
         if (actif && nombreSemestresActuels == 0) {
-            semestre.setActif(true);
+            semestre.setActive(true);
         } else if (actif && nombreSemestresActuels > 0) {
             // Désactiver les autres si on active celui-ci
             List<Semestre> autresSemestres = semestreRepository.findByAnneeAcademiqueId(anneeAcademiqueId);
-            autresSemestres.forEach(s -> s.setActif(false));
+            autresSemestres.forEach(s -> s.setActive(false));
         }
 
         return semestreRepository.save(semestre);
@@ -85,10 +85,10 @@ public class SemestreService {
 
         // Désactiver tous les semestres de la même année
         List<Semestre> semestres = semestreRepository.findByAnneeAcademiqueId(semestre.getAnneeAcademique().getId());
-        semestres.forEach(s -> s.setActif(false));
+        semestres.forEach(s -> s.setActive(false));
 
         // Activer le semestre choisi
-        semestre.setActif(true);
+        semestre.setActive(true);
 
         return semestreRepository.save(semestre);
     }
@@ -96,7 +96,7 @@ public class SemestreService {
     @Transactional
     public Semestre desactiverSemestre(Long id) {
         Semestre semestre = findById(id);
-        semestre.setActif(false);
+        semestre.setActive(false);
         return semestreRepository.save(semestre);
     }
 
@@ -110,7 +110,7 @@ public class SemestreService {
     }
 
     public Semestre getSemestreActif(Long anneeId) {
-        return semestreRepository.findByAnneeAcademiqueIdAndActifTrue(anneeId)
+        return semestreRepository.findByAnneeAcademiqueIdAndActiveTrue(anneeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Semestre actif pour l'année " + anneeId));
     }
 

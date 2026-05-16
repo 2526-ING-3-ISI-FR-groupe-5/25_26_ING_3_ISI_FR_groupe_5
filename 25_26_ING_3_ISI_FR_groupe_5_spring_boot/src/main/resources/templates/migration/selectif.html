@@ -1,0 +1,465 @@
+﻿<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<head>
+    <title>Migration académique — CarnetRouge</title>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
+        <!-- EN-TÊTE -->
+        <div class="mb-8 lg:mb-10">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="font-serif text-[clamp(1.8rem,5vw,2.4rem)] leading-[1.2] text-gray-900 dark:text-gray-100 mb-2">
+                        Migration <span class="text-primary italic">académique</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                        Migrer les étudiants et les programmations vers une nouvelle année académique
+                    </p>
+                </div>
+                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm text-gray-500"
+                      th:text="${currentInstitutName}">Tous les instituts</span>
+            </div>
+        </div>
+
+        <!-- SÉLECTEUR D'INSTITUT (SUPER_ADMIN) -->
+        <div sec:authorize="hasRole('SUPER_ADMIN')"
+             class="mb-6 p-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200 dark:border-amber-500/20">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="text-sm font-medium text-amber-800 dark:text-amber-300 whitespace-nowrap">🏛️ Institut cible :</label>
+                <select class="flex-1 max-w-md bg-white dark:bg-bgsurface border border-amber-300 dark:border-amber-500/30 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary"
+                        onchange="changeInstitut(this.value)">
+                    <option value="">🔄 Sélectionner un institut</option>
+                    <option th:each="inst : ${instituts}"
+                            th:value="${inst.id}"
+                            th:text="${inst.nom}"
+                            th:selected="${selectedInstitutId} == ${inst.id}">
+                    </option>
+                </select>
+            </div>
+            <p class="text-xs text-amber-600 dark:text-amber-400 mt-2">⚠️ Sélectionnez un institut pour voir ses données.</p>
+        </div>
+
+        <!-- ANNÉE ACTIVE -->
+        <div th:if="${anneeActive != null}"
+             class="mb-6 p-4 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200 dark:border-blue-500/20 flex items-center gap-3">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Année active actuelle</p>
+                <p class="font-bold text-gray-900 dark:text-white" th:text="${anneeActive.nom}">2024-2025</p>
+            </div>
+        </div>
+        <div th:if="${anneeActive == null}"
+             class="mb-6 p-4 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/20">
+            <p class="text-red-700 dark:text-red-300 font-medium">⚠️ Aucune année académique active.</p>
+            <a th:href="@{/admin/annees}" class="inline-block mt-2 text-sm text-primary hover:underline">→ Gérer les années académiques</a>
+        </div>
+
+        <!-- MESSAGES FLASH -->
+        <div th:if="${succes}" class="mb-6 p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl flex items-start gap-3 fade-in">
+            <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span class="text-green-800 dark:text-green-300" th:text="${succes}"></span>
+        </div>
+        <div th:if="${erreur}" class="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 fade-in">
+            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <span class="text-red-800 dark:text-red-300" th:text="${erreur}"></span>
+        </div>
+
+        <!-- RÉSULTAT FLASH -->
+        <div th:if="${resultat}" class="mb-8 bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden shadow-sm fade-in">
+            <div class="bg-gradient-to-r from-green-500/10 to-transparent px-6 py-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
+                <h2 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span th:if="${resultat.simulation}" class="text-blue-600">🔮</span>
+                    <span th:unless="${resultat.simulation}" class="text-green-600">✅</span>
+                    <span th:text="${resultat.simulation} ? 'Résultat de la simulation' : 'Migration effectuée'">Résultat</span>
+                </h2>
+                <span class="text-xs text-gray-500" th:if="${resultat.dateMigration}"
+                      th:text="${#temporals.format(resultat.dateMigration, 'dd/MM/yyyy HH:mm')}"></span>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    <div class="p-3 bg-green-50 dark:bg-green-500/10 rounded-lg text-center border border-green-100 dark:border-green-500/20">
+                        <div class="text-2xl font-bold text-green-600" th:text="${resultat.totalAdmis}">0</div>
+                        <div class="text-xs text-gray-500">Admis</div>
+                    </div>
+                    <div class="p-3 bg-yellow-50 dark:bg-yellow-500/10 rounded-lg text-center border border-yellow-100 dark:border-yellow-500/20">
+                        <div class="text-2xl font-bold text-yellow-600" th:text="${resultat.totalRedoublants}">0</div>
+                        <div class="text-xs text-gray-500">Redoublants</div>
+                    </div>
+                    <div class="p-3 bg-red-50 dark:bg-red-500/10 rounded-lg text-center border border-red-100 dark:border-red-500/20">
+                        <div class="text-2xl font-bold text-red-600" th:text="${resultat.totalExclus}">0</div>
+                        <div class="text-xs text-gray-500">Exclus</div>
+                    </div>
+                    <div class="p-3 bg-purple-50 dark:bg-purple-500/10 rounded-lg text-center border border-purple-100 dark:border-purple-500/20">
+                        <div class="text-2xl font-bold text-purple-600" th:text="${resultat.totalDiplomes}">0</div>
+                        <div class="text-xs text-gray-500">Diplômés</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 dark:bg-gray-500/10 rounded-lg text-center border border-gray-200 dark:border-white/5">
+                        <div class="text-2xl font-bold text-gray-600" th:text="${resultat.totalIgnores}">0</div>
+                        <div class="text-xs text-gray-500">Ignorés</div>
+                    </div>
+                </div>
+                <!-- Listes détaillées -->
+                <div class="space-y-2">
+                    <div th:if="${not #lists.isEmpty(resultat.admis)}" class="border border-gray-200 dark:border-white/5 rounded-lg overflow-hidden">
+                        <details class="group">
+                            <summary class="px-4 py-3 bg-gray-50 dark:bg-bgsurface cursor-pointer font-medium text-green-700 dark:text-green-400 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <span>📋 Admis (<span th:text="${#lists.size(resultat.admis)}"></span>)</span>
+                                <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white dark:bg-bgcard max-h-48 overflow-y-auto">
+                                <ul class="space-y-1 text-sm">
+                                    <li th:each="m : ${resultat.admis}" class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></span>
+                                        <span th:text="${m}"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                    <div th:if="${not #lists.isEmpty(resultat.redoublants)}" class="border border-gray-200 dark:border-white/5 rounded-lg overflow-hidden">
+                        <details class="group">
+                            <summary class="px-4 py-3 bg-gray-50 dark:bg-bgsurface cursor-pointer font-medium text-yellow-700 dark:text-yellow-400 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <span>🔄 Redoublants (<span th:text="${#lists.size(resultat.redoublants)}"></span>)</span>
+                                <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white dark:bg-bgcard max-h-48 overflow-y-auto">
+                                <ul class="space-y-1 text-sm">
+                                    <li th:each="m : ${resultat.redoublants}" class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full flex-shrink-0"></span>
+                                        <span th:text="${m}"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                    <div th:if="${not #lists.isEmpty(resultat.exclus)}" class="border border-gray-200 dark:border-white/5 rounded-lg overflow-hidden">
+                        <details class="group">
+                            <summary class="px-4 py-3 bg-gray-50 dark:bg-bgsurface cursor-pointer font-medium text-red-700 dark:text-red-400 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <span>🚫 Exclus (<span th:text="${#lists.size(resultat.exclus)}"></span>)</span>
+                                <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white dark:bg-bgcard max-h-48 overflow-y-auto">
+                                <ul class="space-y-1 text-sm">
+                                    <li th:each="m : ${resultat.exclus}" class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></span>
+                                        <span th:text="${m}"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                    <div th:if="${not #lists.isEmpty(resultat.diplomes)}" class="border border-gray-200 dark:border-white/5 rounded-lg overflow-hidden">
+                        <details class="group">
+                            <summary class="px-4 py-3 bg-gray-50 dark:bg-bgsurface cursor-pointer font-medium text-purple-700 dark:text-purple-400 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <span>🎓 Diplômés (<span th:text="${#lists.size(resultat.diplomes)}"></span>)</span>
+                                <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            <div class="p-4 bg-white dark:bg-bgcard max-h-48 overflow-y-auto">
+                                <ul class="space-y-1 text-sm">
+                                    <li th:each="m : ${resultat.diplomes}" class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                        <span class="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0"></span>
+                                        <span th:text="${m}"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-white/5 text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-400" th:text="${resultat.message}"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS RAPIDES -->
+        <div th:if="${totalInscriptions > 0}" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900 dark:text-white" th:text="${totalInscriptions}">0</div>
+                <div class="text-xs text-gray-500 mt-1">Inscriptions</div>
+            </div>
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 text-center">
+                <div class="text-2xl font-bold text-green-600" th:text="${admis}">0</div>
+                <div class="text-xs text-gray-500 mt-1">Admis</div>
+            </div>
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 text-center">
+                <div class="text-2xl font-bold text-yellow-600" th:text="${redoublants}">0</div>
+                <div class="text-xs text-gray-500 mt-1">Redoublants</div>
+            </div>
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 text-center">
+                <div class="text-2xl font-bold text-red-600" th:text="${exclus}">0</div>
+                <div class="text-xs text-gray-500 mt-1">Exclus</div>
+            </div>
+            <div class="bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 p-4 text-center">
+                <div class="text-2xl font-bold text-orange-600" th:text="${sansDecision}">0</div>
+                <div class="text-xs text-gray-500 mt-1">Sans décision</div>
+            </div>
+        </div>
+
+        <!-- ÉTUDIANTS SANS DÉCISION -->
+        <div th:if="${not #lists.isEmpty(etudiantsSansDecision)}"
+             class="mb-8 p-4 bg-orange-50 dark:bg-orange-500/10 rounded-xl border border-orange-200 dark:border-orange-500/20">
+            <h3 class="font-semibold text-orange-800 dark:text-orange-300 mb-3 flex items-center gap-2">
+                ⚠️ Étudiants sans décision (<span th:text="${#lists.size(etudiantsSansDecision)}"></span>)
+            </h3>
+            <ul class="space-y-1 max-h-40 overflow-y-auto">
+                <li th:each="e : ${etudiantsSansDecision}" class="text-sm text-orange-700 dark:text-orange-300 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0"></span>
+                    <span th:text="${e}"></span>
+                </li>
+            </ul>
+            <p class="text-xs text-orange-600 dark:text-orange-400 mt-3">
+                Ces étudiants seront ignorés lors de la migration. Saisissez leurs décisions avant de continuer.
+            </p>
+        </div>
+
+        <!-- SIMULATION + MIGRATION COMPLÈTE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <!-- Simulation -->
+            <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 hover:shadow-md transition-shadow">
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">🔮 Simulation (Dry-Run)</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Visualisez ce qui se passerait sans modifier les données.</p>
+                <form id="formSimu" class="flex gap-3" onsubmit="return lancerSimulation(event)">
+                    <select name="nouvelleAnneeId" id="simuAnneeId"
+                            class="flex-1 bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
+                        <option value="" disabled selected>Année cible</option>
+                        <option th:each="annee : ${annees}" th:value="${annee.id}" th:text="${annee.nom}"></option>
+                    </select>
+                    <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
+                    <button type="submit" id="btnSimu"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+                        Simuler
+                    </button>
+                </form>
+                <div id="simuResult" class="mt-4 hidden"></div>
+            </div>
+
+            <!-- Migration complète -->
+            <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">🚀 Migration complète</h2>
+                <form th:action="@{/admin/migration/lancer}" method="post"
+                      class="space-y-4" onsubmit="return confirmMigration(event)">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Année cible <span class="text-red-500">*</span>
+                        </label>
+                        <select name="nouvelleAnneeId"
+                                class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-primary" required>
+                            <option value="" disabled selected>Sélectionner une année</option>
+                            <option th:each="annee : ${annees}" th:value="${annee.id}" th:text="${annee.nom}"></option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+                        <p class="text-xs text-amber-800 dark:text-amber-300">⚠️ Vérifiez que toutes les décisions de fin d'année sont définies avant de continuer.</p>
+                    </div>
+                    <button type="submit"
+                            class="w-full bg-primary hover:bg-primary/90 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl disabled:opacity-50">
+                        Lancer la migration complète
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MIGRATION SÉLECTIVE -->
+        <div class="mb-10">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                🎯 Migration sélective
+                <span class="text-xs font-normal text-gray-500 dark:text-gray-400">— Sélectionnez les éléments à migrer</span>
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <!-- Chaque carte redirige vers selectif/{type} -->
+                <th:block th:each="item : ${ {
+    {id: 'institut',   icon: '🏛️',  label: 'Instituts'},
+    {id: 'ecole',      icon: '🏫',  label: 'Écoles'},
+    {id: 'filiere',    icon: '📚',  label: 'Filières'},
+    {id: 'specialite', icon: '🔬',  label: 'Spécialités'},
+    {id: 'niveau',     icon: '📊',  label: 'Niveaux'},
+    {id: 'classe',     icon: '🏛',   label: 'Classes'},
+    {id: 'etudiant',   icon: '👤',  label: 'Étudiants'},
+    {id: 'enseignant', icon: '👨‍🏫', label: 'Enseignants'},
+    {id: 'assistant',  icon: '🤝',  label: 'Assistants'},
+    {id: 'ue',         icon: '📖',  label: 'UE'}
+} }">
+
+                    <!-- L'accès aux propriétés devient limpide et dynamique -->
+                    <a th:href="@{ '/' + ${item.id} }">
+                        <span th:text="${item.icon}"></span>
+                        <span th:text="${item.label}"></span>
+                    </a>
+
+                </th:block>
+                <a th:href="@{/admin/migration/selectif/institut(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">🏛️</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Instituts</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/ecole(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">🏫</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Écoles</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/filiere(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">📚</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Filières</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/specialite(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">🔬</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Spécialités</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/niveau(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">📊</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Niveaux</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/classe(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">🏛</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Classes</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/etudiant(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">👤</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Étudiants</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/enseignant(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">👨‍🏫</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Enseignants</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/assistant(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">🤝</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">Assistants</span>
+                </a>
+                <a th:href="@{/admin/migration/selectif/ue(institutId=${selectedInstitutId})}"
+                   class="flex flex-col items-center gap-2 p-4 bg-white dark:bg-bgcard rounded-xl border border-gray-200 dark:border-white/5 hover:border-primary hover:shadow-md transition-all group">
+                    <span class="text-2xl">📖</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary">UE</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- HISTORIQUE BATCHES -->
+        <div th:if="${not #lists.isEmpty(batchsRecents)}" class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📋 Historique récent</h3>
+            <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 dark:bg-bgsurface border-b border-gray-200 dark:border-white/5">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cible</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    <tr th:each="batch : ${batchsRecents}" class="hover:bg-gray-50 dark:hover:bg-white/2 transition-colors">
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300" th:text="${batch.sourceAnnee.nom}"></td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300" th:text="${batch.targetAnnee.nom}"></td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                                  th:classappend="${batch.status.name() == 'PUBLIEE'} ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' :
+                                                 (${batch.status.name() == 'TERMINEE'} ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400' :
+                                                 (${batch.status.name() == 'ANNULE'} ? 'bg-gray-100 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400' :
+                                                 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'))"
+                                  th:text="${batch.status}">
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-xs"
+                            th:text="${#temporals.format(batch.dateExecution, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td class="px-4 py-3 flex items-center gap-2">
+                            <a th:href="@{/admin/migration/resultat/{id}(id=${batch.id})}"
+                               class="text-xs text-primary hover:underline">Détail</a>
+                            <form th:if="${batch.rollbackPossible}" th:action="@{/admin/migration/rollback/{id}(id=${batch.id})}" method="post"
+                                  onsubmit="return confirm('Annuler cette migration ?')">
+                                <button type="submit" class="text-xs text-red-500 hover:underline">↩ Rollback</button>
+                            </form>
+                            <form th:if="${batch.rollbackPossible}" th:action="@{/admin/migration/publier/{id}(id=${batch.id})}" method="post"
+                                  onsubmit="return confirm('Publier définitivement ? Cette action est irréversible.')">
+                                <button type="submit" class="text-xs text-green-600 hover:underline">📌 Publier</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.changeInstitut = function(institutId) {
+        const url = new URL(window.location.href);
+        if (institutId) url.searchParams.set('institutId', institutId);
+        else url.searchParams.delete('institutId');
+        window.location.href = url.toString();
+    };
+
+    async function lancerSimulation(event) {
+        event.preventDefault();
+        const anneeId = document.getElementById('simuAnneeId').value;
+        const institutId = /*[[${selectedInstitutId}]]*/ null;
+        const btn = document.getElementById('btnSimu');
+        const resultDiv = document.getElementById('simuResult');
+        if (!anneeId) { alert('Veuillez sélectionner une année cible'); return false; }
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Simulation...';
+        resultDiv.classList.add('hidden');
+        try {
+            let url = `/admin/migration/statistiques?nouvelleAnneeId=${anneeId}`;
+            if (institutId) url += `&institutId=${institutId}`;
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) throw new Error('Erreur serveur');
+            const res = await response.json();
+            resultDiv.innerHTML = `
+        <div class="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-200 dark:border-blue-500/20 fade-in">
+            <p class="font-medium text-blue-800 dark:text-blue-300 mb-3">📊 Résultat de la simulation :</p>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+                <div class="p-2 bg-white dark:bg-bgsurface rounded text-center"><div class="font-bold text-green-600">${res.totalAdmis}</div><div class="text-xs text-gray-500">Admis</div></div>
+                <div class="p-2 bg-white dark:bg-bgsurface rounded text-center"><div class="font-bold text-yellow-600">${res.totalRedoublants}</div><div class="text-xs text-gray-500">Redoublants</div></div>
+                <div class="p-2 bg-white dark:bg-bgsurface rounded text-center"><div class="font-bold text-red-600">${res.totalExclus}</div><div class="text-xs text-gray-500">Exclus</div></div>
+                <div class="p-2 bg-white dark:bg-bgsurface rounded text-center"><div class="font-bold text-purple-600">${res.totalDiplomes}</div><div class="text-xs text-gray-500">Diplômés</div></div>
+                <div class="p-2 bg-white dark:bg-bgsurface rounded text-center"><div class="font-bold text-gray-600">${res.totalIgnores}</div><div class="text-xs text-gray-500">Ignorés</div></div>
+            </div>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-3">💡 Données indicatives — aucune modification effectuée.</p>
+        </div>`;
+            resultDiv.classList.remove('hidden');
+        } catch (error) {
+            resultDiv.innerHTML = `<div class="p-3 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 rounded-lg">❌ ${error.message}</div>`;
+            resultDiv.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Simuler';
+        }
+        return false;
+    }
+
+    function confirmMigration(event) {
+        const anneeSelect = event.target.querySelector('select');
+        const anneeNom = anneeSelect.options[anneeSelect.selectedIndex]?.text || 'cette année';
+        return confirm(`⚠️ Confirmer la migration vers "${anneeNom}" ?\n\nCette action crée de nouvelles inscriptions pour N+1.`);
+    }
+    /*]]>*/
+</script>
+</div>
+</body>
+</html>

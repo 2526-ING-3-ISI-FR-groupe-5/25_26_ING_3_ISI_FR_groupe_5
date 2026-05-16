@@ -3,10 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -91,9 +88,7 @@ public class ProgrammationUE extends Auditable {
         return semestre != null && semestre.getAnneeAcademique().getId().equals(anneeActive.getId());
     }
 
-    public boolean isDansSemestreActif() {
-        return semestre != null && semestre.isActif();
-    }
+
 
     public String getEnseignantsAsString() {
         if (enseignants == null || enseignants.isEmpty()) {
@@ -103,4 +98,31 @@ public class ProgrammationUE extends Auditable {
                 .map(e -> e.getPrenom() + " " + e.getNom())
                 .collect(Collectors.joining(", "));
     }
+
+
+
+
+
+
+
+// ✅ PAR :
+
+    /**
+     * Vérifie si cette programmation appartient au contexte actif d'un institut.
+     * @param contexteActif InstitutContexteActif résolu pour l'institut cible
+     */
+    public boolean isDansContexteActif(InstitutContexteActif contexteActif) {
+        if (semestre == null || contexteActif == null) return false;
+        return semestre.getId().equals(contexteActif.getSemestre().getId())
+                && semestre.getAnneeAcademique().getId().equals(contexteActif.getAnneeAcademique().getId());
+    }
+
+    /**
+     * Version fallback pour compatibilité temporaire (à supprimer après migration complète)
+     */
+    @Deprecated
+    public boolean isDansSemestreActif() {
+        return semestre != null && semestre.isActive();  // ✅ 'active' unifié
+    }
+
 }

@@ -47,8 +47,9 @@
                     ← Retour
                 </a>
 
+                <!-- ✅ MODIFIÉ : th:if compare l'ID à anneeActiveId au lieu de .active -->
                 <button sec:authorize="hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')"
-                        th:if="${inscription.anneeAcademique.active}"
+                        th:if="${anneeActiveId != null and inscription.anneeAcademique.id == anneeActiveId}"
                         onclick="openDecisionModal()"
                         class="btn btn-sm bg-primary hover:bg-primary/90 text-white">
                     ✏️ Modifier la décision
@@ -123,7 +124,11 @@
                     <div class="p-3 bg-gray-50 dark:bg-bgsurface rounded-lg">
                         <p class="text-xs text-gray-500 mb-1">Année académique</p>
                         <p class="font-medium text-gray-900 dark:text-white" th:text="${inscription.anneeAcademique.nom}">2024-2025</p>
-                        <span th:if="${inscription.anneeAcademique.active}" class="inline-block mt-1 text-xs text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded">● Active</span>
+                        <!-- ✅ MODIFIÉ : Badge "Active" basé sur ID match -->
+                        <span th:if="${anneeActiveId != null and inscription.anneeAcademique.id == anneeActiveId}"
+                              class="inline-block mt-1 text-xs text-green-600 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded">
+                            ● Active
+                        </span>
                     </div>
                     <div class="p-3 bg-gray-50 dark:bg-bgsurface rounded-lg">
                         <p class="text-xs text-gray-500 mb-1">Classe</p>
@@ -219,7 +224,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL : MODIFIER LA DÉCISION -->
+<!-- ✅ MODAL : Corrigé avec routing RESTful propre -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div id="decisionModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeDecisionModal()"></div>
@@ -231,7 +236,8 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <form th:action="@{/admin/migration/decision/{id}(id=${inscription.id})}" method="post" id="decisionForm" class="space-y-4">
+            <!-- ✅ MODIFIÉ : Action RESTful propre vers /admin/inscriptions/{id}/decision -->
+            <form th:action="@{/admin/inscriptions/{id}/decision(id=${inscription.id})}" method="post" id="decisionForm" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Décision de fin d'année <span class="text-red-500">*</span></label>
                     <select name="decision" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" required onchange="toggleExclusionWarning(this.value)">
@@ -259,6 +265,9 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SCRIPTS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
 <script th:inline="javascript">
     /*<![CDATA[*/
     function openDecisionModal() { document.getElementById('decisionModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }

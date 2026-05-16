@@ -20,10 +20,6 @@ public class AppelRetardRequest {
     @NotNull(message = "L'enseignant est obligatoire")
     private Long enseignantId;
 
-    /**
-     * Heure d'arrivée réelle de l'étudiant.
-     * Doit être après l'heure de début du cours.
-     */
     @NotNull(message = "L'heure d'arrivée est obligatoire")
     private LocalTime heureArrivee;
 

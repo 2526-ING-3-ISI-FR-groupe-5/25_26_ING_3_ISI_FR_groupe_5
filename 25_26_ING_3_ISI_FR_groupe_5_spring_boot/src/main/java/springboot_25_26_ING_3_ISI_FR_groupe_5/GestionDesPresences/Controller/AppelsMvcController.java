@@ -32,7 +32,7 @@ public class AppelsMvcController {
     private final AppelsService appelsService;
     private final PlageHoraireService plageHoraireService;
     private final SessionAppelService sessionAppelService;
-    private final AppelsRepository appelsRepository; // ✅ Ajouté pour les comptages
+    private final AppelsRepository appelsRepository;
 
     /**
      * GET /enseignant/appels/{id}/appel
@@ -43,34 +43,27 @@ public class AppelsMvcController {
     public String afficherAppel(@PathVariable Long id,
                                 Model model,
                                 @AuthenticationPrincipal Utilisateur user) {
-        // ✅ Utiliser PlageHoraireResponse (DTO) au lieu de l'entité
-        PlageHoraireResponse plage = plageHoraireService.findById(id);
 
-        // Données de la plage horaire
+        PlageHoraireResponse plage = plageHoraireService.findById(id);
         model.addAttribute("plageHoraire", plage);
 
-        // Liste des appels (étudiants)
         var appels = appelsService.getByPlageHoraire(id);
         model.addAttribute("appels", appels);
 
-        // ✅ Statistiques avec les méthodes existantes du repository
         model.addAttribute("nbPresents", appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.PRESENT).size());
         model.addAttribute("nbRetards", appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.RETARD).size());
         model.addAttribute("nbAbsents", appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.ABSENT).size());
 
-        // ✅ Session active (retourne l'objet directement, pas Optional)
         SessionAppel sessionActive = sessionAppelService.getSessionActive(id);
         model.addAttribute("sessionActive", sessionActive);
 
-        // Historique des sessions
         var sessions = sessionAppelService.getByPlage(id);
         model.addAttribute("sessions", sessions);
 
-        // Premier cours du matin ?
         boolean estPremierCoursMatin = plage.getHeureDebut().getHour() < 9;
         model.addAttribute("estPremierCoursMatin", estPremierCoursMatin);
 
-        return "appels/form";
+        return "enseignant/appel_interface";  // ✅ Correspond à templates/enseignant/appel_interface.html
     }
 
     /**
@@ -79,14 +72,13 @@ public class AppelsMvcController {
      */
     @PostMapping("/{id}/check-manuel")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
-    public String checkManuel(@PathVariable Long id,
-                              @RequestParam Long plageHoraireId,
+    public String checkManuel(@PathVariable Long id,  // ✅ id = plageHoraireId
                               @RequestParam(required = false) List<Long> etudiantIdsPresents,
                               @AuthenticationPrincipal Utilisateur user,
                               RedirectAttributes redirectAttributes) {
         try {
             AppelsCheckManuelRequest req = new AppelsCheckManuelRequest();
-            req.setPlageHoraireId(plageHoraireId);
+            req.setPlageHoraireId(id);  // ✅ Utilise le path variable
             req.setEtudiantIdsPresents(etudiantIdsPresents != null ? etudiantIdsPresents : List.of());
 
             if (user instanceof Enseignant e) {
@@ -100,7 +92,7 @@ public class AppelsMvcController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅ Redirection correcte
     }
 
     /**
@@ -111,14 +103,13 @@ public class AppelsMvcController {
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
     public String marquerRetard(@PathVariable Long id,
                                 @RequestParam Long etudiantId,
-                                @RequestParam Long plageHoraireId,
                                 @RequestParam LocalTime heureArrivee,
                                 @AuthenticationPrincipal Utilisateur user,
                                 RedirectAttributes redirectAttributes) {
         try {
             AppelRetardRequest req = new AppelRetardRequest();
             req.setEtudiantId(etudiantId);
-            req.setPlageHoraireId(plageHoraireId);
+            req.setPlageHoraireId(id);  // ✅ Utilise le path variable
             req.setHeureArrivee(heureArrivee);
 
             if (user instanceof Enseignant e) {
@@ -132,7 +123,7 @@ public class AppelsMvcController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅
     }
 
     /**
@@ -148,7 +139,7 @@ public class AppelsMvcController {
                                 RedirectAttributes redirectAttributes) {
         try {
             SessionAppelRequest req = new SessionAppelRequest();
-            req.setPlageHoraireId(id);
+            req.setPlageHoraireId(id);  // ✅ Utilise le path variable
             req.setMethode(MethodeValidation.valueOf(methode));
             req.setDureeMinutes(dureeMinutes);
 
@@ -159,7 +150,7 @@ public class AppelsMvcController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅
     }
 
     /**
@@ -178,7 +169,7 @@ public class AppelsMvcController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅
     }
 
     /**
@@ -197,7 +188,7 @@ public class AppelsMvcController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅ CORRECTION ICI : était "/" + id + "/" + id
     }
 
     /**
@@ -211,13 +202,12 @@ public class AppelsMvcController {
                                 @RequestParam int nbHeuresPresent,
                                 RedirectAttributes redirectAttributes) {
         try {
-            // ✅ Utiliser la méthode du service (à créer si elle n'existe pas)
             appelsService.ajusterHeures(aid, nbHeuresPresent);
             redirectAttributes.addFlashAttribute("succes", "✅ Heures ajustées !");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur : " + e.getMessage());
         }
 
-        return "redirect:/enseignant/appels/" + id + "/appel";
+        return "redirect:/enseignant/appels/" + id + "/appel";  // ✅
     }
 }

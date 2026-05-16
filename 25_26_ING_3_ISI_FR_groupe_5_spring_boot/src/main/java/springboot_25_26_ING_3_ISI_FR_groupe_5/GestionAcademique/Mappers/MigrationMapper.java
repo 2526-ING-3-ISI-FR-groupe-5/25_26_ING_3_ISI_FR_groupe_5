@@ -29,18 +29,23 @@ public interface MigrationMapper {
     @Mapping(target = "institutNom", source = "institutNom")
 
     // ✅ Compteurs : utiliser `expression` pour accéder aux getters de `resultat`
-    @Mapping(target = "totalAdmis", expression = "java(resultat.getAdmisCount())")
-    @Mapping(target = "totalRedoublants", expression = "java(resultat.getRedoublantsCount())")
-    @Mapping(target = "totalExclus", expression = "java(resultat.getExclusCount())")
-    @Mapping(target = "totalDiplomes", expression = "java(resultat.getDiplomesCount())")
-    @Mapping(target = "totalIgnores", expression = "java(resultat.getIgnoresCount())")
+    @Mapping(target = "totalAdmis", expression = "java(resultat.getAdmis())")
+    @Mapping(target = "totalRedoublants", expression = "java(resultat.getRedoublants())")
+    @Mapping(target = "totalExclus", expression = "java(resultat.getExclus())")
+    @Mapping(target = "totalDiplomes", expression = "java(resultat.getDiplomes())")
+    @Mapping(target = "totalIgnores", expression = "java(resultat.getIgnores())")
 
     // ✅ Total calculé
-    @Mapping(target = "totalTraite", expression = "java(resultat.getTotalTraite())")
+    @Mapping(target = "totalTraite", expression = "java(resultat.getTotalMigre())")
 
     // ✅ Métadonnées
     @Mapping(target = "message", expression = "java(resultat.toString())")
     @Mapping(target = "dateMigration", expression = "java(LocalDateTime.now())")
+    @Mapping(target = "admis", source = "resultat.admisList")
+    @Mapping(target = "redoublants", source = "resultat.redoublantsList")
+    @Mapping(target = "exclus", source = "resultat.exclusList")
+    @Mapping(target = "diplomes", source = "resultat.diplomesList")
+    @Mapping(target = "ignores", source = "resultat.ignoresList")
 
     // ❌ NE PAS AJOUTER de @Mapping pour les listes : elles sont mappées automatiquement !
     // MapStruct fera : response.setAdmis(new ArrayList<>(resultat.getAdmis()));

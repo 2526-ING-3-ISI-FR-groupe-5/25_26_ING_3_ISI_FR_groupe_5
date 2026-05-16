@@ -1,6 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Servi
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.StatsService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
-
+@Slf4j
 @Controller
 @RequestMapping("/etudiant")
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class EspaceEtudiantController {
     private final StatsService statsService;
     private final SessionAppelService sessionAppelService;
     private final AppelsMapper appelsMapper;
+
 
     @GetMapping("/mon-espace")
     public String dashboard(Model model, @AuthenticationPrincipal Utilisateur utilisateur) {
@@ -42,7 +44,7 @@ public class EspaceEtudiantController {
         var historique = appelsService.getByEtudiant(etudiant.getId());
         model.addAttribute("appels", appelsMapper.toResponseList(historique));
 
-        return "etudiants/dashboard";
+        return "enseignant/dashboardEnseignant";
     }
 
     @PostMapping("/valider-presence")
@@ -50,11 +52,12 @@ public class EspaceEtudiantController {
                                   @AuthenticationPrincipal Utilisateur u,
                                   RedirectAttributes ra) {
         try {
+            log.info("Étudiant {} tente de valider sa présence", u.getId());
             appelsService.validerParCode(req, ((Etudiant) u).getId());
             ra.addFlashAttribute("succes", "Votre présence a été enregistrée !");
         } catch (Exception e) {
+            log.warn("Échec validation présence étudiant {}: {}", u.getId(), e.getMessage());
             ra.addFlashAttribute("erreur", "Échec de validation : " + e.getMessage());
         }
         return "redirect:/etudiant/mon-espace";
-    }
-}
+    }}

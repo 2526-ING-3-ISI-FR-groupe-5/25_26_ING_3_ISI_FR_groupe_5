@@ -634,7 +634,7 @@ public class PlageHoraireService implements IPlageHoraireService {
 
     private Semestre findSemestreActif(Classe classe) {
         return semestreRepository
-                .findByAnneeAcademiqueIdAndActifTrue(anneeAcademiqueService.getAnneeActive().getId())
+                .findByAnneeAcademiqueIdAndActiveTrue(anneeAcademiqueService.getAnneeActive().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Aucun semestre actif trouvé"
                 ));

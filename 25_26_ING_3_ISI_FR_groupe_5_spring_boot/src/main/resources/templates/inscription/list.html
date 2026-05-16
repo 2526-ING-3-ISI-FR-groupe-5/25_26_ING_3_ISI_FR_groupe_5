@@ -260,7 +260,7 @@
                             <span th:unless="${insc.dateDecision}" class="text-gray-400">—</span>
                         </td>
 
-                        <!-- Actions -->
+                        <!-- ✅ ACTIONS : Corrigé pour utiliser anneeActiveId au lieu de .active -->
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
                                 <a th:href="@{/admin/inscriptions/{id}(id=${insc.id})}"
@@ -268,8 +268,9 @@
                                    title="Voir le détail">
                                     👁️
                                 </a>
+                                <!-- ✅ MODIFIÉ : th:if compare l'ID à anneeActiveId au lieu de .active -->
                                 <button sec:authorize="hasAnyRole('SUPER_ADMIN','ADMIN_INSTITUT')"
-                                        th:if="${insc.anneeAcademique.active and insc.decisionFinAnnee == null}"
+                                        th:if="${insc.anneeAcademique.id == anneeActiveId and insc.decisionFinAnnee == null}"
                                         class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
                                         th:onclick="'openDecisionModal(' + ${insc.id} + ')'"
                                         title="Définir la décision">
@@ -365,7 +366,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL : DÉFINIR UNE DÉCISION (rapide depuis la liste) -->
+<!-- ✅ MODAL : Corrigé avec routing RESTful propre -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div id="decisionModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeDecisionModal()"></div>
@@ -377,8 +378,10 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <form th:action="@{/admin/migration/decision/__inscriptionId__}" method="post" id="decisionForm" class="space-y-4">
+            <!-- ✅ MODIFIÉ : Action RESTful propre, placeholder dynamique -->
+            <form th:action="@{/admin/inscriptions/__id__/decision}" method="post" id="decisionForm" class="space-y-4">
                 <input type="hidden" name="classeId" th:value="${filters?.classeId}">
+                <input type="hidden" name="anneeId" th:value="${filters?.anneeId}">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Décision <span class="text-red-500">*</span></label>
                     <select name="decision" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm" required>
@@ -403,7 +406,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- SCRIPTS -->
+<!-- ✅ SCRIPTS : Corrigés pour gérer le placeholder dynamiquement -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <script th:inline="javascript">
     /*<![CDATA[*/
@@ -443,7 +446,8 @@
     function openDecisionModal(inscriptionId) {
         currentInscriptionId = inscriptionId;
         const form = document.getElementById('decisionForm');
-        form.action = form.action.replace('__inscriptionId__', inscriptionId);
+        // ✅ MODIFIÉ : Remplace __id__ (plus court, plus propre)
+        form.action = form.action.replace('__id__', inscriptionId);
         document.getElementById('decisionModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }

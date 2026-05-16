@@ -18,13 +18,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Surveillant;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity  // ← Active @PreAuthorize au niveau méthode
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -33,15 +30,17 @@ public class SecurityConfig {
     @Qualifier("customUserDetailsService")
     private final UserDetailsService userDetailsService;
 
+    // ✅ URLs publiques — Patterns compatibles PathPatternParser (Spring 6+)
     private static final String[] PUBLIC_URL = {
             "/login",
-            "/refresh-token/**",
-            "/notFound/**",
-            "/accessDenied/**",
+            "/logout",
+            "/refresh-token",              // ← Sans /** car route exacte
+            "/notFound",
+            "/accessDenied",
             "/sessionExpired",
-            "/error/**",
-            "/admin1/**",
-            "/api/v1/auth/**",
+            "/error",                      // ← Sans /** car route exacte
+            "/admin",                      // ← Route exacte
+            "/api/v1/auth/**",             // ← OK: /** à la fin
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/css/**",
@@ -51,7 +50,8 @@ public class SecurityConfig {
             "/sw.js",
             "/icon-512.png",
             "/favicon.ico",
-            "/"
+            "/",
+            "/actuator/health"
     };
 
     @Bean
@@ -68,8 +68,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
@@ -83,28 +82,40 @@ public class SecurityConfig {
                 )
 
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendRedirect("/login")
-                        )
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendRedirect("/accessDenied")
-                        )
+                        .authenticationEntryPoint((req, res, exc) -> res.sendRedirect("/login"))
+                        .accessDeniedHandler((req, res, exc) -> res.sendRedirect("/accessDenied"))
                 )
 
-                // ✅ AJOUT OBLIGATOIRE — sans ça, permitAll() ne fonctionne pas
+                // ═══════════════════════════════════════════════════════════
+                // 🔐 RÈGLES D'AUTORISATION — ORDRE: spécifique → général
+                // ═══════════════════════════════════════════════════════════
                 .authorizeHttpRequests(auth -> auth
+                        // 1. URLs publiques
                         .requestMatchers(PUBLIC_URL).permitAll()
+
+                        // 2. 🆕 Endpoints étudiants — Patterns corrigés (sans /** suivi de texte)
+                        .requestMatchers("/api/appels/valider-code").hasRole("ETUDIANT")
+                        .requestMatchers("/api/sessions-appel/*/active").hasAnyRole("ETUDIANT", "ENSEIGNANT", "ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/api/sessions-appel/classe/*/active").hasAnyRole("ETUDIANT", "ENSEIGNANT", "ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/etudiant/**").hasAnyRole("ETUDIANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+
+                        // 3. Enseignants & Assistants
+                        .requestMatchers("/api/appels/**").hasAnyRole("ENSEIGNANT", "ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/api/sessions-appel/**").hasAnyRole("ENSEIGNANT", "ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/enseignant/**").hasAnyRole("ENSEIGNANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+
+                        // 4. Admins
                         .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
                         .requestMatchers("/journal/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
-                        .requestMatchers("/enseignant/**").hasAnyRole("ENSEIGNANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
-                        .requestMatchers("/etudiant/**").hasAnyRole("ETUDIANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
+                        .requestMatchers("/api/instituts/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
+
+                        // 5. Autres rôles
                         .requestMatchers("/surveillant/**").hasAnyRole("SURVEILLANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
                         .requestMatchers("/assistant/**").hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
-                        .requestMatchers("/dashboard").authenticated()
-                        .requestMatchers("/api/instituts/**").hasAnyRole("SUPER_ADMIN", "ADMIN_INSTITUT")
-                        .requestMatchers("/api/appels/**").hasAnyRole("ENSEIGNANT", "ASSISTANT", "ADMIN_INSTITUT")
-                        .requestMatchers("/api/sessions-appel/**").hasAnyRole("ETUDIANT", "ENSEIGNANT", "ASSISTANT", "ADMIN_INSTITUT")
                         .requestMatchers("/emploisDeTemps/**").hasAnyRole("SUPER_ADMIN", "ASSISTANT")
+
+                        // 6. Fallback
+                        .requestMatchers("/dashboard").authenticated()
                         .anyRequest().authenticated()
                 )
 

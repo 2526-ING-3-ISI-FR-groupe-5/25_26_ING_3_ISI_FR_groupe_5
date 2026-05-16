@@ -10,6 +10,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.InstitutContexteActif;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutContexteActifRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
@@ -23,17 +26,12 @@ import java.util.List;
 public class DashboardController {
 
     private final AnneeAcademiqueService anneeService;
+    private final InstitutContexteActifRepository contexteRepo;
     private final InstitutSecurityService securityService;
     private final IJournalActionService journalActionService;
 
-    // ✅ Priorité des rôles
     private static final List<String> ROLES_PRIORITE = List.of(
-            "SUPER_ADMIN",
-            "ADMIN_INSTITUT",
-            "ASSISTANT",
-            "ENSEIGNANT",
-            "SURVEILLANT",
-            "ETUDIANT"
+            "SUPER_ADMIN", "ADMIN_INSTITUT", "ASSISTANT", "ENSEIGNANT", "SURVEILLANT", "ETUDIANT"
     );
 
     @GetMapping("/dashboard")
@@ -42,70 +40,53 @@ public class DashboardController {
             @AuthenticationPrincipal Utilisateur utilisateur,
             Model model) {
 
-        // ============================================
-        // Vérification des rôles
-        // ✅ hasRole() vérifie sans le préfixe ROLE_
-        // ============================================
+        // 1. Rôles & Priorité
         boolean estSuperAdmin    = utilisateur.hasRole("SUPER_ADMIN");
         boolean estAdminInstitut = utilisateur.hasRole("ADMIN_INSTITUT");
         boolean estEnseignant    = utilisateur.hasRole("ENSEIGNANT");
         boolean estEtudiant      = utilisateur.hasRole("ETUDIANT");
         boolean estAssistant     = utilisateur.hasRole("ASSISTANT");
         boolean estSurveillant   = utilisateur.hasRole("SURVEILLANT");
+        boolean estAdmin         = estSuperAdmin || estAdminInstitut;
 
-        // ✅ estAdmin = vrai si SUPER_ADMIN ou ADMIN_INSTITUT
-        boolean estAdmin = estSuperAdmin || estAdminInstitut;
-
-        // ✅ Rôle principal selon priorité
         String rolePrincipal = ROLES_PRIORITE.stream()
                 .filter(utilisateur::hasRole)
                 .findFirst()
                 .orElse("INCONNU");
 
-        // ============================================
-        // Institut de l'utilisateur
-        // ============================================
+        // 2. Institut
         Institut institut = utilisateur.getInstitut();
         Long institutId = institut != null ? institut.getId() : null;
 
-        // ============================================
-        // Année académique active
-        // ============================================
+        // 3. ✅ CONTEXTE ACTIF (remplace l'ancien findByActiveTrue)
         Annee_academique anneeActive = null;
+        Semestre semestreActif = null;
         if (institutId != null) {
-            try {
-                anneeActive = anneeService
-                        .getAnneeActivePourInstitut(institutId);
-            } catch (Exception e) {
-                log.warn("Aucune année active pour l'institut {}",
-                        institutId);
+            InstitutContexteActif contexte = contexteRepo.findByInstitutId(institutId).orElse(null);
+            if (contexte != null) {
+                anneeActive = contexte.getAnneeAcademique();
+                semestreActif = contexte.getSemestre();
             }
         }
 
-        // ============================================
-        // Sélecteur d'institut — Super Admin uniquement
-        // ============================================
+        // 4. Sélecteur institut (Super Admin uniquement)
         boolean showInstitutSelector = estSuperAdmin;
         String currentInstitutName = estSuperAdmin
                 ? securityService.getCurrentInstitutName()
-                : (institut != null ? institut.getNom() : "");
+                : (institut != null ? institut.getNom() : "Global");
 
-        // ============================================
-        // Permissions fines
-        // ============================================
+        // 5. Permissions fines
         boolean peutVoirJournal = estSuperAdmin || estAdminInstitut;
         boolean peutFaireAppel  = estEnseignant || estSurveillant;
         boolean peutGererEmploiDuTemps = estAssistant || estAdmin;
 
-        // ============================================
-        // Attributs pour la vue
-        // ============================================
+        // 6. Exposition au modèle
         model.addAttribute("utilisateur", utilisateur);
         model.addAttribute("institut", institut);
         model.addAttribute("anneeActive", anneeActive);
+        model.addAttribute("semestreActif", semestreActif);
         model.addAttribute("rolePrincipal", rolePrincipal);
 
-        // ✅ Flags rôles
         model.addAttribute("estSuperAdmin", estSuperAdmin);
         model.addAttribute("estAdminInstitut", estAdminInstitut);
         model.addAttribute("estAdmin", estAdmin);
@@ -114,35 +95,23 @@ public class DashboardController {
         model.addAttribute("estAssistant", estAssistant);
         model.addAttribute("estSurveillant", estSurveillant);
 
-        // ✅ Sélecteur institut
         model.addAttribute("showInstitutSelector", showInstitutSelector);
         model.addAttribute("currentInstitutName", currentInstitutName);
-
-        // ✅ Permissions
         model.addAttribute("peutVoirJournal", peutVoirJournal);
         model.addAttribute("peutFaireAppel", peutFaireAppel);
         model.addAttribute("peutGererEmploiDuTemps", peutGererEmploiDuTemps);
 
-        // ✅ Dernières actions — Admin uniquement
+        // 7. Dernières actions (Admin)
         if (estAdmin) {
             try {
                 model.addAttribute("dernieresActions",
-                        journalActionService.getByUtilisateur(
-                                utilisateur.getId(),
-                                PageRequest.of(0, 5)
-                        ).getContent()
-                );
+                        journalActionService.getByUtilisateur(utilisateur.getId(), PageRequest.of(0, 5)).getContent());
             } catch (Exception e) {
-                log.warn("Erreur chargement dernières actions");
+                log.warn("Erreur chargement dernières actions: {}", e.getMessage());
             }
         }
 
-        log.info("Dashboard — {} [{}] — Institut: {}",
-                utilisateur.getEmail(),
-                rolePrincipal,
-                institut != null ? institut.getNom() : "Global"
-        );
-
+        log.info("Dashboard — {} [{}] — Institut: {}", utilisateur.getEmail(), rolePrincipal, currentInstitutName);
         return "dashboard";
     }
 }

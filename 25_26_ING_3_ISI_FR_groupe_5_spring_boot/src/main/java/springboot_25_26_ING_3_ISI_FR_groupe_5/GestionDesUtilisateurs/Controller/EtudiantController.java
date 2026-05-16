@@ -259,6 +259,6 @@ private final AppelsMapper appelsMapper;
         List<Appels> historique = appelsService.getByEtudiant(etudiantId);
         model.addAttribute("appels", appelsMapper.toResponseList(historique));
 
-        return "etudiants/dashboard";
+        return "dashboardEtudiant";
     }
 }

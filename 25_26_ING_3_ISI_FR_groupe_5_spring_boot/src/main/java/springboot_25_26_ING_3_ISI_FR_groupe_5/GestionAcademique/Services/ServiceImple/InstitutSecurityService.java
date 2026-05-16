@@ -37,9 +37,9 @@ public class InstitutSecurityService {
             return Optional.of((Utilisateur) principal);
         }
 
-        // Si le principal est une String (email), on cherche en base
+        // Si le principal est une String (email), on cherche en base AVEC les rôles
         if (principal instanceof String email) {
-            return utilisateurRepository.findByEmail(email);
+            return utilisateurRepository.findByEmailWithRoles(email);
         }
 
         return Optional.empty();

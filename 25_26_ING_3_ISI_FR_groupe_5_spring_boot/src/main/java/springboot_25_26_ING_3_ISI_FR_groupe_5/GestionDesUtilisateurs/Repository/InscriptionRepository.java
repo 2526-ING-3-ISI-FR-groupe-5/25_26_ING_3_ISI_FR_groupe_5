@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,11 +13,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.Statut
 
 import java.util.List;
 import java.util.Optional;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Ecole;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Filiere;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
 
 @Repository
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
@@ -24,118 +20,69 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     // ═══════════════════════════════════════════════════════════
     // RECHERCHES DE BASE
     // ═══════════════════════════════════════════════════════════
-
     List<Inscription> findByAnneeAcademiqueId(Long anneeId);
-
     List<Inscription> findByEtudiantId(Long etudiantId);
-
     List<Inscription> findByClasseId(Long classeId);
-
     Optional<Inscription> findByEtudiantIdAndAnneeAcademiqueId(Long etudiantId, Long anneeId);
     List<Inscription> findByClasseIdAndAnneeAcademiqueId(Long classeId, Long anneeId);
-
     boolean existsByEtudiantIdAndAnneeAcademiqueId(Long etudiantId, Long anneeId);
-
     List<Inscription> findByEtudiantIdOrderByAnneeAcademiqueNomDesc(Long etudiantId);
 
     // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR DÉCISION
+    // RECHERCHES PAR DÉCISION & STATUT
     // ═══════════════════════════════════════════════════════════
-
     List<Inscription> findByAnneeAcademiqueIdAndDecisionFinAnnee(Long anneeId, DecisionFinAnnee decision);
+    List<Inscription> findByAnneeAcademiqueIdAndStatut(Long anneeId, StatutInscription statut);
+    List<Inscription> findByClasseIdAndAnneeAcademiqueIdAndStatut(Long classeId, Long anneeId, StatutInscription statut);
 
     @Query("SELECT i FROM Inscription i WHERE i.anneeAcademique.id = :anneeId AND i.decisionFinAnnee = :decision")
     List<Inscription> findByAnneeAndDecision(@Param("anneeId") Long anneeId, @Param("decision") DecisionFinAnnee decision);
 
     // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR STATUT
-    // ═══════════════════════════════════════════════════════════
-
-    List<Inscription> findByAnneeAcademiqueIdAndStatut(Long anneeId, StatutInscription statut);
-
-    // ✅ Méthode pour les étudiants actifs d'une classe
-    List<Inscription> findByClasseIdAndAnneeAcademiqueIdAndStatut(Long classeId, Long anneeId, StatutInscription statut);
-
-    // ═══════════════════════════════════════════════════════════
     // COMPTEURS
     // ═══════════════════════════════════════════════════════════
-
     long countByClasseIdAndAnneeAcademiqueIdAndStatut(Long classeId, Long anneeId, StatutInscription statut);
 
     // ═══════════════════════════════════════════════════════════
-    // MULTI-INSTITUTS
+    // MULTI-INSTITUTS (Filtrage sécurisé)
     // ═══════════════════════════════════════════════════════════
-
-    /**
-     * Trouve toutes les inscriptions d'une année académique pour un institut donné
-     * L'institut est remonté via : inscription → classe → niveau → filière → école → institut
-     */
     @Query("""
         SELECT i FROM Inscription i 
         WHERE i.anneeAcademique.id = :anneeId 
         AND i.classe.niveau.filiere.ecole.institut.id = :institutId
     """)
-    List<Inscription> findByAnneeAcademiqueIdAndInstitutId(
-            @Param("anneeId") Long anneeId,
-            @Param("institutId") Long institutId
-    );
+    List<Inscription> findByAnneeAcademiqueIdAndInstitutId(@Param("anneeId") Long anneeId, @Param("institutId") Long institutId);
 
-    /**
-     * Trouve toutes les inscriptions d'un institut (toutes années confondues)
-     */
     @Query("""
         SELECT i FROM Inscription i 
         WHERE i.classe.niveau.filiere.ecole.institut.id = :institutId
     """)
     List<Inscription> findByInstitutId(@Param("institutId") Long institutId);
 
-    /**
-     * Trouve les inscriptions d'une classe pour un institut (vérification de sécurité)
-     */
     @Query("""
         SELECT i FROM Inscription i 
         WHERE i.classe.id = :classeId 
         AND i.anneeAcademique.id = :anneeId
         AND i.classe.niveau.filiere.ecole.institut.id = :institutId
     """)
-    List<Inscription> findByClasseIdAndAnneeAcademiqueIdAndInstitutId(
-            @Param("classeId") Long classeId,
-            @Param("anneeId") Long anneeId,
-            @Param("institutId") Long institutId
-    );
+    List<Inscription> findByClasseIdAndAnneeAcademiqueIdAndInstitutId(@Param("classeId") Long classeId, @Param("anneeId") Long anneeId, @Param("institutId") Long institutId);
 
-/* Récupère les inscriptions par année avec pagination
-     * Utilisé pour : migration complète, simulation, liste sans décision
-     */
+    // ═══════════════════════════════════════════════════════════
+    // PAGINATION AVEC @EntityGraph (Anti N+1 / LazyInit)
+    // ═══════════════════════════════════════════════════════════
+    @EntityGraph(attributePaths = {"etudiant", "classe", "anneeAcademique"})
     @Query("SELECT i FROM Inscription i WHERE i.anneeAcademique.id = :anneeId")
-    Page<Inscription> findByAnneeAcademiqueIdPaginated(
-            @Param("anneeId") Long anneeId,
-            Pageable pageable);
+    Page<Inscription> findByAnneeAcademiqueIdPaginated(@Param("anneeId") Long anneeId, Pageable pageable);
 
-    /**
-     * Récupère les inscriptions par classe + année avec pagination
-     * Utilisé pour : migration sélective de classe/filière/niveau
-     */
+    @EntityGraph(attributePaths = {"etudiant", "classe.niveau", "anneeAcademique"})
     @Query("SELECT i FROM Inscription i WHERE i.classe.id = :classeId AND i.anneeAcademique.id = :anneeId")
-    Page<Inscription> findByClasseIdAndAnneeAcademiqueIdPaginated(
-            @Param("classeId") Long classeId,
-            @Param("anneeId") Long anneeId,
-            Pageable pageable);
+    Page<Inscription> findByClasseIdAndAnneeAcademiqueIdPaginated(@Param("classeId") Long classeId, @Param("anneeId") Long anneeId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"etudiant", "classe.niveau.specialite", "anneeAcademique"})
     @Query("""
-    SELECT i FROM Inscription i 
-    WHERE i.anneeAcademique.id = :anneeId 
-    AND i.classe.niveau.filiere.ecole.institut.id = :institutId
-""")
-    Page<Inscription> findByAnneeAcademiqueIdAndInstitutIdPaginated(
-            @Param("anneeId") Long anneeId,
-            @Param("institutId") Long institutId,
-            Pageable pageable
-    );
-
-
-    
-
-
-
+        SELECT i FROM Inscription i
+        WHERE i.anneeAcademique.id = :anneeId
+        AND i.classe.niveau.filiere.ecole.institut.id = :institutId
+    """)
+    Page<Inscription> findByAnneeAcademiqueIdAndInstitutIdPaginated(@Param("anneeId") Long anneeId, @Param("institutId") Long institutId, Pageable pageable);
 }

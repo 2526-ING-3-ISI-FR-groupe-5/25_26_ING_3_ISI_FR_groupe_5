@@ -7,11 +7,12 @@
     <title>Nouvelle programmation — CarnetRouge</title>
 </head>
 <body>
-
 <div layout:fragment="content">
-    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
 
-        <!-- En-tête -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- EN-TÊTE -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="mb-8 lg:mb-10">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -23,7 +24,7 @@
                     </p>
                 </div>
                 <a th:href="@{/admin/programmations(classeId=${classeIdSelectionne})}"
-                   class="btn bg-primary hover:bg-primary/90 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200 gap-2 py-2 px-4">
+                   class="btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-none shadow-sm hover:shadow transition-all duration-200 gap-2 py-2 px-4">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
@@ -32,18 +33,33 @@
             </div>
         </div>
 
-        <!-- Formulaire -->
-        <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GARDE-FOU : Contexte Actif -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div th:if="${anneeActiveId == null}" class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Aucune année académique active</h3>
+                    <p class="text-sm text-red-700 dark:text-red-400 mt-1">Veuillez activer une année et un semestre depuis les paramètres avant de créer une programmation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- FORMULAIRE -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div th:if="${anneeActiveId != null}" class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 overflow-hidden">
             <div class="p-6">
                 <form th:action="@{/admin/programmations/creer}" th:object="${form}" method="post" class="space-y-5">
 
                     <!-- Classe -->
                     <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Classe <span class="text-red-500">*</span></span>
-                        </label>
+                        <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Classe <span class="text-red-500">*</span></span></label>
                         <select th:field="*{classeId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
-                            <option value="" disabled selected>Sélectionner une classe</option>
+                            <option value="" disabled>Sélectionner une classe</option>
                             <option th:each="classe : ${classes}" th:value="${classe.id}" th:text="${classe.nom}"></option>
                         </select>
                         <p th:if="${#fields.hasErrors('classeId')}" th:errors="*{classeId}" class="text-red-500 text-xs mt-1"></p>
@@ -51,11 +67,9 @@
 
                     <!-- Semestre -->
                     <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Semestre <span class="text-red-500">*</span></span>
-                        </label>
+                        <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Semestre <span class="text-red-500">*</span></span></label>
                         <select th:field="*{semestreId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
-                            <option value="" disabled selected>Sélectionner un semestre</option>
+                            <option value="" disabled>Sélectionner un semestre</option>
                             <option th:each="semestre : ${semestres}" th:value="${semestre.id}" th:text="${semestre.libelle}"></option>
                         </select>
                         <p th:if="${#fields.hasErrors('semestreId')}" th:errors="*{semestreId}" class="text-red-500 text-xs mt-1"></p>
@@ -63,59 +77,52 @@
 
                     <!-- UE -->
                     <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Unité d'enseignement <span class="text-red-500">*</span></span>
-                        </label>
+                        <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Unité d'enseignement <span class="text-red-500">*</span></span></label>
                         <select th:field="*{ueId}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required>
-                            <option value="" disabled selected>Sélectionner une UE</option>
+                            <option value="" disabled>Sélectionner une UE</option>
                             <option th:each="ue : ${ues}" th:value="${ue.id}" th:text="${ue.nom} + ' (' + ${ue.code} + ')'"></option>
                         </select>
                         <p th:if="${#fields.hasErrors('ueId')}" th:errors="*{ueId}" class="text-red-500 text-xs mt-1"></p>
                     </div>
 
-                    <!-- Quota horaire -->
-                    <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Quota horaire <span class="text-red-500">*</span></span>
-                        </label>
-                        <input type="number" th:field="*{dheure}" placeholder="Ex: 45" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
-                        <p th:if="${#fields.hasErrors('dheure')}" th:errors="*{dheure}" class="text-red-500 text-xs mt-1"></p>
-                    </div>
-
-                    <!-- Crédits -->
-                    <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nombre de crédits <span class="text-red-500">*</span></span>
-                        </label>
-                        <input type="number" th:field="*{nbrCredit}" placeholder="Ex: 6" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
-                        <p th:if="${#fields.hasErrors('nbrCredit')}" th:errors="*{nbrCredit}" class="text-red-500 text-xs mt-1"></p>
+                    <!-- Quota horaire & Crédits -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Quota horaire <span class="text-red-500">*</span></span></label>
+                            <input type="number" th:field="*{dheure}" placeholder="Ex: 45" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                            <p th:if="${#fields.hasErrors('dheure')}" th:errors="*{dheure}" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Crédits ECTS <span class="text-red-500">*</span></span></label>
+                            <input type="number" th:field="*{nbrCredit}" placeholder="Ex: 6" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" required/>
+                            <p th:if="${#fields.hasErrors('nbrCredit')}" th:errors="*{nbrCredit}" class="text-red-500 text-xs mt-1"></p>
+                        </div>
                     </div>
 
                     <!-- Enseignants -->
                     <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Enseignants</span>
-                        </label>
+                        <label class="label"><span class="label-text font-medium text-gray-700 dark:text-gray-300">Enseignant(s) assigné(s)</span></label>
                         <select th:field="*{enseignantIds}" class="w-full bg-gray-50 dark:bg-bgsurface border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-primary" multiple size="5">
-                            <option th:each="enseignant : ${enseignants}" th:value="${enseignant.id}" th:text="${enseignant.prenom} + ' ' + ${enseignant.nom}"></option>
+                            <option th:each="ens : ${enseignants}" th:value="${ens.id}" th:text="${ens.prenom} + ' ' + ${ens.nom}"></option>
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs</p>
+                        <p class="text-xs text-gray-500 mt-1">Maintenez <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px]">Ctrl</kbd> (ou <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px]">Cmd</kbd>) pour en sélectionner plusieurs</p>
+                        <p th:if="${#fields.hasErrors('enseignantIds')}" th:errors="*{enseignantIds}" class="text-red-500 text-xs mt-1"></p>
                     </div>
 
-                    <!-- Info -->
-                    <div class="alert bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5 text-blue-600 dark:text-blue-400">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <!-- Info métier -->
+                    <div class="alert bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-3 flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <span class="text-sm text-blue-700 dark:text-blue-300">Une UE ne peut être programmée qu'une seule fois par classe et par semestre</span>
+                        <span class="text-sm text-blue-700 dark:text-blue-300">Une UE ne peut être programmée qu'une seule fois par classe et par semestre. Les conflits seront bloqués automatiquement.</span>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex gap-3 pt-4">
-                        <a th:href="@{/admin/programmations(classeId=${classeIdSelectionne})}" class="flex-1 text-center btn bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-none rounded-lg py-2 px-4 transition-all duration-200">
+                    <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/5">
+                        <a th:href="@{/admin/programmations(classeId=${classeIdSelectionne})}" class="flex-1 btn bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-none rounded-lg py-2.5 px-4">
                             Annuler
                         </a>
-                        <button type="submit" class="flex-1 btn bg-primary hover:bg-primary/90 text-white border-none rounded-lg py-2 px-4 transition-all duration-200 shadow-lg hover:shadow-xl gap-2">
+                        <button type="submit" class="flex-1 btn bg-primary hover:bg-primary/90 text-white border-none rounded-lg py-2.5 px-4 shadow-lg hover:shadow-xl gap-2 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
@@ -127,5 +134,20 @@
         </div>
     </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SCRIPT : Pré-sélection de la classe si passée en paramètre -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', () => {
+        const preselectedClass = /*[[${classeIdSelectionne}]]*/ null;
+        if (preselectedClass) {
+            const select = document.querySelector('select[name="classeId"]');
+            if (select) select.value = preselectedClass;
+        }
+    });
+    /*]]>*/
+</script>
 </body>
 </html>

@@ -178,6 +178,7 @@ public interface JournalActionMapper {
 
             // Migration
             case MIGRATION_EFFECTUEE -> "Migration effectuée";
+            case MIGRATION_EXECUTE -> "Migration executee";
 
             // Séance
             case SEANCE_CREEE -> "Séance créée";
@@ -215,6 +216,8 @@ public interface JournalActionMapper {
             case NIVEAU_SUPPRIME -> "niveau supprimé";
             case ANNEE_ACADEMIQUE_DESACTIVEE ->"desactiver une année academique";
             case INSCRIPTION_MODIFIEE -> "inscrition modifier";
+            case MIGRATION_ROLLBACK -> " Rollback de la migration";
+            case MIGRATION_PUBLIEE -> "Migration publier";
         };
     }
 }

@@ -1,8 +1,11 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -13,8 +16,11 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@SuperBuilder
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@AllArgsConstructor
+@NoArgsConstructor
 public abstract class Auditable {
 
     @CreatedDate

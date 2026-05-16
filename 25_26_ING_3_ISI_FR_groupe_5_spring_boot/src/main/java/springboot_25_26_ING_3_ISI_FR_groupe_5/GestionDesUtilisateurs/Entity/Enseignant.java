@@ -37,3 +37,4 @@ public class  Enseignant extends Utilisateur {
     @Builder.Default
     private Set<ProgrammationUE> programmations = new HashSet<>();
 }
+

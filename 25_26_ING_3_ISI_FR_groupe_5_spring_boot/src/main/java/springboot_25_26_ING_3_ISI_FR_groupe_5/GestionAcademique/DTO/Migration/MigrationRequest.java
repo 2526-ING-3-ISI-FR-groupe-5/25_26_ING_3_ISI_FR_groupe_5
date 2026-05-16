@@ -30,6 +30,11 @@ public class MigrationRequest {
     private Long niveauId;
 
     public boolean isSimulation() {
+        return typeMigration == TypeMigration.SIMULATION;
+    }
+
+    // 💡 Recommandé (symétrie métier) :
+    public boolean isExecution() {
         return typeMigration == TypeMigration.COMPLETE;
     }
 }

@@ -29,7 +29,7 @@ public class EspaceEnseignantController {
     // ══════════════════════════════════════════
     // DASHBOARD PRINCIPAL (STATS + COURS DU JOUR)
     // ══════════════════════════════════════════
-    @GetMapping("/mon-espace")
+    /*@GetMapping("/mon-espace")
     public String dashboard(Model model, @AuthenticationPrincipal Utilisateur u) {
         Long ensId = ((Enseignant) u).getId();
 
@@ -40,6 +40,23 @@ public class EspaceEnseignantController {
         model.addAttribute("coursAujourdhui", plageHoraireService.findCoursEnseignantAujourdhui(ensId, LocalDate.now()));
 
         return "enseignant/dashboard";
+    }*/
+
+    @GetMapping("/mon-espace")
+    public String dashboard(Model model, @AuthenticationPrincipal Utilisateur u) {
+        if (!(u instanceof Enseignant enseignant)) {
+            return "redirect:/accessDenied";
+        }
+
+        Long ensId = enseignant.getId();
+
+        // ✅ Progression des UEs
+        model.addAttribute("uesProgression", statsService.getProgressionEnseignant(ensId));
+
+        // ✅ Cours du jour (avec getters accessibles)
+        model.addAttribute("coursAujourdhui", plageHoraireService.findCoursEnseignantAujourdhui(ensId, LocalDate.now()));
+
+        return "/enseignant/dashboardEnseignant";
     }
 
     // ══════════════════════════════════════════
@@ -67,7 +84,7 @@ public class EspaceEnseignantController {
         model.addAttribute("nbRetards", appels.stream().filter(a -> a.isRetard()).count());
         model.addAttribute("nbAbsents", appels.stream().filter(a -> a.isAbsentToutLeCours()).count());
 
-        return "enseignant/appel_interface";
+        return "appels/appel_interface";
     }
 
 }
