@@ -3,6 +3,8 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Serv
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.stats.EnseignantUEStatsDTO;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.stats.EtudiantStatsDTO;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IStatsService;
@@ -24,18 +26,96 @@ public class StatsService implements IStatsService {
     private final AppelsRepository appelsRepository;
     private final ProgrammationUERepository programmationRepository;
     private final PlageHoraireRepository plageHoraireRepository;
+    private final AnneeAcademiqueService anneeService;
+    private final InstitutSecurityService securityService;
 
-    // ══════════════════════════════════════════
-    // STATS ÉTUDIANT (Semestre Actif)
-    // ══════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    // STATS ÉTUDIANT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Stats de l'étudiant pour le semestre actif.
+     * Conservé pour compatibilité avec le dashboard enseignant.
+     */
+    @Override
     public EtudiantStatsDTO getStatsEtudiant(Long etudiantId) {
         long presences = appelsRepository.countByEtudiantAndStatutAndSemestreActif(etudiantId, StatutPresence.PRESENT);
-        long retards = appelsRepository.countByEtudiantAndStatutAndSemestreActif(etudiantId, StatutPresence.RETARD);
-        long absJ = appelsRepository.countByEtudiantAndStatutAndSemestreActif(etudiantId, StatutPresence.JUSTIFIE);
-        long absNJ = appelsRepository.countAbsencesNonJustifieesByEtudiant(etudiantId);
+        long retards   = appelsRepository.countByEtudiantAndStatutAndSemestreActif(etudiantId, StatutPresence.RETARD);
+        long absJ      = appelsRepository.countByEtudiantAndStatutAndSemestreActif(etudiantId, StatutPresence.JUSTIFIE);
+        long absNJ     = appelsRepository.countAbsencesNonJustifieesByEtudiant(etudiantId);
 
+        return buildStats(presences, retards, absJ, absNJ);
+    }
+
+    /**
+     * ✅ AJOUTÉ — Stats de l'étudiant pour une année précise.
+     * Permet de consulter N-1, N-2... sans être limité au semestre actif.
+     *
+     * @param etudiantId identifiant de l'étudiant
+     * @param anneeId    identifiant de l'année académique cible
+     *                   (null → délègue à getStatsEtudiant pour le semestre actif)
+     */
+    public EtudiantStatsDTO getStatsEtudiantParAnnee(Long etudiantId, Long anneeId) {
+        if (anneeId == null) return getStatsEtudiant(etudiantId);
+
+        long presences = appelsRepository.countByEtudiantAndStatutAndAnnee(etudiantId, StatutPresence.PRESENT, anneeId);
+        long retards   = appelsRepository.countByEtudiantAndStatutAndAnnee(etudiantId, StatutPresence.RETARD, anneeId);
+        long absJ      = appelsRepository.countByEtudiantAndStatutAndAnnee(etudiantId, StatutPresence.JUSTIFIE, anneeId);
+        long absNJ     = appelsRepository.countAbsencesNonJustifieesByEtudiantAndAnnee(etudiantId, anneeId);
+
+        return buildStats(presences, retards, absJ, absNJ);
+    }
+
+    /**
+     * ✅ AJOUTÉ — Récap des heures de présence d'un étudiant pour une année précise.
+     * Utile pour afficher le total d'heures validées sur N-1 après un rollback.
+     */
+    public int getHeuresPresentParAnnee(Long etudiantId, Long anneeId) {
+        return appelsRepository.sumHeuresPresentByEtudiantAndAnnee(etudiantId, anneeId);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PROGRESSION ENSEIGNANT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Progression de l'enseignant pour le semestre actif.
+     * Conservé pour compatibilité avec le dashboard.
+     */
+    @Override
+    public List<EnseignantUEStatsDTO> getProgressionEnseignant(Long enseignantId) {
+        // Utilise encore la méthode dépréciée pour le semestre actif
+        // → à remplacer par getProgressionEnseignantParAnnee(enseignantId, anneeActiveId)
+        // dès que le contexte actif est accessible ici
+        List<ProgrammationUE> programmations =
+                programmationRepository.findByEnseignantsIdAndSemestreActifTrue(enseignantId);
+        return buildProgression(programmations);
+    }
+
+    /**
+     * ✅ AJOUTÉ — Progression de l'enseignant pour une année précise.
+     * Permet de consulter N-1, N-2... sans être limité au semestre actif.
+     *
+     * @param enseignantId identifiant de l'enseignant
+     * @param anneeId      identifiant de l'année académique cible
+     *                     (null → délègue à getProgressionEnseignant)
+     */
+    public List<EnseignantUEStatsDTO> getProgressionEnseignantParAnnee(Long enseignantId, Long anneeId) {
+        if (anneeId == null) return getProgressionEnseignant(enseignantId);
+
+        List<ProgrammationUE> programmations =
+                programmationRepository.findByEnseignantIdAndAnneeId(enseignantId, anneeId);
+        return buildProgression(programmations);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PRIVÉ — Builders partagés
+    // ═══════════════════════════════════════════════════════════
+
+    private EtudiantStatsDTO buildStats(long presences, long retards, long absJ, long absNJ) {
         long totalPoints = presences + retards + absJ + absNJ;
-        double taux = (totalPoints == 0) ? 100.0 : ((double) (presences + retards) / totalPoints) * 100;
+        double taux = (totalPoints == 0) ? 100.0
+                : ((double) (presences + retards) / totalPoints) * 100;
 
         return EtudiantStatsDTO.builder()
                 .nbPresences(presences)
@@ -46,24 +126,17 @@ public class StatsService implements IStatsService {
                 .build();
     }
 
-    // ══════════════════════════════════════════
-    // PROGRESSION ENSEIGNANT (Par UE/Programmation)
-    // ══════════════════════════════════════════
-    public List<EnseignantUEStatsDTO> getProgressionEnseignant(Long enseignantId) {
-        // Utilise ta méthode findByEnseignantsIdAndSemestreActifTrue du repo
-        List<ProgrammationUE> programmations = programmationRepository.findByEnseignantsIdAndSemestreActifTrue(enseignantId);
-
+    private List<EnseignantUEStatsDTO> buildProgression(List<ProgrammationUE> programmations) {
         return programmations.stream().map(prog -> {
-            // Récupérer les plages terminées pour cette programmation spécifique
-            List<PlageHoraire> plagesTerminees = plageHoraireRepository.findPlagesTermineesByProgrammation(prog.getId());
+            List<PlageHoraire> plagesTerminees =
+                    plageHoraireRepository.findPlagesTermineesByProgrammation(prog.getId());
 
-            // Somme des durées via ton helper Java getDureeHeures()
             double heuresFaites = plagesTerminees.stream()
                     .mapToDouble(PlageHoraire::getDureeHeures)
                     .sum();
 
             double heuresPrevues = (prog.getDheure() != null) ? prog.getDheure() : 0.0;
-            double pourcentage = (heuresPrevues == 0) ? 0 : (heuresFaites / heuresPrevues) * 100;
+            double pourcentage   = (heuresPrevues == 0) ? 0 : (heuresFaites / heuresPrevues) * 100;
 
             return EnseignantUEStatsDTO.builder()
                     .ueCode(prog.getUe().getCode())

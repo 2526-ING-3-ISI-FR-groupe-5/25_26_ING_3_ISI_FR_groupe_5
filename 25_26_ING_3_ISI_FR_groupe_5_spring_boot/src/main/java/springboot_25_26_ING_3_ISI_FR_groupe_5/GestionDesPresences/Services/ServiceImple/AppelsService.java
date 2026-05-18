@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Serv
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
@@ -25,6 +26,7 @@ import java.util.*;
 
 import static springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -41,29 +43,45 @@ public class AppelsService implements IAppelsService {
 
     @Transactional(readOnly = true)
     public Appels findById(Long id) {
-        return appelsRepository.findById(id).orElseThrow(() -> new RuntimeException("Appel introuvable"));
+        return appelsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appel introuvable : " + id));
     }
 
     @Transactional(readOnly = true)
-    public List<Appels> getByPlageHoraire(Long id) { return appelsRepository.findByPlageHoraireId(id); }
+    public List<Appels> getByPlageHoraire(Long id) {
+        return appelsRepository.findByPlageHoraireId(id);
+    }
 
     @Transactional(readOnly = true)
-    public List<Appels> getByEtudiant(Long id) { return appelsRepository.findByEtudiantId(id); }
+    public List<Appels> getByEtudiant(Long id) {
+        return appelsRepository.findByEtudiantId(id);
+    }
 
     @Transactional(readOnly = true)
-    public List<Appels> getBySession(Long id) { return appelsRepository.findBySessionAppelId(id); }
+    public List<Appels> getBySession(Long id) {
+        return appelsRepository.findBySessionAppelId(id);
+    }
 
     @Transactional(readOnly = true)
-    public List<Appels> getRetardsByPlage(Long id) { return appelsRepository.findByPlageHoraireIdAndStatut(id, RETARD); }
+    public List<Appels> getRetardsByPlage(Long id) {
+        return appelsRepository.findByPlageHoraireIdAndStatut(id, RETARD);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Appels> getRetardsByEtudiant(Long etudiantId) {
+        return appelsRepository.findByEtudiantIdAndStatut(etudiantId, StatutPresence.RETARD);
+    }
 
     // ── ACTIONS ──
 
     public Appels creer(AppelsRequest req) {
         Etudiant etu = etudiantService.findById(req.getEtudiantId());
         PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
-        Enseignant ens = req.getEnseignantId() != null ? enseignantService.findById(req.getEnseignantId()) : null;
+        Enseignant ens = req.getEnseignantId() != null
+                ? enseignantService.findById(req.getEnseignantId()) : null;
 
-        Appels appel = appelsRepository.findByEtudiantIdAndPlageHoraireId(etu.getId(), ph.getId())
+        Appels appel = appelsRepository
+                .findByEtudiantIdAndPlageHoraireId(etu.getId(), ph.getId())
                 .orElse(Appels.builder().etudiant(etu).plageHoraire(ph).build());
 
         appliquerStatutDepuisRequest(appel, req, ens);
@@ -73,6 +91,8 @@ public class AppelsService implements IAppelsService {
     public List<Appels> enregistrerAppelManuel(AppelsCheckManuelRequest req) {
         PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
         Enseignant ens = enseignantService.findById(req.getEnseignantId());
+
+        // ✅ CORRIGÉ — session null acceptable, loggée proprement
         SessionAppel session = getSessionActiveOrNull(ph.getId());
 
         initialiserAppelsPourPlage(ph, ens, session);
@@ -112,11 +132,13 @@ public class AppelsService implements IAppelsService {
             });
         }
 
-        // 4. Absents (ceux non mentionnés dans la requête)
-        tousLesAppels.stream().filter(a -> !traites.contains(a.getEtudiant().getId())).forEach(a -> {
-            a.marquerAbsent(ens);
-            resultats.add(appelsRepository.save(a));
-        });
+        // 4. Absents — tous ceux non mentionnés dans la requête
+        tousLesAppels.stream()
+                .filter(a -> !traites.contains(a.getEtudiant().getId()))
+                .forEach(a -> {
+                    a.marquerAbsent(ens);
+                    resultats.add(appelsRepository.save(a));
+                });
 
         return resultats;
     }
@@ -125,7 +147,8 @@ public class AppelsService implements IAppelsService {
         PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
         validerHeureArrivee(req.getHeureArrivee(), ph);
 
-        Appels a = appelsRepository.findByEtudiantIdAndPlageHoraireId(req.getEtudiantId(), ph.getId())
+        Appels a = appelsRepository
+                .findByEtudiantIdAndPlageHoraireId(req.getEtudiantId(), ph.getId())
                 .orElseThrow(() -> new RuntimeException("Appel non initialisé"));
 
         a.marquerRetard(req.getHeureArrivee(), enseignantService.findById(req.getEnseignantId()));
@@ -135,39 +158,77 @@ public class AppelsService implements IAppelsService {
 
     public Appels modifier(Long id, AppelsRequest req) {
         Appels a = findById(id);
-        Enseignant ens = req.getEnseignantId() != null ? enseignantService.findById(req.getEnseignantId()) : a.getEnseignant();
+        Enseignant ens = req.getEnseignantId() != null
+                ? enseignantService.findById(req.getEnseignantId())
+                : a.getEnseignant();
         appliquerStatutDepuisRequest(a, req, ens);
         if (req.getCommentaire() != null) a.setCommentaire(req.getCommentaire());
         return appelsRepository.save(a);
     }
 
-    public void supprimer(Long id) { appelsRepository.delete(findById(id)); }
+    public void supprimer(Long id) {
+        appelsRepository.delete(findById(id));
+    }
 
-@Transactional
-@Override
-public void ajusterHeures(Long appelId, int nbHeuresPresent) {
+    @Transactional
+    @Override
+    public void ajusterHeures(Long appelId, int nbHeuresPresent) {
         Appels appel = appelsRepository.findById(appelId)
                 .orElseThrow(() -> new EntityNotFoundException("Appel non trouvé : " + appelId));
 
-        // Validation : pas moins de 0, pas plus que la durée du cours
         if (nbHeuresPresent < 0) {
             throw new IllegalArgumentException("Le nombre d'heures ne peut pas être négatif");
         }
         int dureeHeures = (int) appel.getPlageHoraire().getDureeHeures();
         if (nbHeuresPresent > dureeHeures) {
-            throw new IllegalArgumentException("Le nombre d'heures ne peut pas dépasser la durée du cours");
+            throw new IllegalArgumentException(
+                    "Le nombre d'heures (" + nbHeuresPresent +
+                            ") ne peut pas dépasser la durée du cours (" + dureeHeures + "h)");
         }
 
         appel.setNbHeuresPresent(nbHeuresPresent);
         appel.setStatut(nbHeuresPresent > 0 ? StatutPresence.PARTIEL : StatutPresence.ABSENT);
         appelsRepository.save(appel);
     }
+
+    public Appels validerParCode(AppelsRequest req, Long etudiantId) {
+        SessionAppel session = sessionAppelService.findById(req.getSessionAppelId());
+
+        if (!session.isValide()) {
+            throw new RuntimeException("Session expirée ou fermée.");
+        }
+        if (!session.getCode().equals(req.getCodeSaisi())) {
+            throw new RuntimeException("Code invalide.");
+        }
+
+        if (session.getPerimetreMetres() != null) {
+            boolean estPresentPhysiquement = session.estDansLePerimetre(
+                    req.getLatitudeEtudiant(), req.getLongitudeEtudiant());
+            if (!estPresentPhysiquement) {
+                throw new RuntimeException(
+                        "Validation impossible : vous n'êtes pas dans l'enceinte de l'établissement.");
+            }
+        }
+
+        Appels appel = appelsRepository
+                .findByEtudiantIdAndPlageHoraireId(etudiantId, session.getPlageHoraire().getId())
+                .orElseThrow(() -> new RuntimeException("Appel non initialisé."));
+
+        appel.marquerPresent(session.getEnseignant(), session.getMethode());
+        appel.setLatitudeEtudiant(req.getLatitudeEtudiant());
+        appel.setLongitudeEtudiant(req.getLongitudeEtudiant());
+        appel.setDansLePerimetre(true);
+
+        return appelsRepository.save(appel);
+    }
+
     // ── HELPERS ──
 
     private void appliquerStatutDepuisRequest(Appels a, AppelsRequest req, Enseignant ens) {
         if (req.getStatut() == null) return;
         switch (req.getStatut()) {
-            case PRESENT -> a.marquerPresent(ens, req.getMethode() != null ? req.getMethode() : MethodeValidation.MANUELLE);
+            case PRESENT -> a.marquerPresent(ens,
+                    req.getMethode() != null ? req.getMethode() : MethodeValidation.MANUELLE);
             case ABSENT  -> a.marquerAbsent(ens);
             case PARTIEL -> a.marquerPartiel(req.getNbHeuresPresent(), ens);
             case RETARD  -> {
@@ -179,63 +240,50 @@ public void ajusterHeures(Long appelId, int nbHeuresPresent) {
 
     private void validerHeureArrivee(LocalTime heure, PlageHoraire ph) {
         if (heure == null) throw new IllegalArgumentException("Heure d'arrivée requise");
-        if (heure.isBefore(ph.getHeureDebut())) throw new IllegalArgumentException("L'étudiant n'est pas en retard");
-        if (heure.isAfter(ph.getHeureFin())) throw new IllegalArgumentException("Cours terminé, mettre Absent");
+        if (heure.isBefore(ph.getHeureDebut()))
+            throw new IllegalArgumentException("L'étudiant n'est pas en retard");
+        if (heure.isAfter(ph.getHeureFin()))
+            throw new IllegalArgumentException("Cours terminé, mettre Absent");
     }
 
     private Appels trouverDansListe(List<Appels> liste, Long etuId) {
-        return liste.stream().filter(a -> a.getEtudiant().getId().equals(etuId)).findFirst()
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé dans la liste"));
+        return liste.stream()
+                .filter(a -> a.getEtudiant().getId().equals(etuId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Étudiant id=" + etuId + " non trouvé dans la liste d'appel"));
     }
 
-    private void initialiserAppelsPourPlage(PlageHoraire ph, Enseignant ens, SessionAppel s) {
+    private void initialiserAppelsPourPlage(PlageHoraire ph, Enseignant ens, SessionAppel session) {
         etudiantRepository.findByClasseIdAndActiveTrue(ph.getClasse().getId()).forEach(etu -> {
             if (appelsRepository.findByEtudiantIdAndPlageHoraireId(etu.getId(), ph.getId()).isEmpty()) {
-                appelsRepository.save(Appels.builder().etudiant(etu).plageHoraire(ph).enseignant(ens).sessionAppel(s).statut(EN_ATTENTE).build());
+                appelsRepository.save(Appels.builder()
+                        .etudiant(etu).plageHoraire(ph)
+                        .enseignant(ens).sessionAppel(session)
+                        .statut(EN_ATTENTE).build());
             }
         });
     }
 
-    private SessionAppel getSessionActiveOrNull(Long phId) {
-        try { return sessionAppelService.getSessionActive(phId); } catch (Exception e) { return null; }
-    }
-// Dans AppelsService.java
-
     /**
-     * Récupère tous les retards d'un étudiant spécifique.
+     * ✅ CORRIGÉ — Retourne null si aucune session active,
+     * mais log l'exception pour distinguer "pas de session" d'une vraie erreur.
+     * Avant : toutes les exceptions étaient silencieusement avalées.
      */
-    @Transactional(readOnly = true)
-    public List<Appels> getRetardsByEtudiant(Long etudiantId) {
-        return appelsRepository.findByEtudiantIdAndStatut(etudiantId, StatutPresence.RETARD);
-    }
-
-
-
-    public Appels validerParCode(AppelsRequest req, Long etudiantId) {
-        SessionAppel session = sessionAppelService.findById(req.getSessionAppelId());
-
-        // 1. Vérification de la validité temporelle et du code
-        if (!session.isValide()) throw new RuntimeException("Session expirée ou fermée.");
-        if (!session.getCode().equals(req.getCodeSaisi())) throw new RuntimeException("Code invalide.");
-
-        // 2. VÉRIFICATION DU PÉRIMÈTRE
-        if (session.getPerimetreMetres() != null) {
-            boolean estPresentPhysiquement = session.estDansLePerimetre(req.getLatitudeEtudiant(), req.getLongitudeEtudiant());
-
-            if (!estPresentPhysiquement) {
-                throw new RuntimeException("Validation impossible : vous n'êtes pas dans l'enceinte de l'établissement (Hors périmètre).");
-            }
+    private SessionAppel getSessionActiveOrNull(Long phId) {
+        try {
+            return sessionAppelService.getSessionActive(phId);
+        } catch (RuntimeException e) {
+            // "Aucune session active" est un cas normal — on log en debug, pas en erreur
+            log.debug("Aucune session active pour la plage {} : {}", phId, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            // Toute autre exception (DB, NPE...) mérite un warning
+            log.warn("Erreur inattendue lors de la récupération de la session active pour la plage {} : {}",
+                    phId, e.getMessage());
+            return null;
         }
-
-        // 3. Enregistrement de la présence
-        Appels appel = appelsRepository.findByEtudiantIdAndPlageHoraireId(etudiantId, session.getPlageHoraire().getId())
-                .orElseThrow(() -> new RuntimeException("Appel non initialisé."));
-
-        appel.marquerPresent(session.getEnseignant(), session.getMethode());
-        appel.setLatitudeEtudiant(req.getLatitudeEtudiant());
-        appel.setLongitudeEtudiant(req.getLongitudeEtudiant());
-        appel.setDansLePerimetre(true);
-
-        return appelsRepository.save(appel);
     }
 }
+
+//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

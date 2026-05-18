@@ -1,14 +1,16 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.appel;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalTime;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AppelRetardRequest {
 
     @NotNull(message = "L'étudiant est obligatoire")

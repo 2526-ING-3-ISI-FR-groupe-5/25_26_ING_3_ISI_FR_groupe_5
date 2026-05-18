@@ -189,10 +189,6 @@ public class Appels {
     /**
      * Marque l'étudiant en retard.
      * Lève une exception si la règle métier n'est pas respectée.
-     *
-     * @param heureArrivee heure réelle d'arrivée de l'étudiant
-     * @param enseignant   enseignant qui enregistre le retard
-     * @throws IllegalStateException si le retard n'est pas autorisé sur ce cours
      */
     public void marquerRetard(LocalTime heureArrivee, Enseignant enseignant) {
         if (!isRetardAutorise()) {
@@ -207,36 +203,48 @@ public class Appels {
                     "L'heure d'arrivée (" + heureArrivee + ") ne peut pas être avant l'heure de début du cours."
             );
         }
-        this.statut       = StatutPresence.RETARD;
-        this.heureArrivee = heureArrivee;
-        this.enseignant   = enseignant;
+        this.statut         = StatutPresence.RETARD;
+        this.heureArrivee   = heureArrivee;
+        this.enseignant     = enseignant;
         this.dateValidation = LocalDateTime.now();
-        this.methode      = MethodeValidation.MANUELLE;
-        this.present      = false;
+        this.methode        = MethodeValidation.MANUELLE;
+        this.present        = false;
+        // Retard = présent pour une partie du cours — on compte les heures restantes
+        if (plageHoraire != null) {
+            int minutesCours = (int) plageHoraire.getDureeMinutes();
+            int minutesRetard = getRetardMinutesDepuisHeure(heureArrivee);
+            int minutesPresent = Math.max(0, minutesCours - minutesRetard);
+            this.nbHeuresPresent = minutesPresent / 60;
+        }
     }
 
     /**
-     * Marque l'étudiant présent.
+     * ✅ CORRIGÉ — Marque l'étudiant présent et renseigne nbHeuresPresent
+     * avec la durée complète du cours.
+     * Avant : nbHeuresPresent restait à 0, faussant les stats de présence.
      */
     public void marquerPresent(Enseignant enseignant, MethodeValidation methode) {
-        this.statut         = StatutPresence.PRESENT;
-        this.present        = true;
-        this.heureArrivee   = null;
-        this.enseignant     = enseignant;
-        this.dateValidation = LocalDateTime.now();
-        this.methode        = methode;
+        this.statut          = StatutPresence.PRESENT;
+        this.present         = true;
+        this.heureArrivee    = null;
+        this.enseignant      = enseignant;
+        this.dateValidation  = LocalDateTime.now();
+        this.methode         = methode;
+        // ✅ CORRIGÉ — on renseigne les heures de présence effectives
+        this.nbHeuresPresent = plageHoraire != null ? (int) plageHoraire.getDureeHeures() : 0;
     }
 
     /**
      * Marque l'étudiant absent.
      */
     public void marquerAbsent(Enseignant enseignant) {
-        this.statut         = StatutPresence.ABSENT;
-        this.present        = false;
-        this.heureArrivee   = null;
-        this.enseignant     = enseignant;
-        this.dateValidation = LocalDateTime.now();
-        this.methode        = MethodeValidation.MANUELLE;
+        this.statut          = StatutPresence.ABSENT;
+        this.present         = false;
+        this.heureArrivee    = null;
+        this.nbHeuresPresent = 0;
+        this.enseignant      = enseignant;
+        this.dateValidation  = LocalDateTime.now();
+        this.methode         = MethodeValidation.MANUELLE;
     }
 
     /**
@@ -270,7 +278,7 @@ public class Appels {
     }
 
     // ══════════════════════════════════════════
-    // HELPERS — institut (pour le filtrage multi-tenant)
+    // HELPERS — institut (filtrage multi-tenant)
     // ══════════════════════════════════════════
 
     public Long getInstitutId() {
@@ -278,5 +286,14 @@ public class Appels {
             return etudiant.getInstitut().getId();
         }
         return null;
+    }
+
+    // ══════════════════════════════════════════
+    // PRIVÉ
+    // ══════════════════════════════════════════
+
+    private int getRetardMinutesDepuisHeure(LocalTime heure) {
+        if (heure == null || plageHoraire == null) return 0;
+        return (int) java.time.Duration.between(plageHoraire.getHeureDebut(), heure).toMinutes();
     }
 }

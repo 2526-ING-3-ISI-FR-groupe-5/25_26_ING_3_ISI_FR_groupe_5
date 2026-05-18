@@ -16,20 +16,20 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.PlageHoraireRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.SessionAppelRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
 public class SessionAppelService implements ISessionAppelService {
+
     private final PlageHoraireRepository plageHoraireRepository;
     private final SessionAppelRepository sessionAppelRepository;
     private final AppelsRepository appelsRepository;
@@ -40,20 +40,6 @@ public class SessionAppelService implements ISessionAppelService {
     // ══════════════════════════════════════════
     // GET
     // ══════════════════════════════════════════
-
-    public SessionAppel getSessionActivePourClasse(Long classeId) {
-        List<PlageHoraire> plages = plageHoraireRepository.findByClasseId(classeId);
-        if (plages == null || plages.isEmpty()) return null;
-
-        for (PlageHoraire plage : plages) {
-            var sessionOpt = sessionAppelRepository.findByPlageHoraireIdAndActifTrue(plage.getId());
-            if (sessionOpt.isPresent()) {
-                return sessionOpt.get();
-            }
-        }
-        return null;
-    }
-
 
     @Transactional(readOnly = true)
     public SessionAppel findById(Long id) {
@@ -72,18 +58,32 @@ public class SessionAppelService implements ISessionAppelService {
                 .orElseThrow(() -> new RuntimeException("Aucune session active pour cette plage."));
     }
 
+    /**
+     * ✅ CORRIGÉ — Une seule requête directe en base au lieu de la boucle N+1.
+     *
+     * AVANT : findByClasseId() → liste de plages → 1 requête par plage → N+1
+     * APRES : findActiveByClasseId() → 1 seule requête JOIN directe
+     */
+    @Transactional(readOnly = true)
+    public SessionAppel getSessionActivePourClasse(Long classeId) {
+        return sessionAppelRepository.findActiveByClasseId(classeId).orElse(null);
+    }
+
     // ══════════════════════════════════════════
     // POST — Créer une session
     // ══════════════════════════════════════════
 
     public SessionAppel creer(SessionAppelRequest req, Long enseignantId) {
         PlageHoraire plage = plageHoraireService.findEntityById(req.getPlageHoraireId());
-
         Enseignant enseignant = enseignantService.findById(enseignantId);
 
         // Désactiver toute session active existante sur la même plage
         sessionAppelRepository.findByPlageHoraireIdAndActifTrue(req.getPlageHoraireId())
-                .ifPresent(s -> { s.setActif(false); sessionAppelRepository.save(s); });
+                .ifPresent(s -> {
+                    s.setActif(false);
+                    sessionAppelRepository.save(s);
+                    log.info("Session {} désactivée avant création d'une nouvelle", s.getId());
+                });
 
         int duree = req.getDureeMinutes() != null ? req.getDureeMinutes() : 3;
 
@@ -107,7 +107,7 @@ public class SessionAppelService implements ISessionAppelService {
     }
 
     // ══════════════════════════════════════════
-    // PUT — Terminer le cours
+    // PUT — Actions sur une session
     // ══════════════════════════════════════════
 
     public SessionAppel terminerCours(Long sessionId) {
@@ -125,13 +125,26 @@ public class SessionAppelService implements ISessionAppelService {
         return sessionAppelRepository.save(session);
     }
 
-    // ══════════════════════════════════════════
-    // PUT — Renouveler le code (QR/PIN expiré)
-    // ══════════════════════════════════════════
+    // Nouvelle signature
 
-    public SessionAppel renouvelerCode(Long sessionId, int dureeMinutes) {
+    /**
+     * ✅ CORRIGÉ — Vérification que l'enseignant est bien le propriétaire de la session.
+     * Avant : n'importe quel enseignant pouvait renouveler le code d'une session
+     * qu'il n'avait pas créée.
+     */
+    public SessionAppel renouvelerCode(Long sessionId, int dureeMinutes, Long enseignantId) {
         SessionAppel session = findById(sessionId);
-        if (session.isCoursTermine()) throw new RuntimeException("Le cours est déjà terminé.");
+
+        if (session.isCoursTermine()) {
+            throw new RuntimeException("Le cours est déjà terminé.");
+        }
+
+        // Vérification propriété
+        if (!session.getEnseignant().getId().equals(enseignantId)) {
+            throw new RuntimeException(
+                    "Vous ne pouvez renouveler que le code d'une session que vous avez créée.");
+        }
+
         session.setCode(genererCode(session.getMethode()));
         session.setDateGeneration(LocalDateTime.now());
         session.setDateExpiration(LocalDateTime.now().plusMinutes(dureeMinutes));
@@ -140,7 +153,40 @@ public class SessionAppelService implements ISessionAppelService {
     }
 
     // ══════════════════════════════════════════
-    // PRIVÉ — Générateur de code
+    // DELETE
+    // ══════════════════════════════════════════
+
+    /**
+     * ✅ CORRIGÉ — Garde ajoutée : impossible de supprimer une session
+     * dont le cours est terminé (historique de présence protégé).
+     * Seules les sessions actives ou arrêtées peuvent être supprimées.
+     *
+     * AVANT : supprimait silencieusement l'historique même sur cours terminé.
+     */
+    @Transactional
+    public void supprimer(Long id) {
+        SessionAppel session = sessionAppelRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Session d'appel introuvable : " + id));
+
+        if (session.isCoursTermine()) {
+            throw new RuntimeException(
+                    "Impossible de supprimer une session dont le cours est terminé. " +
+                            "L'historique de présence doit être conservé.");
+        }
+
+        List<Appels> appels = appelsRepository.findBySessionAppelId(id);
+        if (!appels.isEmpty()) {
+            appelsRepository.deleteAll(appels);
+            log.info("{} appel(s) supprimé(s) pour la session {}", appels.size(), id);
+        }
+
+        sessionAppelRepository.delete(session);
+        log.warn("Session d'appel {} supprimée avec {} appels", id, appels.size());
+    }
+
+    // ══════════════════════════════════════════
+    // PRIVÉ
     // ══════════════════════════════════════════
 
     private String genererCode(MethodeValidation methode) {
@@ -155,7 +201,6 @@ public class SessionAppelService implements ISessionAppelService {
         if (session.getPlageHoraire() == null || session.getPlageHoraire().getClasse() == null) {
             return;
         }
-
         Long classeId = session.getPlageHoraire().getClasse().getId();
         etudiantRepository.findByClasseIdAndActiveTrue(classeId).forEach(etudiant -> {
             appelsRepository.findByEtudiantIdAndPlageHoraireId(
@@ -165,13 +210,13 @@ public class SessionAppelService implements ISessionAppelService {
                 if (appel.getEnseignant() == null) appel.setEnseignant(session.getEnseignant());
                 appelsRepository.save(appel);
             }, () -> appelsRepository.save(Appels.builder()
-                            .etudiant(etudiant)
-                            .plageHoraire(session.getPlageHoraire())
-                            .enseignant(session.getEnseignant())
-                            .sessionAppel(session)
-                            .statut(StatutPresence.EN_ATTENTE)
-                            .synchronise(true)
-                            .build()));
+                    .etudiant(etudiant)
+                    .plageHoraire(session.getPlageHoraire())
+                    .enseignant(session.getEnseignant())
+                    .sessionAppel(session)
+                    .statut(StatutPresence.EN_ATTENTE)
+                    .synchronise(true)
+                    .build()));
         });
     }
 
@@ -181,23 +226,5 @@ public class SessionAppelService implements ISessionAppelService {
                     appel.marquerAbsent(session.getEnseignant());
                     appelsRepository.save(appel);
                 });
-    }
-
-    @Transactional
-    public void supprimer(Long id) {
-        SessionAppel session = sessionAppelRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Session d'appel non trouvée avec l'ID : " + id));
-
-        // Optionnel : Supprimer les appels associés
-        List<Appels> appels = appelsRepository.findBySessionAppelId(id);
-        if (!appels.isEmpty()) {
-            appelsRepository.deleteAll(appels);
-            log.info("{} appels supprimés pour la session {}", appels.size(), id);
-        }
-
-        // Supprimer la session
-        sessionAppelRepository.delete(session);
-        log.warn("Session d'appel {} supprimée définitivement avec tous ses appels", id);
     }
 }

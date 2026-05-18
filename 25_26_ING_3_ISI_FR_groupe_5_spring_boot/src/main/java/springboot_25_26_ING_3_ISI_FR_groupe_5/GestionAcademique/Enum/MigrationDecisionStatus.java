@@ -5,5 +5,5 @@ public enum MigrationDecisionStatus {
     EN_COURS,         // En cours de clonage
     MIGREE,           // Copiée avec succès en N+1
     ERREUR,           // Échec technique (ex: doublon, FK manquante)
-    ANNULEE           // Annulée lors d'un rollback
+    ROLLBACK, ANNULEE           // Annulée lors d'un rollback
 }

@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE, Long> {
 
     // ═══════════════════════════════════════════════════════════
-    // RECHERCHES DE BASE (avec @EntityGraph anti N+1)
+    // RECHERCHES DE BASE
     // ═══════════════════════════════════════════════════════════
 
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
@@ -30,8 +30,12 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     Optional<ProgrammationUE> findByIdWithDetails(@Param("id") Long id);
 
+    boolean existsByUeIdAndClasseIdAndSemestreId(Long ueId, Long classeId, Long semestreId);
+
+    List<ProgrammationUE> findBySemestre_AnneeAcademique_Id(Long anneeId);
+
     // ═══════════════════════════════════════════════════════════
-    // PAR CLASSE + ANNÉE (remplace .active par ID explicite)
+    // PAR CLASSE + ANNÉE
     // ═══════════════════════════════════════════════════════════
 
     @Query("""
@@ -39,7 +43,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         WHERE p.classe.id = :classeId
         AND p.semestre.anneeAcademique.id = :anneeId
         ORDER BY p.ue.nom ASC
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByClasseIdAndAnneeAcademiqueId(
             @Param("classeId") Long classeId,
@@ -49,19 +53,29 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         SELECT p FROM ProgrammationUE p
         WHERE p.semestre.anneeAcademique.id = :anneeId
         ORDER BY p.ue.nom ASC
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
 
+    @Query("""
+        SELECT p FROM ProgrammationUE p
+        WHERE p.classe.id = :classeId
+        AND p.semestre.anneeAcademique.id = :anneeId
+    """)
+    @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
+    List<ProgrammationUE> findByClasseAndAnnee(
+            @Param("classeId") Long classeId,
+            @Param("anneeId") Long anneeId);
+
     // ═══════════════════════════════════════════════════════════
-    // MULTI-INSTITUT (filtrage sécurisé via chemin académique)
+    // MULTI-INSTITUT
     // ═══════════════════════════════════════════════════════════
 
     @Query("""
         SELECT p FROM ProgrammationUE p
         WHERE p.classe.niveau.filiere.ecole.institut.id = :institutId
         AND p.semestre.anneeAcademique.id = :anneeId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByAnneeAcademiqueIdAndInstitutId(
             @Param("anneeId") Long anneeId,
@@ -72,7 +86,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         JOIN p.enseignants e
         WHERE e.id = :enseignantId
         AND p.classe.niveau.filiere.ecole.institut.id = :institutId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre"})
     List<ProgrammationUE> findByEnseignantIdAndInstitutId(
             @Param("enseignantId") Long enseignantId,
@@ -83,7 +97,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         WHERE p.classe.id = :classeId
         AND p.semestre.anneeAcademique.id = :anneeId
         AND p.classe.niveau.filiere.ecole.institut.id = :institutId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByClasseIdAndAnneeAcademiqueIdAndInstitutId(
             @Param("classeId") Long classeId,
@@ -91,7 +105,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
             @Param("institutId") Long institutId);
 
     // ═══════════════════════════════════════════════════════════
-    // PAR ENSEIGNANT (avec filtrage institut optionnel)
+    // PAR ENSEIGNANT
     // ═══════════════════════════════════════════════════════════
 
     @Query("""
@@ -99,7 +113,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         JOIN p.enseignants e
         WHERE e.id = :enseignantId
         AND p.semestre.anneeAcademique.id = :anneeId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre"})
     List<ProgrammationUE> findByEnseignantAndAnnee(
             @Param("enseignantId") Long enseignantId,
@@ -110,14 +124,11 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         JOIN p.enseignants e
         WHERE e.id = :enseignantId
         AND p.semestre.id = :semestreId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre"})
     List<ProgrammationUE> findByEnseignantIdAndSemestreId(
             @Param("enseignantId") Long enseignantId,
             @Param("semestreId") Long semestreId);
-
-    // ✅ Méthode dérivée simple (sans @Query) pour compatibilité
-    List<ProgrammationUE> findBySemestre_AnneeAcademique_Id(Long anneeId);
 
     // ═══════════════════════════════════════════════════════════
     // PAR UE
@@ -127,7 +138,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         SELECT p FROM ProgrammationUE p
         WHERE p.ue.id = :ueId
         AND p.semestre.anneeAcademique.id = :anneeId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByUeAndAnnee(
             @Param("ueId") Long ueId,
@@ -137,14 +148,14 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         SELECT p FROM ProgrammationUE p
         WHERE p.ue.id = :ueId
         AND p.semestre.id = :semestreId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findByUeIdAndSemestreId(
             @Param("ueId") Long ueId,
             @Param("semestreId") Long semestreId);
 
     // ═══════════════════════════════════════════════════════════
-    // PAGINATION AVEC @EntityGraph (Anti N+1 / LazyInit)
+    // PAGINATION
     // ═══════════════════════════════════════════════════════════
 
     @EntityGraph(attributePaths = {"ue", "classe.niveau", "semestre.anneeAcademique", "enseignants"})
@@ -157,7 +168,7 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         SELECT p FROM ProgrammationUE p
         WHERE p.classe.id = :classeId
         AND p.semestre.anneeAcademique.id = :anneeId
-        """)
+    """)
     Page<ProgrammationUE> findByClasseIdAndAnneeAcademiqueIdPaginated(
             @Param("classeId") Long classeId,
             @Param("anneeId") Long anneeId,
@@ -168,97 +179,91 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
         SELECT p FROM ProgrammationUE p
         WHERE p.semestre.anneeAcademique.id = :anneeId
         AND p.classe.niveau.filiere.ecole.institut.id = :institutId
-        """)
+    """)
     Page<ProgrammationUE> findByAnneeAcademiqueIdAndInstitutIdPaginated(
             @Param("anneeId") Long anneeId,
             @Param("institutId") Long institutId,
             Pageable pageable);
 
     // ═══════════════════════════════════════════════════════════
-    // MIGRATION SÉLECTIVE (préparation du clonage N → N+1)
+    // MIGRATION SÉLECTIVE
     // ═══════════════════════════════════════════════════════════
 
-    /**
-     * Trouve les programmations d'une année source pour un institut donné.
-     * Utilisé pour la sélection manuelle avant migration vers N+1.
-     */
     @Query("""
         SELECT p FROM ProgrammationUE p
         WHERE p.semestre.anneeAcademique.id = :sourceAnneeId
         AND p.classe.niveau.filiere.ecole.institut.id = :institutId
-        """)
+    """)
     @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
     List<ProgrammationUE> findMigrablesBySourceAnneeAndInstitut(
             @Param("sourceAnneeId") Long sourceAnneeId,
             @Param("institutId") Long institutId);
 
-    /**
-     * Vérifie si une programmation équivalente existe déjà dans l'année cible.
-     * Utilisé pour éviter les doublons lors du clonage.
-     */
-    boolean existsByUeIdAndClasseIdAndSemestreId(
-            Long ueId, Long classeId, Long semestreId);
-
     // ═══════════════════════════════════════════════════════════
-    // MÉTHODES DÉPRÉCIÉES (à supprimer après migration complète)
+    // ✅ AJOUTÉ — PAR ENSEIGNANT + ANNÉE (pour consultation N-1, N-2...)
+    // Remplace findByEnseignantsIdAndSemestreActifTrue() dans StatsService
+    // pour permettre la consultation de n'importe quelle année historique.
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * @deprecated Utiliser findByClasseIdAndAnneeAcademiqueId avec InstitutContexteActif
+     * Programmations d'un enseignant pour une année précise.
+     * Utilisé par StatsService.getProgressionEnseignant(enseignantId, anneeId).
+     * null anneeId → utiliser findByEnseignantAndSemestreActif() à la place.
      */
+    @Query("""
+        SELECT DISTINCT p FROM ProgrammationUE p
+        JOIN p.enseignants e
+        WHERE e.id = :enseignantId
+        AND p.semestre.anneeAcademique.id = :anneeId
+        ORDER BY p.ue.nom ASC
+    """)
+    @EntityGraph(attributePaths = {"ue", "classe", "semestre"})
+    List<ProgrammationUE> findByEnseignantIdAndAnneeId(
+            @Param("enseignantId") Long enseignantId,
+            @Param("anneeId") Long anneeId);
+
+    // ═══════════════════════════════════════════════════════════
+    // DÉPRÉCIÉES — à supprimer après migration complète
+    // ═══════════════════════════════════════════════════════════
+
+    /** @deprecated Utiliser findByClasseIdAndAnneeAcademiqueId */
     @Deprecated
     @Query("""
         SELECT p FROM ProgrammationUE p
         WHERE p.classe.id = :classeId
         AND p.semestre.anneeAcademique.active = true
         ORDER BY p.ue.nom ASC
-        """)
+    """)
     List<ProgrammationUE> findByClasseIdAndAnneeActive(@Param("classeId") Long classeId);
 
-    /**
-     * @deprecated Utiliser findByEnseignantIdAndInstitutId avec filtrage explicite
-     */
+    /** @deprecated Utiliser findByEnseignantIdAndInstitutId */
     @Deprecated
     @Query("""
         SELECT DISTINCT p FROM ProgrammationUE p
         JOIN p.enseignants e
         WHERE e.id = :enseignantId
         AND p.semestre.anneeAcademique.active = true
-        """)
+    """)
     List<ProgrammationUE> findByEnseignantId(@Param("enseignantId") Long enseignantId);
 
-    /**
-     * @deprecated Utiliser avec filtrage institut explicite
-     */
+    /** @deprecated Utiliser findByEnseignantIdAndAnneeId */
+    @Deprecated
+    @Query("""
+        SELECT DISTINCT p FROM ProgrammationUE p
+        JOIN p.enseignants e
+        WHERE e.id = :enseignantId
+        AND p.semestre.active = true
+    """)
+    List<ProgrammationUE> findByEnseignantsIdAndSemestreActifTrue(
+            @Param("enseignantId") Long enseignantId);
+
+    /** @deprecated Utiliser avec filtrage institut + année explicite */
     @Deprecated
     @Query("""
         SELECT DISTINCT p.classe FROM ProgrammationUE p
         JOIN p.enseignants e
         WHERE e.id = :enseignantId
         AND p.semestre.anneeAcademique.active = true
-        """)
+    """)
     List<Classe> findClassesByEnseignantId(@Param("enseignantId") Long enseignantId);
-
-    /**
-     * @deprecated Utiliser avec filtrage institut + année explicite
-     */
-    @Deprecated
-    @Query("""
-        SELECT p FROM ProgrammationUE p 
-        JOIN p.enseignants e 
-        WHERE e.id = :enseignantId 
-        AND p.semestre.active = true
-        """)
-    List<ProgrammationUE> findByEnseignantsIdAndSemestreActifTrue(
-            @Param("enseignantId") Long enseignantId);
-
-    @Query("""
-        SELECT p FROM ProgrammationUE p
-        WHERE p.classe.id = :classeId
-        AND p.semestre.anneeAcademique.id = :anneeId
-        """)
-    @EntityGraph(attributePaths = {"ue", "classe", "semestre", "enseignants"})
-    List<ProgrammationUE> findByClasseAndAnnee(
-            @Param("classeId") Long classeId,
-            @Param("anneeId") Long anneeId);
 }

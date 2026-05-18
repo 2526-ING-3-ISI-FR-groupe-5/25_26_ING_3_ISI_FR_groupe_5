@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${titre}">Migration - CarnetRouge</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="max-w-[1100px] mx-auto px-4 py-6">
+
+        <!-- EN-TETE -->
+        <div class="flex items-center gap-3 mb-6">
+            <a th:href="@{/admin/migration(institutId=${selectedInstitutId})}"
+               class="text-gray-400 hover:text-primary transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div>
+                <h1 class="font-serif text-2xl text-white" th:text="${titre}">Migration</h1>
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Sélectionnez les étudiants à migrer vers la nouvelle année
+                </p>
+            </div>
+        </div>
+
+        <!-- FLASH -->
+        <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm" th:text="${erreur}"></div>
+
+        <!-- LÉGENDE DÉCISIONS -->
+        <div class="flex flex-wrap gap-2 mb-4">
+            <span class="text-xs text-gray-400">Légende :</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-400 border border-green-500/20">ADMIS</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">REDOUBLANT</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/20">EXCLU</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20">DIPLOME</span>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-gray-500/10 text-gray-400 border border-gray-500/20">Sans décision</span>
+        </div>
+
+        <form th:action="@{/admin/migration/selectif/etudiant}" method="post" id="formMigration">
+            <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
+
+            <!-- BARRE OUTILS -->
+            <div class="bg-bgcard border border-white/5 rounded-2xl overflow-hidden mb-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 bg-bgsurface/30 border-b border-white/5">
+                    <div class="flex items-center gap-3 flex-1">
+                        <input type="text" id="searchInput" placeholder="Rechercher par nom ou matricule..."
+                               oninput="filtrer(this.value)"
+                               class="flex-1 max-w-sm bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                        <select id="filtreDecision" onchange="filtrerDecision(this.value)"
+                                class="bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                            <option value="">Toutes les décisions</option>
+                            <option value="ADMIS">Admis</option>
+                            <option value="REDOUBLANT">Redoublants</option>
+                            <option value="EXCLU">Exclus</option>
+                            <option value="DIPLOME">Diplômés</option>
+                            <option value="SANS">Sans décision</option>
+                        </select>
+                        <span id="compteur" class="text-xs text-gray-500 whitespace-nowrap">0 sélectionné(s)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="toutSelectionner()" class="text-xs text-primary hover:underline px-2 py-1">Tout sélectionner</button>
+                        <span class="text-gray-600">|</span>
+                        <button type="button" onclick="toutDeselectionner()" class="text-xs text-gray-500 hover:underline px-2 py-1">Tout désélectionner</button>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
+                    <table class="w-full text-sm" id="tableItems">
+                        <thead class="bg-bgsurface/50 sticky top-0">
+                        <tr>
+                            <th class="w-10 px-4 py-3"></th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Étudiant</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Matricule</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Classe</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Décision</th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                        <tr th:if="${#lists.isEmpty(items)}" class="item-row">
+                            <td colspan="5" class="px-4 py-10 text-center text-gray-500 text-sm">Aucun étudiant disponible.</td>
+                        </tr>
+                        <tr th:each="etudiant : ${items}"
+                            th:data-nom="${etudiant.nom + ' ' + etudiant.prenom}"
+                            th:data-matricule="${etudiant.matricule}"
+                            th:data-decision="${etudiant.decisionFinAnnee?.name() ?: 'SANS'}"
+                            class="item-row hover:bg-bgsurface/30 transition-colors">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" name="ids" th:value="${etudiant.id}"
+                                       onchange="majCompteur()"
+                                       class="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary/30">
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-bgsubtle flex items-center justify-center text-xs font-bold text-gray-400"
+                                         th:text="${#strings.substring(etudiant.nom,0,1)}">A</div>
+                                    <span class="font-medium text-gray-200"
+                                          th:text="${etudiant.nom + ' ' + etudiant.prenom}"></span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-gray-400 font-mono text-xs" th:text="${etudiant.matricule}"></td>
+                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${etudiant.classe?.nom ?: '-'}"></td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium border"
+                                      th:with="dec=${etudiant.decisionFinAnnee}"
+                                      th:classappend="${dec?.name() == 'ADMIS'}      ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                     (${dec?.name() == 'REDOUBLANT'} ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                                                     (${dec?.name() == 'EXCLU'}      ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                     (${dec?.name() == 'DIPLOME'}    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                                                       'bg-gray-500/10 text-gray-400 border-gray-500/20')))"
+                                      th:text="${dec != null ? dec.name() : 'Sans décision'}">
+                                </span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PARAMÈTRES + BOUTON -->
+            <div class="bg-bgcard border border-white/5 rounded-2xl p-5">
+                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Année cible <span class="text-red-400">*</span></label>
+                        <select name="nouvelleAnneeId"
+                                class="w-full bg-bgsurface border border-white/10 rounded-lg py-2.5 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary" required>
+                            <option value="" disabled selected>Sélectionner une année</option>
+                            <option th:each="annee : ${annees}" th:value="${annee.id}" th:text="${annee.nom}"></option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3">
+                        <a th:href="@{/admin/migration(institutId=${selectedInstitutId})}"
+                           class="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-gray-300 hover:bg-white/5 transition-colors">Annuler</a>
+                        <button type="submit"
+                                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow hover:shadow-lg transition-all">
+                            Lancer la migration
+                        </button>
+                    </div>
+                </div>
+                <p class="text-xs text-amber-400/70 mt-3">Les données de l'année courante resteront intactes.</p>
+            </div>
+            <div id="msg-erreur" class="hidden mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                Veuillez sélectionner au moins un étudiant.
+            </div>
+        </form>
+    </div>
+</div>
+<script layout:fragment="scripts">
+    function filtrer(q) {
+        const filtre = document.getElementById('filtreDecision').value;
+        q = q.toLowerCase();
+        document.querySelectorAll('.item-row').forEach(row => {
+            const nom = (row.dataset.nom || '').toLowerCase();
+            const mat = (row.dataset.matricule || '').toLowerCase();
+            const dec = row.dataset.decision || '';
+            const matchQ = !q || nom.includes(q) || mat.includes(q);
+            const matchD = !filtre || (filtre === 'SANS' ? dec === 'SANS' : dec === filtre);
+            row.classList.toggle('hidden', !matchQ || !matchD);
+        });
+    }
+    function filtrerDecision(val) { filtrer(document.getElementById('searchInput').value); }
+    function majCompteur() {
+        const n = document.querySelectorAll('input[name="ids"]:checked').length;
+        document.getElementById('compteur').textContent = n + ' sélectionné(s)';
+    }
+    function toutSelectionner() {
+        document.querySelectorAll('.item-row:not(.hidden) input[name="ids"]').forEach(cb => cb.checked = true);
+        majCompteur();
+    }
+    function toutDeselectionner() {
+        document.querySelectorAll('input[name="ids"]').forEach(cb => cb.checked = false);
+        majCompteur();
+    }
+    document.getElementById('formMigration').addEventListener('submit', function(e) {
+        const n = document.querySelectorAll('input[name="ids"]:checked').length;
+        if (n === 0) {
+            e.preventDefault();
+            const msg = document.getElementById('msg-erreur');
+            msg.classList.remove('hidden');
+            msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+</script>
+</body>
+</html>

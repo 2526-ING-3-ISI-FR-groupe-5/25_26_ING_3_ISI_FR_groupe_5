@@ -269,7 +269,7 @@ public class MigrationController {
                         : anneeService.getAll()));
         model.addAttribute("selectedInstitutId", institutCible);
 
-        return "migration/selectif";
+        return "migration/selectif-"+type;
     }
 
     // ═══════════════════════════════════════════════════════════

@@ -26,7 +26,7 @@
         <!-- EN-TÊTE -->
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-1">
-                <a th:href="@{/admin/migration}"
+                <a th:href="@{/admin/migration(institutId=${batch.institut?.id})}"
                    class="text-gray-400 hover:text-primary transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -92,7 +92,7 @@
                 </p>
                 <div class="flex gap-3 flex-shrink-0">
                     <form th:action="@{/admin/migration/rollback/{id}(id=${batch.id})}" method="post"
-                          onsubmit="return confirm('Annuler cette migration ? Les inscriptions N+1 seront supprimées.')">
+                          onsubmit="return confirm('Annuler cette migration ? Les données N+1 seront conservées.')">
                         <button type="submit"
                                 class="px-4 py-2 text-sm rounded-lg border border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,6 +160,10 @@
                                 class="filtre-btn px-3 py-1 rounded-full text-xs border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                             Erreurs
                         </button>
+                        <button onclick="filtrerDecisions('ROLLBACK')" id="btn-ROLLBACK"
+                                class="filtre-btn px-3 py-1 rounded-full text-xs border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors">
+                            Rollbacks
+                        </button>
                     </div>
 
                     <div class="border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden">
@@ -182,7 +186,9 @@
                                         th:text="${decision.sourceReference}"></td>
                                     <td class="px-4 py-2.5">
                                         <span class="px-2 py-0.5 rounded-full text-xs"
-                                              th:classappend="${decision.status.name() == 'MIGREE'} ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'"
+                                              th:classappend="${decision.status.name() == 'MIGREE'} ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' :
+                                                             (${decision.status.name() == 'ERREUR'} ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400' :
+                                                             'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400')"
                                               th:text="${decision.status}">
                                         </span>
                                     </td>
@@ -197,7 +203,7 @@
 
         <!-- RETOUR -->
         <div class="text-center">
-            <a th:href="@{/admin/migration}"
+            <a th:href="@{/admin/migration(institutId=${batch.institut?.id})}"
                class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>

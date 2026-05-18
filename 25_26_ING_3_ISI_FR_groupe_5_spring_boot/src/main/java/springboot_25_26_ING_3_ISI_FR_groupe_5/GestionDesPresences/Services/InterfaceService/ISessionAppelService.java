@@ -17,5 +17,6 @@ public interface ISessionAppelService {
     SessionAppel creer(SessionAppelRequest req, Long enseignantId);
     SessionAppel terminerCours(Long sessionId);
     SessionAppel arreterSession(Long sessionId);
-    SessionAppel renouvelerCode(Long sessionId, int dureeMinutes);
+
+
 }

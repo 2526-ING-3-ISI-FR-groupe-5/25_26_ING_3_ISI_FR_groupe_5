@@ -17,41 +17,22 @@ import java.util.Optional;
 public interface AppelsRepository extends JpaRepository<Appels, Long> {
 
     // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR ÉTUDIANT
+    // RECHERCHES DE BASE
     // ═══════════════════════════════════════════════════════════
 
     List<Appels> findByEtudiantId(Long etudiantId);
-
     List<Appels> findBySessionAppelId(Long sessionId);
-
-    List<Appels> findByPlageHoraireIdAndStatut(Long plageHoraireId, StatutPresence statut);
-
-    Optional<Appels> findByEtudiantIdAndPlageHoraireId(Long etudiantId, Long plageHoraireId);
-
-    List<Appels> findBySessionAppelIdAndStatut(Long sessionId, StatutPresence statut);
-
-    // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR PLAGE HORAIRE
-    // ═══════════════════════════════════════════════════════════
-
     List<Appels> findByPlageHoraireId(Long plageHoraireId);
-
-    // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR ENSEIGNANT
-    // ═══════════════════════════════════════════════════════════
+    List<Appels> findByPlageHoraireIdAndStatut(Long plageHoraireId, StatutPresence statut);
+    List<Appels> findBySessionAppelIdAndStatut(Long sessionId, StatutPresence statut);
+    List<Appels> findByEtudiantIdAndStatut(Long etudiantId, StatutPresence statut);
+    Optional<Appels> findByEtudiantIdAndPlageHoraireId(Long etudiantId, Long plageHoraireId);
 
     @Query("SELECT a FROM Appels a JOIN FETCH a.plageHoraire WHERE a.enseignant.id = :enseignantId ORDER BY a.dateValidation DESC")
     Page<Appels> findByEnseignantIdWithPlage(@Param("enseignantId") Long enseignantId, Pageable pageable);
 
-    // ✅ CORRIGÉ : Suppression du doublon - cette méthode était déjà définie plus haut (ligne ~37)
-    // List<Appels> findByEtudiantIdAndStatut(Long etudiantId, StatutPresence statut); ← SUPPRIMÉ
-
-    // ═══════════════════════════════════════════════════════════
-    // STATISTIQUES
-    // ═══════════════════════════════════════════════════════════
-
-    @Query("SELECT COUNT(a) FROM Appels a WHERE a.etudiant.id = :etudiantId AND a.present = false")
-    long countAbsencesByEtudiant(@Param("etudiantId") Long etudiantId);
+    @Query("SELECT a FROM Appels a JOIN FETCH a.etudiant JOIN FETCH a.plageHoraire WHERE a.id = :id")
+    Appels findByIdWithDetails(@Param("id") Long id);
 
     // ═══════════════════════════════════════════════════════════
     // MULTI-INSTITUTS
@@ -67,16 +48,127 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
         AND a.justificatif IS NULL
         ORDER BY a.dateValidation DESC
     """)
-    Page<Appels> findAbsencesNonJustifieesByInstitutId(@Param("institutId") Long institutId, Pageable pageable);
+    Page<Appels> findAbsencesNonJustifieesByInstitutId(
+            @Param("institutId") Long institutId, Pageable pageable);
 
     // ═══════════════════════════════════════════════════════════
-    // VÉRIFICATIONS
+    // STATISTIQUES — SEMESTRE ACTIF (conserver pour compatibilité)
     // ═══════════════════════════════════════════════════════════
 
-    @Query("SELECT a FROM Appels a JOIN FETCH a.etudiant JOIN FETCH a.plageHoraire WHERE a.id = :id")
-    Appels findByIdWithDetails(@Param("id") Long id);
+    @Query("""
+        SELECT COUNT(a) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.active = true
+        AND a.statut = :statut
+    """)
+    long countByEtudiantAndStatutAndSemestreActif(
+            @Param("etudiantId") Long etudiantId,
+            @Param("statut") StatutPresence statut);
 
-    // ✅ Mise à jour bulk — une seule requête au lieu de N
+    @Query("""
+        SELECT COUNT(a) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.active = true
+        AND a.statut = :statut
+    """)
+    long countByEtudiantAndStatutInActiveSemestre(
+            @Param("etudiantId") Long etudiantId,
+            @Param("statut") StatutPresence statut);
+
+    @Query("""
+        SELECT COUNT(a) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.active = true
+        AND a.statut = 'ABSENT'
+        AND a.justificatif IS NULL
+    """)
+    long countAbsencesNonJustifieesByEtudiant(@Param("etudiantId") Long etudiantId);
+
+    @Query("SELECT COUNT(a) FROM Appels a WHERE a.etudiant.id = :etudiantId AND a.present = false")
+    long countAbsencesByEtudiant(@Param("etudiantId") Long etudiantId);
+
+    // ═══════════════════════════════════════════════════════════
+    // ✅ AJOUTÉ — STATISTIQUES PAR ANNÉE (pour consultation N-1, N-2...)
+    // Permet de consulter l'historique d'une année précise,
+    // pas seulement l'année dont le semestre est actif.
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Compte les appels d'un statut donné pour un étudiant sur une année précise.
+     * Remplace countByEtudiantAndStatutAndSemestreActif() pour les années historiques.
+     */
+    @Query("""
+        SELECT COUNT(a) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.anneeAcademique.id = :anneeId
+        AND a.statut = :statut
+    """)
+    long countByEtudiantAndStatutAndAnnee(
+            @Param("etudiantId") Long etudiantId,
+            @Param("statut") StatutPresence statut,
+            @Param("anneeId") Long anneeId);
+
+    /**
+     * Compte les absences non justifiées d'un étudiant sur une année précise.
+     */
+    @Query("""
+        SELECT COUNT(a) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.anneeAcademique.id = :anneeId
+        AND a.statut = 'ABSENT'
+        AND a.justificatif IS NULL
+    """)
+    long countAbsencesNonJustifieesByEtudiantAndAnnee(
+            @Param("etudiantId") Long etudiantId,
+            @Param("anneeId") Long anneeId);
+
+    /**
+     * Somme des heures de présence d'un étudiant sur une année précise.
+     * Utile pour le récap des heures au retour à N-1.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(a.nbHeuresPresent), 0) FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.anneeAcademique.id = :anneeId
+    """)
+    int sumHeuresPresentByEtudiantAndAnnee(
+            @Param("etudiantId") Long etudiantId,
+            @Param("anneeId") Long anneeId);
+
+    /**
+     * Tous les appels d'un étudiant pour une année précise.
+     * Utile pour afficher l'historique complet de présence d'une année.
+     */
+    @Query("""
+        SELECT a FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.anneeAcademique.id = :anneeId
+        ORDER BY a.plageHoraire.heureDebut ASC
+    """)
+    List<Appels> findByEtudiantIdAndAnneeId(
+            @Param("etudiantId") Long etudiantId,
+            @Param("anneeId") Long anneeId);
+
+    /**
+     * Tous les appels d'un étudiant pour une année et un statut précis.
+     * Ex: toutes les absences de l'étudiant sur N-1.
+     */
+    @Query("""
+        SELECT a FROM Appels a
+        WHERE a.etudiant.id = :etudiantId
+        AND a.plageHoraire.semestre.anneeAcademique.id = :anneeId
+        AND a.statut = :statut
+        ORDER BY a.plageHoraire.heureDebut ASC
+    """)
+    List<Appels> findByEtudiantIdAndAnneeIdAndStatut(
+            @Param("etudiantId") Long etudiantId,
+            @Param("anneeId") Long anneeId,
+            @Param("statut") StatutPresence statut);
+
+    // ═══════════════════════════════════════════════════════════
+    // MISE À JOUR BULK
+    // ═══════════════════════════════════════════════════════════
+
     @Modifying
     @Query("""
         UPDATE Appels a
@@ -85,41 +177,5 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     """)
     void updateStatutByJustificatifId(
             @Param("justificatifId") Long justificatifId,
-            @Param("statut") StatutPresence statut
-    );
-
-    // ✅ CORRIGÉ : Ajout des @Param manquants
-    @Query("""
-        SELECT COUNT(a) FROM Appels a 
-        WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.active = true 
-        AND a.statut = :statut
-    """)
-    long countByEtudiantAndStatutInActiveSemestre(
-            @Param("etudiantId") Long etudiantId,
-            @Param("statut") StatutPresence statut
-    );
-
-    @Query("""
-        SELECT COUNT(a) FROM Appels a 
-        WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.active = true 
-        AND a.statut = :statut
-    """)
-    long countByEtudiantAndStatutAndSemestreActif(
-            @Param("etudiantId") Long etudiantId,
-            @Param("statut") StatutPresence statut
-    );
-
-    // Pour les absences non justifiées (NJ)
-    @Query("""
-        SELECT COUNT(a) FROM Appels a 
-        WHERE a.etudiant.id = :etudiantId 
-        AND a.plageHoraire.semestre.active = true 
-        AND a.statut = 'ABSENT' 
-        AND a.justificatif IS NULL
-    """)
-    long countAbsencesNonJustifieesByEtudiant(@Param("etudiantId") Long etudiantId);
-
-    List<Appels> findByEtudiantIdAndStatut(Long etudiantId, StatutPresence statutPresence);
+            @Param("statut") StatutPresence statut);
 }

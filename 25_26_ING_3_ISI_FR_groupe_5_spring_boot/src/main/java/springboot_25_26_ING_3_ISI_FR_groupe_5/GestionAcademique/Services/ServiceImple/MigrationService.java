@@ -442,28 +442,33 @@ public class MigrationService implements IMigrationService {
         Annee_academique anneeSource = batch.getSourceAnnee();
         Annee_academique anneeTarget = batch.getTargetAnnee();
 
-        log.info("↩️ Rollback batch {} : {} → {}", batchId,
-                anneeSource.getNom(), anneeTarget.getNom());
+        log.info("↩️ Rollback batch {} : restauration état {} ← {} (données N+1 conservées)",
+                batchId, anneeSource.getNom(), anneeTarget.getNom());
 
-        int page = 0;
-        Page<Inscription> batchPage;
-        do {
-            Pageable pageable = PageRequest.of(page++, PAGINATION_BATCH_SIZE);
-            batchPage = inscriptionRepo.findByAnneeAcademiqueIdPaginated(anneeTarget.getId(), pageable);
+        List<MigrationDecision> decisions = decisionRepo.findByBatchId(batchId);
 
-            for (Inscription inscriptionN1 : batchPage) {
-                Etudiant etudiant = inscriptionN1.getEtudiant();
-                restaurerClasseEtudiant(etudiant, anneeSource);
-                if (!etudiant.isActive()) {
-                    etudiant.setActive(true);
-                    etudiantRepository.save(etudiant);
+        for (MigrationDecision decision : decisions) {
+            if (decision.getStatus() != MigrationDecisionStatus.MIGREE) continue;
+
+            if (decision.getSourceType() == MigrationSourceType.INSCRIPTION) {
+                Inscription inscriptionN = inscriptionRepo.findById(decision.getSourceId()).orElse(null);
+                if (inscriptionN != null) {
+                    Etudiant etudiant = inscriptionN.getEtudiant();
+                    restaurerClasseEtudiant(etudiant, anneeSource);
+                    if (!etudiant.isActive()) {
+                        etudiant.setActive(true);
+                        etudiantRepository.save(etudiant);
+                    }
                 }
             }
-            inscriptionRepo.deleteAll(batchPage.getContent());
-            inscriptionRepo.flush();
-        } while (batchPage.hasNext());
+            // ENSEIGNANT, ASSISTANT, UE, PROGRAMMATION_UE, CLASSE : rien à faire
+            // Les données N+1 sont conservées
 
-        programmationService.supprimerProgrammationsAnnee(anneeTarget.getId());
+            decision.setStatus(MigrationDecisionStatus.ROLLBACK);
+            decisionRepo.save(decision);
+        }
+
+        // Restaurer le contexte actif vers l'année source
         restaurerContexteActif(batch.getInstitut().getId(), anneeSource);
 
         batch.setStatus(MigrationBatchStatus.ANNULE);
@@ -471,7 +476,8 @@ public class MigrationService implements IMigrationService {
         batchRepo.save(batch);
 
         journalService.journaliserSucces(acteur, TypeAction.MIGRATION_ROLLBACK, "Migration", batchId,
-                "Rollback " + anneeSource.getNom() + " → " + anneeTarget.getNom());
+                "Rollback " + anneeSource.getNom() + " ← " + anneeTarget.getNom()
+                        + " (données N+1 conservées)");
 
         log.info("✅ Rollback terminé pour batch {}", batchId);
     }
@@ -513,8 +519,53 @@ public class MigrationService implements IMigrationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MigrationResultat simuler(Long institutId, Long nouvelleAnneeId) {
-        return null;
+        Annee_academique ancienne = anneeService.getAnneeActivePourInstitut(institutId);
+        Annee_academique nouvelle = anneeService.findEntityById(nouvelleAnneeId);
+
+        if (nouvelle == null || nouvelle.isActive()) {
+            throw new MigrationException("L'année cible n'existe pas ou est déjà active");
+        }
+        if (!nouvelle.getInstitut().getId().equals(institutId)) {
+            throw new MigrationException("L'année cible n'appartient pas au même institut");
+        }
+
+        MigrationResultat resultat = new MigrationResultat();
+        int page = 0;
+        Page<Inscription> batchPage;
+
+        do {
+            Pageable pageable = PageRequest.of(page++, PAGINATION_BATCH_SIZE);
+            batchPage = inscriptionRepo.findByAnneeAcademiqueIdPaginated(ancienne.getId(), pageable);
+
+            batchPage.forEach(i -> {
+                DecisionFinAnnee decision = i.getDecisionFinAnnee();
+                if (decision == null) {
+                    resultat.ajouterIgnore(i.getEtudiant().getMatricule());
+                    return;
+                }
+                switch (decision) {
+                    case ADMIS -> {
+                        Optional<Niveau> niveauSup = niveauService.getNiveauSuperieur(
+                                i.getClasse().getNiveau());
+                        if (niveauSup.isEmpty()) {
+                            resultat.ajouterDiplome(i.getEtudiant().getMatricule());
+                        } else {
+                            resultat.ajouterAdmis(i.getEtudiant().getMatricule());
+                        }
+                    }
+                    case REDOUBLANT -> resultat.ajouterRedoublant(i.getEtudiant().getMatricule());
+                    case EXCLU     -> resultat.ajouterExclu(i.getEtudiant().getMatricule());
+                    case DIPLOME   -> resultat.ajouterDiplome(i.getEtudiant().getMatricule());
+                }
+            });
+        } while (batchPage.hasNext());
+
+        log.info("📊 Simulation migration {} → {} : {}",
+                ancienne.getNom(), nouvelle.getNom(), resultat);
+
+        return resultat;
     }
 
     @Override
