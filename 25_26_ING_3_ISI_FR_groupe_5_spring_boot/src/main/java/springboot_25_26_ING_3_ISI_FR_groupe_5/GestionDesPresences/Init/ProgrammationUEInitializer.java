@@ -1,3 +1,4 @@
+/*
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Init;
 
 import lombok.RequiredArgsConstructor;
@@ -243,4 +244,4 @@ private  final  ClassesRepository classeRepository;
                         .build()
         );
     }
-}
+}*/

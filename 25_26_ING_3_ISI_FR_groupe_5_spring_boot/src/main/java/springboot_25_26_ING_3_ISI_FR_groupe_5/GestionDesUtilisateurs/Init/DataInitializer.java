@@ -1,3 +1,4 @@
+/*
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Init;
 
 import lombok.RequiredArgsConstructor;
@@ -600,4 +601,4 @@ public class DataInitializer implements ApplicationRunner {
     private record EnseignantData(String nom, String prenom, String email, String grade, String type) {}
     private record AssistantData(String nom, String prenom, String email, String fonction) {}
     private record SurveillantData(String nom, String prenom, String email, String secteur, String typeContrat) {}
-}
+}*/

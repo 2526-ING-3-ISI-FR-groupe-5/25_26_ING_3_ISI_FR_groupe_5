@@ -56,6 +56,23 @@ public class MigrationController {
     private final AssistantRepository assistantRepository;
     private final MigrationBatchRepository batchRepository;
 
+/*    private TypeMigration typeMigrationFromString(String type) {
+        return switch (type) {
+            case "institut"   -> TypeMigration.INSTITUT;
+            case "ecole"      -> TypeMigration.ECOLE;
+            case "filiere"    -> TypeMigration.FILIERE;
+            case "specialite" -> TypeMigration.SPECIALITE;
+            case "niveau"     -> TypeMigration.NIVEAU;
+            case "classe"     -> TypeMigration.CLASSE;
+            case "etudiant"   -> TypeMigration.ETUDIANT;
+            case "enseignant" -> TypeMigration.ENSEIGNANT;
+            case "assistant"  -> TypeMigration.ASSISTANT;
+            case "ue"         -> TypeMigration.UE;
+            default           -> TypeMigration.SELECTIVE;
+        };
+    }*/
+
+
     // ═══════════════════════════════════════════════════════════
     // UTILITAIRE — MigrationResultat → MigrationResponse
     // ═══════════════════════════════════════════════════════════
@@ -306,8 +323,9 @@ public class MigrationController {
                 default -> throw new IllegalArgumentException("Type inconnu : " + type);
             };
 
+            // ✅ Utilise le type spécifique
             ra.addFlashAttribute("resultat",
-                    mapResultatToResponse(resultat, TypeMigration.SELECTIVE, institutId, null, true));
+                    mapResultatToResponse(resultat, typeMigrationFromString(type), institutId, null, true));
             ra.addFlashAttribute("succes", "Migration " + type + " effectuée avec succès !");
 
         } catch (Exception e) {
@@ -318,6 +336,23 @@ public class MigrationController {
 
         return "redirect:/admin/migration"
                 + (institutId != null ? "?institutId=" + institutId : "");
+    }
+
+    // ✅ Nouvelle méthode
+    private TypeMigration typeMigrationFromString(String type) {
+        return switch (type) {
+            case "institut"   -> TypeMigration.INSTITUT;
+            case "ecole"      -> TypeMigration.ECOLE;
+            case "filiere"    -> TypeMigration.FILIERE;
+            case "specialite" -> TypeMigration.SPECIALITE;
+            case "niveau"     -> TypeMigration.NIVEAU;
+            case "classe"     -> TypeMigration.CLASSE;
+            case "etudiant"   -> TypeMigration.ETUDIANT;
+            case "enseignant" -> TypeMigration.ENSEIGNANT;
+            case "assistant"  -> TypeMigration.ASSISTANT;
+            case "ue"         -> TypeMigration.UE;
+            default           -> TypeMigration.SELECTIVE;
+        };
     }
 
     // ═══════════════════════════════════════════════════════════
