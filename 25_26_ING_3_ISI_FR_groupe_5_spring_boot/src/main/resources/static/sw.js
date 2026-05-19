@@ -1,12 +1,11 @@
-const CACHE_NAME = 'carnet-rouge-v1';
-
-// Ne mettre QUE les ressources statiques et pages publiques
+const CACHE_NAME = 'carnet-rouge';
+// ues et pages publiques
 // Pas les routes protégées par JWT
 const ASSETS = [
     '/login',
     '/css/output.css',
     '/manifest.json',
-    '/icon-512.png'
+    '/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {

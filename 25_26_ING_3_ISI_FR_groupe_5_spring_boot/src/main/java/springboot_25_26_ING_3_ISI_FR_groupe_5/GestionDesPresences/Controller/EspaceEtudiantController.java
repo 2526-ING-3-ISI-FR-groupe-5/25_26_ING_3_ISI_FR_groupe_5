@@ -34,65 +34,127 @@ public class EspaceEtudiantController {
 
     @GetMapping("/mon-espace")
     public String dashboard(Model model, @AuthenticationPrincipal Utilisateur utilisateur) {
-
-        // ✅ CORRIGÉ — cast sécurisé avec instanceof
-        // AVANT : (Etudiant) utilisateur → ClassCastException si mauvais rôle
         if (!(utilisateur instanceof Etudiant etudiant)) {
             return "redirect:/accessDenied";
         }
 
-        // 1. Statistiques semestre actif
+        // Stats semestre actif
         model.addAttribute("stats", statsService.getStatsEtudiant(etudiant.getId()));
 
-        // 2. Session active pour sa classe
-        // ✅ CORRIGÉ — etudiant.getClasse() peut être null (LAZY ou non affecté)
+        // Session active pour sa classe — null si aucune
         if (etudiant.getClasse() != null) {
             try {
-                model.addAttribute("sessionActive",
-                        sessionAppelService.getSessionActivePourClasse(etudiant.getClasse().getId()));
+                var session = sessionAppelService.getSessionActivePourClasse(etudiant.getClasse().getId());
+                model.addAttribute("sessionActive", session);
             } catch (Exception e) {
-                log.debug("Aucune session active pour la classe {} : {}",
-                        etudiant.getClasse().getId(), e.getMessage());
+                log.debug("Aucune session active classe {} : {}", etudiant.getClasse().getId(), e.getMessage());
                 model.addAttribute("sessionActive", null);
             }
         } else {
             model.addAttribute("sessionActive", null);
         }
 
-        // 3. Historique récent des appels
-        var historique = appelsService.getByEtudiant(etudiant.getId());
-        model.addAttribute("appels", appelsMapper.toResponseList(historique));
+        // Historique des appels
+        model.addAttribute("appels",
+                appelsMapper.toResponseList(appelsService.getByEtudiant(etudiant.getId())));
 
         model.addAttribute("etudiant", etudiant);
 
-        // ✅ CORRIGÉ — template étudiant, pas le dashboard enseignant
-        // AVANT : "enseignant/dashboardEnseignant" → affichait la mauvaise vue
         return "etudiant/dashboardEtudiant";
     }
 
     // ══════════════════════════════════════════
-    // VALIDATION DE PRÉSENCE (QR / PIN)
+    // PAGE PWA — VALIDATION DE PRÉSENCE
+    // GET /etudiant/valider-presence
     // ══════════════════════════════════════════
 
+    /**
+     * Affiche la page de validation de présence (PWA).
+     * Charge la session active de la classe de l'étudiant.
+     * Si aucune session active : affiche un message d'attente.
+     *
+     * Le code PIN et les coordonnées GPS sont saisis sur cette page
+     * puis soumis via POST /etudiant/valider-presence.
+     */
+    @GetMapping("/valider-presence")
+    public String afficherValidation(Model model, @AuthenticationPrincipal Utilisateur utilisateur) {
+        if (!(utilisateur instanceof Etudiant etudiant)) {
+            return "redirect:/accessDenied";
+        }
+
+        // Charger la session active si elle existe
+        if (etudiant.getClasse() != null) {
+            try {
+                var session = sessionAppelService.getSessionActivePourClasse(
+                        etudiant.getClasse().getId());
+                // On ne passe pas le code au template — sécurité
+                model.addAttribute("session", session);
+            } catch (Exception e) {
+                log.debug("Aucune session active pour affichage validation : {}", e.getMessage());
+                model.addAttribute("session", null);
+            }
+        } else {
+            model.addAttribute("session", null);
+        }
+
+        return "etudiant/valider-presence";
+    }
+
+    // ══════════════════════════════════════════
+    // POST — VALIDATION PRÉSENCE (PWA)
+    // POST /etudiant/valider-presence
+    // ══════════════════════════════════════════
+
+    /**
+     * Reçoit le code PIN + coordonnées GPS et valide la présence.
+     *
+     * Champs attendus dans AppelsRequest :
+     * - sessionAppelId   : id de la session
+     * - codeSaisi        : code PIN 6 chiffres
+     * - latitudeEtudiant : depuis navigator.geolocation
+     * - longitudeEtudiant: depuis navigator.geolocation
+     */
     @PostMapping("/valider-presence")
     public String validerPresence(
             @ModelAttribute AppelsRequest req,
             @AuthenticationPrincipal Utilisateur u,
             RedirectAttributes ra) {
 
-        // ✅ CORRIGÉ — cast sécurisé
         if (!(u instanceof Etudiant etudiant)) {
             return "redirect:/accessDenied";
         }
 
+        // Vérification GPS côté serveur — double sécurité
+        if (req.getLatitudeEtudiant() == null || req.getLongitudeEtudiant() == null) {
+            ra.addFlashAttribute("erreur",
+                    "Position GPS manquante. Autorisez la geolocalisation et reessayez.");
+            return "redirect:/etudiant/valider-presence";
+        }
+
         try {
-            log.info("Etudiant {} valide sa presence", etudiant.getId());
+            log.info("Etudiant {} valide sa presence (lat={}, lng={})",
+                    etudiant.getId(),
+                    req.getLatitudeEtudiant(),
+                    req.getLongitudeEtudiant());
+
             appelsService.validerParCode(req, etudiant.getId());
             ra.addFlashAttribute("succes", "Votre presence a ete enregistree !");
+
         } catch (Exception e) {
             log.warn("Echec validation presence etudiant {} : {}", etudiant.getId(), e.getMessage());
-            ra.addFlashAttribute("erreur", "Echec de validation : " + e.getMessage());
+
+            // Message d'erreur lisible selon le type d'échec
+            String msg = e.getMessage();
+            if (msg != null && msg.contains("perimetre")) {
+                msg = "Vous etes trop loin de la salle de cours. Rapprochez-vous et reessayez.";
+            } else if (msg != null && msg.contains("Code invalide")) {
+                msg = "Code incorrect. Verifiez le code affiche par votre enseignant.";
+            } else if (msg != null && msg.contains("expire")) {
+                msg = "La session a expire. Demandez a votre enseignant de renouveler le code.";
+            }
+            ra.addFlashAttribute("erreur", msg);
         }
-        return "redirect:/etudiant/mon-espace";
+
+        return "redirect:/etudiant/valider-presence";
     }
 }

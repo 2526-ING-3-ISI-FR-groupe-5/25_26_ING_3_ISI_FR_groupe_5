@@ -34,22 +34,29 @@ public class SecurityConfig {
     private static final String[] PUBLIC_URL = {
             "/login",
             "/logout",
-            "/refresh-token",              // ← Sans /** car route exacte
+            "/refresh-token",
             "/notFound",
             "/accessDenied",
             "/sessionExpired",
-            "/error",                      // ← Sans /** car route exacte
-            "/admin",                      // ← Route exacte
-            "/api/v1/auth/**",             // ← OK: /** à la fin
+            "/error",
+            "/admin",
+            "/api/v1/auth/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
+
             "/css/**",
             "/js/**",
             "/images/**",
+
             "/manifest.json",
             "/sw.js",
-            "/icon-512.png",
+
+            "/icon-192x192.png",
+            "/icon-512x512.png",
+
+            "/fa.ico",
             "/favicon.ico",
+
             "/",
             "/actuator/health"
     };
