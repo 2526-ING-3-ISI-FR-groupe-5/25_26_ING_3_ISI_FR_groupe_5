@@ -14,30 +14,54 @@ import java.util.Optional;
 public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long> {
 
     // ═══════════════════════════════════════════════════════════
-    // RECHERCHES PAR PLAGE HORAIRE
+    // RECHERCHES PAR CLASSE
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Session normale active pour une classe (QR Code ou PIN).
+     */
     @Query("""
-    SELECT DISTINCT s FROM SessionAppel s 
-    JOIN FETCH s.plageHoraire 
-    WHERE s.plageHoraire.classe.id = :classeId 
+    SELECT DISTINCT s FROM SessionAppel s
+    JOIN FETCH s.plageHoraire
+    WHERE s.plageHoraire.classe.id = :classeId
     AND s.actif = true
+    AND s.typeSession = 'NORMALE'
 """)
     Optional<SessionAppel> findActiveByClasseId(@Param("classeId") Long classeId);
 
+    /**
+     * Session offline active pour une classe.
+     */
+    @Query("""
+    SELECT DISTINCT s FROM SessionAppel s
+    JOIN FETCH s.plageHoraire
+    WHERE s.plageHoraire.classe.id = :classeId
+    AND s.actif = true
+    AND s.typeSession = 'OFFLINE'
+""")
+    Optional<SessionAppel> findOfflineActiveByClasseId(@Param("classeId") Long classeId);
 
-//    @Query("SELECT s FROM SessionAppel s WHERE s.plageHoraire.classe.id = :classeId AND s.actif = true")
-//    Optional<SessionAppel> findActiveByClasseId(@Param("classeId") Long classeId);
+    // ═══════════════════════════════════════════════════════════
+    // RECHERCHES PAR PLAGE HORAIRE
+    // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Toutes les sessions d'une plage horaire.
+     */
     List<SessionAppel> findByPlageHoraireId(Long plageHoraireId);
 
-    // Session active d'une plage horaire
+    /**
+     * Session active d'une plage horaire (peu importe le type).
+     */
     Optional<SessionAppel> findByPlageHoraireIdAndActifTrue(Long plageHoraireId);
 
     // ═══════════════════════════════════════════════════════════
     // RECHERCHES PAR ENSEIGNANT
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Sessions d'un enseignant sur une période donnée.
+     */
     @Query("""
         SELECT s FROM SessionAppel s
         WHERE s.enseignant.id = :enseignantId
@@ -53,6 +77,9 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // SESSIONS EXPIRÉES (pour nettoyage)
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Trouve toutes les sessions actives mais expirées.
+     */
     @Query("""
         SELECT s FROM SessionAppel s
         WHERE s.actif = true
@@ -64,20 +91,22 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
     // STATISTIQUES
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Compte le nombre de sessions terminées pour une plage.
+     */
     long countByPlageHoraireIdAndCoursTermineTrue(Long plageHoraireId);
 
     // ═══════════════════════════════════════════════════════════
     // MULTI-INSTITUTS
     // ═══════════════════════════════════════════════════════════
 
+    /**
+     * Toutes les sessions d'un institut.
+     */
     @Query("""
         SELECT s FROM SessionAppel s
         WHERE s.plageHoraire.classe.niveau.filiere.ecole.institut.id = :institutId
         ORDER BY s.dateGeneration DESC
     """)
     List<SessionAppel> findByInstitutId(@Param("institutId") Long institutId);
-
-
 }
-
-

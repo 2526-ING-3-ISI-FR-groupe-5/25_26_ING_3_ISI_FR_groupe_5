@@ -5,9 +5,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.sessionApp
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Mapper(
         componentModel = "spring",
@@ -24,7 +21,11 @@ public interface SessionAppelMapper {
     @Mapping(target = "enseignantNom",    source = "enseignant.nom")
     @Mapping(target = "enseignantPrenom", source = "enseignant.prenom")
 
-    // Calculés via @AfterMapping
+    // ✅ QR Code
+    @Mapping(target = "qrCodeBase64",     source = "qrCodeBase64")
+    @Mapping(target = "typeSession",      source = "typeSession")
+
+    // Calcules via @AfterMapping
     @Mapping(target = "expire",             ignore = true)
     @Mapping(target = "nbPresents",         ignore = true)
     @Mapping(target = "nbAbsents",          ignore = true)
@@ -45,14 +46,14 @@ public interface SessionAppelMapper {
     @AfterMapping
     default void completer(@MappingTarget SessionAppelResponse r, SessionAppel s) {
 
-        // Validité
+        // Validite
         r.setExpire(s.isExpire());
 
-        // Retard autorisé sur ce cours
+        // Retard autorise sur ce cours
         r.setRetardAutorise(s.estPremierCoursDuMatin());
 
         // Stats appels
-        r.setNbPresents((int) s.getNbPresents());
+        r.setNbPresents(s.getNbPresents());
         r.setNbAbsents((int) s.getNbAbsents());
         r.setNbPartiels((int) s.getNbPartiels());
         r.setNbRetards((int) s.getNbRetards());
@@ -64,7 +65,7 @@ public interface SessionAppelMapper {
         // Heures plage
         if (s.getPlageHoraire() != null) {
             var p = s.getPlageHoraire();
-            r.setPlageHoraireHeures(p.getHeureDebut() + " – " + p.getHeureFin());
+            r.setPlageHoraireHeures(p.getHeureDebut() + " \u2013 " + p.getHeureFin());
             r.setNbHeureTotal(p.getDureeMinutes() / 60);
         }
     }

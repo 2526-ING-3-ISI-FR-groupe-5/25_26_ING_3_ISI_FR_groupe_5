@@ -6,141 +6,268 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${titre}">Migration - CarnetRouge</title>
+    <style>
+        /* ✅ Checkbox personnalisé sans Tailwind JIT avancé */
+        .custom-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 5px;
+            background: transparent;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .custom-checkbox:checked {
+            background: var(--color-primary, #6366f1);
+            border-color: var(--color-primary, #6366f1);
+        }
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+        .custom-checkbox:hover {
+            border-color: var(--color-primary, #6366f1);
+        }
+
+        /* Ligne sélectionnée */
+        .item-row.selected {
+            background: rgba(99,102,241,0.04);
+        }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);} }
+        .fade-in { animation: fadeIn 0.2s ease-out forwards; }
+    </style>
 </head>
 <body>
 <div layout:fragment="content">
+
+    <!-- ✅ CORRIGÉ : max-w au lieu de min-w -->
     <div class="max-w-[1100px] mx-auto px-4 py-6">
 
         <!-- EN-TETE -->
         <div class="flex items-center gap-3 mb-6">
             <a th:href="@{/admin/migration(institutId=${selectedInstitutId})}"
                class="text-gray-400 hover:text-primary transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
             </a>
             <div>
                 <h1 class="font-serif text-2xl text-white" th:text="${titre}">Migration Enseignants</h1>
                 <p class="text-xs text-gray-400 mt-0.5">
-                    Sélectionnez les enseignants à migrer — leurs programmations seront dupliquées vers la nouvelle année
+                    Selectionnez les enseignants a migrer — leurs programmations seront dupliquees vers la nouvelle annee
                 </p>
             </div>
         </div>
 
         <!-- FLASH -->
-        <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm" th:text="${erreur}"></div>
+        <div th:if="${erreur}"
+             class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm fade-in"
+             th:text="${erreur}"></div>
 
-        <form th:action="@{/admin/migration/selectif/enseignant}" method="post" id="formMigration">
+        <form th:action="@{/admin/migration/selectif/enseignants}" method="post" id="formMigration">
             <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
 
             <!-- BARRE OUTILS -->
             <div class="bg-bgcard border border-white/5 rounded-2xl overflow-hidden mb-4">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 bg-bgsurface/30 border-b border-white/5">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-5 py-4 bg-bgsurface/30 border-b border-white/5">
+
+                    <!-- Recherche + compteur -->
                     <div class="flex items-center gap-3 flex-1">
-                        <input type="text" id="searchInput" placeholder="Rechercher par nom ou email..."
+                        <input type="text" id="searchInput"
+                               placeholder="Rechercher par nom ou email..."
                                oninput="filtrer(this.value)"
-                               class="flex-1 max-w-sm bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary">
-                        <span id="compteur" class="text-xs text-gray-500 whitespace-nowrap">0 sélectionné(s)</span>
+                               class="flex-1 max-w-sm bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary transition-colors">
+                        <span id="compteur" class="text-xs text-gray-500 whitespace-nowrap">
+                            0 selectionne(s)
+                        </span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="toutSelectionner()" class="text-xs text-primary hover:underline px-2 py-1">Tout sélectionner</button>
-                        <span class="text-gray-600">|</span>
-                        <button type="button" onclick="toutDeselectionner()" class="text-xs text-gray-500 hover:underline px-2 py-1">Tout désélectionner</button>
+
+                    <!-- ✅ Boutons Tout sélectionner / Tout désélectionner -->
+                    <div class="flex items-center gap-1.5">
+                        <button type="button"
+                                id="btn-tout-selectionner"
+                                class="text-xs text-primary hover:text-primary/80 font-semibold px-3 py-1.5 rounded-lg hover:bg-primary/5 transition-all cursor-pointer border border-transparent hover:border-primary/20">
+                            Tout selectionner
+                        </button>
+                        <div class="w-px h-4 bg-white/10"></div>
+                        <button type="button"
+                                id="btn-tout-deselectionner"
+                                class="text-xs text-gray-400 hover:text-gray-200 font-semibold px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/10">
+                            Tout deselectionner
+                        </button>
                     </div>
                 </div>
 
-                <!-- TABLE ENSEIGNANTS -->
-                <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
-                    <table class="w-full text-sm" id="tableItems">
-                        <thead class="bg-bgsurface/50 sticky top-0">
-                        <tr>
-                            <th class="w-10 px-4 py-3"></th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enseignant</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Spécialité</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">UE</th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                        <tr th:if="${#lists.isEmpty(items)}" class="item-row">
-                            <td colspan="6" class="px-4 py-10 text-center text-gray-500 text-sm">Aucun enseignant disponible.</td>
-                        </tr>
-                        <tr th:each="enseignant : ${items}"
-                            th:data-nom="${enseignant.nom + ' ' + enseignant.prenom}"
-                            th:data-email="${enseignant.email}"
-                            class="item-row hover:bg-bgsurface/30 transition-colors">
-                            <td class="px-4 py-3">
-                                <input type="checkbox" name="ids" th:value="${enseignant.id}"
-                                       onchange="majCompteur()"
-                                       class="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary/30">
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-lg bg-bgsubtle flex items-center justify-center text-xs font-bold text-gray-400"
-                                         th:text="${#strings.substring(enseignant.nom,0,1) + #strings.substring(enseignant.prenom,0,1)}">EN</div>
-                                    <span class="font-medium text-gray-200"
-                                          th:text="${enseignant.nom + ' ' + enseignant.prenom}"></span>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${enseignant.email}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${enseignant.grade ?: '-'}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${enseignant.specialite ?: '-'}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${#lists.size(enseignant.programmations)}"></td>
-                        </tr>
-                        </tbody>
-                    </table>
+                <!-- EN-TETE TABLEAU (desktop) -->
+                <div class="hidden lg:grid grid-cols-[2.5rem_2fr_2fr_1.2fr_1.5fr_1fr] items-center gap-4 px-6 py-3 bg-bgsurface/50 border-b border-white/5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                    <div></div>
+                    <div>Enseignant</div>
+                    <div>Email</div>
+                    <div>Grade</div>
+                    <div>Specialite</div>
+                    <div>UE</div>
+                </div>
+
+                <!-- LISTE -->
+                <div id="enseignant-container"
+                     class="max-h-[520px] overflow-y-auto divide-y divide-white/5">
+
+                    <!-- Vide -->
+                    <div th:if="${#lists.isEmpty(items)}"
+                         class="px-4 py-10 text-center text-gray-500 text-sm">
+                        Aucun enseignant disponible.
+                    </div>
+
+                    <!-- Lignes -->
+                    <label th:each="enseignant : ${items}"
+                           th:data-nom="${enseignant.nom + ' ' + enseignant.prenom}"
+                           th:data-email="${enseignant.email}"
+                           th:for="'cb-' + ${enseignant.id}"
+                           class="item-row grid grid-cols-1 lg:grid-cols-[2.5rem_2fr_2fr_1.2fr_1.5fr_1fr] items-center gap-4 px-5 lg:px-6 py-4 lg:py-3.5 hover:bg-white/[0.02] transition-colors cursor-pointer">
+
+                        <!-- Checkbox -->
+                        <div class="flex items-center">
+                            <input type="checkbox"
+                                   name="ids"
+                                   th:id="'cb-' + ${enseignant.id}"
+                                   th:value="${enseignant.id}"
+                                   class="custom-checkbox"
+                                   onchange="majCompteur(); majLigne(this);">
+                        </div>
+
+                        <!-- Nom + Avatar -->
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0 bg-primary/10 text-primary border border-primary/20"
+                                 th:text="${#strings.substring(enseignant.nom,0,1) + #strings.substring(enseignant.prenom,0,1)}">EN</div>
+                            <div>
+                                <p class="font-medium text-gray-200 text-sm"
+                                   th:text="${enseignant.nom + ' ' + enseignant.prenom}"></p>
+                                <p class="lg:hidden text-xs text-gray-500 mt-0.5"
+                                   th:text="${enseignant.email}"></p>
+                            </div>
+                        </div>
+
+                        <!-- Email (desktop) -->
+                        <div class="hidden lg:block text-xs text-gray-400 truncate"
+                             th:text="${enseignant.email}"></div>
+
+                        <!-- Grade -->
+                        <div class="flex items-center justify-between lg:block">
+                            <span class="lg:hidden text-xs text-gray-500 uppercase font-semibold">Grade</span>
+                            <span class="text-xs text-gray-400" th:text="${enseignant.grade ?: '-'}"></span>
+                        </div>
+
+                        <!-- Specialite -->
+                        <div class="flex items-center justify-between lg:block">
+                            <span class="lg:hidden text-xs text-gray-500 uppercase font-semibold">Specialite</span>
+                            <span class="text-xs text-gray-400" th:text="${enseignant.specialite ?: '-'}"></span>
+                        </div>
+
+                        <!-- UE -->
+                        <div class="flex items-center justify-between lg:block">
+                            <span class="lg:hidden text-xs text-gray-500 uppercase font-semibold">UE</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                                  th:text="${enseignant.programmations != null ? #lists.size(enseignant.programmations) : 0}">0</span>
+                        </div>
+                    </label>
                 </div>
             </div>
 
-            <!-- PARAMÈTRES + BOUTON -->
+            <!-- PARAMÈTRES + BOUTONS -->
             <div class="bg-bgcard border border-white/5 rounded-2xl p-5">
-                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-end">
                     <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Année cible <span class="text-red-400">*</span></label>
+                        <label class="block text-sm font-medium text-gray-300 mb-1.5">
+                            Annee cible <span class="text-red-400">*</span>
+                        </label>
                         <select name="nouvelleAnneeId"
-                                class="w-full bg-bgsurface border border-white/10 rounded-lg py-2.5 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary" required>
-                            <option value="" disabled selected>Sélectionner une année</option>
+                                class="w-full bg-bgsurface border border-white/10 rounded-lg py-2.5 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary cursor-pointer transition-colors" required>
+                            <option value="" disabled selected>Selectionner une annee</option>
                             <option th:each="annee : ${annees}" th:value="${annee.id}" th:text="${annee.nom}"></option>
                         </select>
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex flex-col sm:flex-row gap-3">
                         <a th:href="@{/admin/migration(institutId=${selectedInstitutId})}"
-                           class="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-gray-300 hover:bg-white/5 transition-colors">Annuler</a>
+                           class="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center justify-center">
+                            Annuler
+                        </a>
                         <button type="submit"
-                                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow hover:shadow-lg transition-all">
+                                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow-md active:scale-95 transition-all">
                             Lancer la migration
                         </button>
                     </div>
                 </div>
-                <p class="text-xs text-amber-400/70 mt-3">Les programmations de ces enseignants seront dupliquées vers la nouvelle année.</p>
+                <p class="text-xs text-amber-400/70 mt-3">
+                    Les programmations de ces enseignants seront dupliquees vers la nouvelle annee.
+                </p>
             </div>
-            <div id="msg-erreur" class="hidden mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-                Veuillez sélectionner au moins un enseignant.
+
+            <!-- MESSAGE ERREUR -->
+            <div id="msg-erreur"
+                 class="hidden mt-3 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm fade-in">
+                Veuillez selectionner au moins un enseignant pour proceder a la migration.
             </div>
         </form>
     </div>
 </div>
+
 <script layout:fragment="scripts">
+    // ── Filtrage ────────────────────────────────────────────
     function filtrer(q) {
-        q = q.toLowerCase();
+        q = q.toLowerCase().trim();
         document.querySelectorAll('.item-row').forEach(row => {
-            const nom = (row.dataset.nom || '').toLowerCase();
+            const nom   = (row.dataset.nom   || '').toLowerCase();
             const email = (row.dataset.email || '').toLowerCase();
-            row.classList.toggle('hidden', q && !nom.includes(q) && !email.includes(q));
+            row.classList.toggle('hidden', q !== '' && !nom.includes(q) && !email.includes(q));
         });
     }
+
+    // ── Compteur ────────────────────────────────────────────
     function majCompteur() {
         const n = document.querySelectorAll('input[name="ids"]:checked').length;
-        document.getElementById('compteur').textContent = n + ' sélectionné(s)';
+        document.getElementById('compteur').textContent = n + ' selectionne(s)';
+        if (n > 0) document.getElementById('msg-erreur').classList.add('hidden');
     }
-    function toutSelectionner() {
-        document.querySelectorAll('.item-row:not(.hidden) input[name="ids"]').forEach(cb => cb.checked = true);
+
+    // ── Surlignage ligne sélectionnée ───────────────────────
+    function majLigne(checkbox) {
+        const row = checkbox.closest('.item-row');
+        if (row) row.classList.toggle('selected', checkbox.checked);
+    }
+
+    // ── ✅ Tout sélectionner ────────────────────────────────
+    document.getElementById('btn-tout-selectionner').addEventListener('click', function () {
+        document.querySelectorAll('.item-row:not(.hidden) input[name="ids"]').forEach(cb => {
+            cb.checked = true;
+            majLigne(cb);
+        });
         majCompteur();
-    }
-    function toutDeselectionner() {
-        document.querySelectorAll('input[name="ids"]').forEach(cb => cb.checked = false);
+    });
+
+    // ── ✅ Tout désélectionner ──────────────────────────────
+    document.getElementById('btn-tout-deselectionner').addEventListener('click', function () {
+        document.querySelectorAll('input[name="ids"]').forEach(cb => {
+            cb.checked = false;
+            majLigne(cb);
+        });
         majCompteur();
-    }
-    document.getElementById('formMigration').addEventListener('submit', function(e) {
+    });
+
+    // ── Validation formulaire ───────────────────────────────
+    document.getElementById('formMigration').addEventListener('submit', function (e) {
         const n = document.querySelectorAll('input[name="ids"]:checked').length;
         if (n === 0) {
             e.preventDefault();
@@ -149,6 +276,10 @@
             msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     });
+
+    // ── Init : surligner les lignes déjà cochées ────────────
+    document.querySelectorAll('input[name="ids"]:checked').forEach(cb => majLigne(cb));
+    majCompteur();
 </script>
 </body>
 </html>

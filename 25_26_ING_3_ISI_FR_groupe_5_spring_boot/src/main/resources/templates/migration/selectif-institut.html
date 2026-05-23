@@ -18,9 +18,9 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </a>
             <div>
-                <h1 class="font-serif text-2xl text-white" th:text="${titre}">Migration Assistants Pédagogiques</h1>
+                <h1 class="font-serif text-2xl text-white" th:text="${titre}">Migration Instituts</h1>
                 <p class="text-xs text-gray-400 mt-0.5">
-                    Sélectionnez les assistants à migrer — leurs affectations de classes seront conservées pour la nouvelle année
+                    Sélectionnez les instituts à migrer — tout le contenu (écoles, filières, classes, étudiants) sera migré
                 </p>
             </div>
         </div>
@@ -28,14 +28,14 @@
         <!-- FLASH -->
         <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm" th:text="${erreur}"></div>
 
-        <form th:action="@{/admin/migration/selectif/assistant}" method="post" id="formMigration">
+        <form th:action="@{/admin/migration/selectif/institut}" method="post" id="formMigration">
             <input type="hidden" name="institutId" th:value="${selectedInstitutId}">
 
             <!-- BARRE OUTILS -->
             <div class="bg-bgcard border border-white/5 rounded-2xl overflow-hidden mb-4">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 bg-bgsurface/30 border-b border-white/5">
                     <div class="flex items-center gap-3 flex-1">
-                        <input type="text" id="searchInput" placeholder="Rechercher par nom ou email..."
+                        <input type="text" id="searchInput" placeholder="Rechercher par nom ou ville..."
                                oninput="filtrer(this.value)"
                                class="flex-1 max-w-sm bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <span id="compteur" class="text-xs text-gray-500 whitespace-nowrap">0 sélectionné(s)</span>
@@ -47,42 +47,41 @@
                     </div>
                 </div>
 
-                <!-- TABLE ASSISTANTS -->
+                <!-- TABLE INSTITUTS -->
                 <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
                     <table class="w-full text-sm" id="tableItems">
                         <thead class="bg-bgsurface/50 sticky top-0">
                         <tr>
                             <th class="w-10 px-4 py-3"></th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assistant</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fonction</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Classes</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Institut</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ville</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Écoles</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Filières</th>
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-white/5">
                         <tr th:if="${#lists.isEmpty(items)}" class="item-row">
-                            <td colspan="5" class="px-4 py-10 text-center text-gray-500 text-sm">Aucun assistant disponible.</td>
+                            <td colspan="5" class="px-4 py-10 text-center text-gray-500 text-sm">Aucun institut disponible.</td>
                         </tr>
-                        <tr th:each="assistant : ${items}"
-                            th:data-nom="${assistant.nom + ' ' + assistant.prenom}"
-                            th:data-email="${assistant.email}"
+                        <tr th:each="institut : ${items}"
+                            th:data-nom="${institut.nom}"
+                            th:data-ville="${institut.ville}"
                             class="item-row hover:bg-bgsurface/30 transition-colors">
                             <td class="px-4 py-3">
-                                <input type="checkbox" name="ids" th:value="${assistant.id}"
+                                <input type="checkbox" name="ids" th:value="${institut.id}"
                                        onchange="majCompteur()"
                                        class="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary/30">
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     <div class="w-7 h-7 rounded-lg bg-bgsubtle flex items-center justify-center text-xs font-bold text-gray-400"
-                                         th:text="${#strings.substring(assistant.nom,0,1) + #strings.substring(assistant.prenom,0,1)}">AS</div>
-                                    <span class="font-medium text-gray-200"
-                                          th:text="${assistant.nom + ' ' + assistant.prenom}"></span>
+                                         th:text="${#strings.substring(institut.nom,0,2)}">IN</div>
+                                    <span class="font-medium text-gray-200" th:text="${institut.nom}"></span>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${assistant.email}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${assistant.fonction ?: '-'}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${#lists.size(assistant.classes)}"></td>
+                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${institut.ville ?: '-'}"></td>
+                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${#lists.size(institut.ecoles)}"></td>
+                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${institut.getNombreFilieres()}"></td>
                         </tr>
                         </tbody>
                     </table>
@@ -109,21 +108,21 @@
                         </button>
                     </div>
                 </div>
-                <p class="text-xs text-amber-400/70 mt-3">Les affectations de classes de ces assistants seront conservées pour la nouvelle année.</p>
+                <p class="text-xs text-amber-400/70 mt-3">Toutes les écoles, filières, classes et étudiants de ces instituts seront migrés selon leur décision de fin d'année.</p>
             </div>
             <div id="msg-erreur" class="hidden mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-                Veuillez sélectionner au moins un assistant.
+                Veuillez sélectionner au moins un institut.
             </div>
         </form>
     </div>
 </div>
-<script>
+<script layout:fragment="scripts">
     function filtrer(q) {
         q = q.toLowerCase();
         document.querySelectorAll('.item-row').forEach(row => {
             const nom = (row.dataset.nom || '').toLowerCase();
-            const email = (row.dataset.email || '').toLowerCase();
-            row.classList.toggle('hidden', q && !nom.includes(q) && !email.includes(q));
+            const ville = (row.dataset.ville || '').toLowerCase();
+            row.classList.toggle('hidden', q && !nom.includes(q) && !ville.includes(q));
         });
     }
     function majCompteur() {

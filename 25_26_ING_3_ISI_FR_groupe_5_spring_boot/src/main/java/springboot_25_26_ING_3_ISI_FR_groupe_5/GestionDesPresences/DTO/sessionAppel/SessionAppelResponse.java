@@ -2,10 +2,9 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.sessionAp
 
 import lombok.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeValidation;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.TypeSession;
 
 import java.time.LocalDateTime;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
 @Getter
 @Setter
@@ -22,8 +21,12 @@ public class SessionAppelResponse {
     private boolean actif;
     private boolean expire;
     private boolean coursTermine;
+    private TypeSession typeSession;
 
-    // Géolocalisation
+    // ✅ QR Code base64 pour affichage enseignant
+    private String qrCodeBase64;
+
+    // Geolocalisation
     private Double latitudeEnseignant;
     private Double longitudeEnseignant;
     private Integer perimetreMetres;
@@ -48,20 +51,9 @@ public class SessionAppelResponse {
     private int nbAbsents;
     private int nbPartiels;
     private int totalEtudiants;
-
-    // 🆕 Stats retards
     private int nbRetards;
     private double retardMoyenMinutes;
-
-    /**
-     * Indique si ce cours autorise la saisie de retards
-     * (premier cours du matin, heureDebut ≤ 08h30).
-     */
     private boolean retardAutorise;
-
-    /** Appel complet = plus aucun étudiant EN_ATTENTE. */
     private boolean appelComplet;
-
-    /** Taux de présence en % (présents + retards + partiels). */
     private double tauxPresence;
 }

@@ -34,75 +34,102 @@
             <!-- BARRE OUTILS -->
             <div class="bg-bgcard border border-white/5 rounded-2xl overflow-hidden mb-4">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-5 py-4 bg-bgsurface/30 border-b border-white/5">
-                    <div class="flex items-center gap-3 flex-1">
+                    <div class="flex items-center gap-3 w-full sm:flex-1">
                         <input type="text" id="searchInput" placeholder="Rechercher par nom..."
                                oninput="filtrer(this.value)"
                                class="flex-1 max-w-sm bg-bgcard border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <span id="compteur" class="text-xs text-gray-500 whitespace-nowrap">0 sélectionnée(s)</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="toutSelectionner()" class="text-xs text-primary hover:underline px-2 py-1">Tout sélectionner</button>
-                        <span class="text-gray-600">|</span>
-                        <button type="button" onclick="toutDeselectionner()" class="text-xs text-gray-500 hover:underline px-2 py-1">Tout désélectionner</button>
+                    <!-- Séparateur moderne en CSS -->
+                    <div class="flex items-center gap-1.5 text-xs">
+                        <button type="button" onclick="toutSelectionner()" class="text-primary hover:text-primary/85 font-medium transition px-2.5 py-1.5 rounded-md hover:bg-primary/5 cursor-pointer">Tout sélectionner</button>
+                        <div class="w-[1px] h-3.5 bg-white/10"></div>
+                        <button type="button" onclick="toutDeselectionner()" class="text-gray-400 hover:text-gray-300 transition px-2.5 py-1.5 rounded-md hover:bg-white/5 cursor-pointer">Tout désélectionner</button>
                     </div>
                 </div>
 
-                <!-- TABLE CLASSES -->
-                <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
-                    <table class="w-full text-sm" id="tableItems">
-                        <thead class="bg-bgsurface/50 sticky top-0">
-                        <tr>
-                            <th class="w-10 px-4 py-3"></th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Classe</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Niveau</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Filière</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Étudiants</th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                        <tr th:if="${#lists.isEmpty(items)}" class="item-row">
-                            <td colspan="5" class="px-4 py-10 text-center text-gray-500 text-sm">Aucune classe disponible.</td>
-                        </tr>
-                        <tr th:each="classe : ${items}"
-                            th:data-nom="${classe.nom}"
-                            class="item-row hover:bg-bgsurface/30 transition-colors">
-                            <td class="px-4 py-3">
+                <!-- CONTENEUR GRILLE UNIFIÉE (Cartes sur Mobile / Tableau sur Desktop) -->
+                <div class="bg-transparent md:bg-bgcard border-0 md:border md:border-white/5 rounded-2xl overflow-hidden p-0 md:p-0">
+
+                    <!-- Entête (Affiché sur Desktop uniquement) -->
+                    <div class="hidden md:grid grid-cols-[1fr_3fr_2fr_2fr_1.5fr] gap-4 px-6 py-3 border-b border-white/5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider bg-bgsurface/80 backdrop-blur-md sticky top-0 z-10">
+                        <div>Sélection</div>
+                        <div>Classe</div>
+                        <div>Niveau</div>
+                        <div>Filière</div>
+                        <div>Étudiants</div>
+                    </div>
+
+                    <!-- Liste des éléments défilable -->
+                    <div id="etudiant-container" class="space-y-3 md:space-y-0 max-h-[520px] overflow-y-auto p-3 md:p-0">
+
+                        <!-- Cas de liste vide -->
+                        <div th:if="${#lists.isEmpty(items)}" class="px-4 py-10 text-center text-gray-500 text-sm">
+                            Aucune classe disponible.
+                        </div>
+
+                        <!-- Ligne dynamique -->
+                        <div th:each="classe : ${items}"
+                             th:data-nom="${classe.nom}"
+                             class="item-row grid grid-cols-1 md:grid-cols-[1fr_3fr_2fr_2fr_1.5fr] gap-4 md:gap-4 items-center p-5 md:px-6 md:py-4 bg-bgcard md:bg-transparent border border-white/5 md:border-0 md:border-b md:border-white/5 rounded-2xl md:rounded-none hover:bg-white/[0.01] transition duration-150">
+
+                            <!-- Sélection (Label ajouté sur mobile, aligné sur PC) -->
+                            <div class="flex items-center justify-between md:justify-start border-t border-white/5 pt-3 md:pt-0 md:border-0 order-2 md:order-1">
+                                <span class="md:hidden text-xs text-gray-500 uppercase font-semibold">Sélectionner</span>
                                 <input type="checkbox" name="ids" th:value="${classe.id}"
                                        onchange="majCompteur()"
-                                       class="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary/30">
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-lg bg-bgsubtle flex items-center justify-center text-xs font-bold text-gray-400"
-                                         th:text="${#strings.substring(classe.nom,0,2)}">CL</div>
-                                    <span class="font-medium text-gray-200" th:text="${classe.nom}"></span>
+                                       class="w-5 h-5 rounded-md border-2 border-white/10 bg-transparent cursor-pointer appearance-none transition-all duration-150 flex items-center justify-center checked:bg-primary checked:border-primary checked:after:content-['✓'] checked:after:text-white checked:after:text-xs checked:after:font-bold shrink-0">
+                            </div>
+
+                            <!-- Classe (Avatar fidèle à la page d'appel + Nom) -->
+                            <div class="flex items-center gap-3 order-1 md:order-2">
+                                <!-- Génération de couleur déterministe et fidèle à l'esthétique originale -->
+                                <div th:with="colors=${ {'#4f7ef8', '#a855f7', '#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#06b6d4', '#ec4899'} }, col=${colors[classe.id % 8]}"
+                                     th:style="'background:' + ${col} + '22; color:' + ${col} + '; border:1px solid ' + ${col} + '44;'"
+                                     class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
+                                     th:text="${#strings.substring(classe.nom,0,2)}">CL</div>
+                                <div>
+                                    <p class="font-semibold text-sm text-gray-200" th:text="${classe.nom}"></p>
+                                    <p class="md:hidden text-xs text-gray-500 font-mono mt-0.5" th:text="${classe.niveau?.nom ?: '-'}"></p>
                                 </div>
-                            </td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${classe.niveau?.nom ?: '-'}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${classe.filiere?.nom ?: '-'}"></td>
-                            <td class="px-4 py-3 text-gray-400 text-xs" th:text="${classe.getNombreEtudiants()}"></td>
-                        </tr>
-                        </tbody>
-                    </table>
+                            </div>
+
+                            <!-- Niveau (Masqué sur mobile, car inclus sous le nom) -->
+                            <div class="hidden md:block text-xs text-gray-400 order-3" th:text="${classe.niveau?.nom ?: '-'}"></div>
+
+                            <!-- Filière -->
+                            <div class="flex items-center justify-between md:justify-start border-t border-white/5 pt-3 md:pt-0 md:border-0 order-3 md:order-4">
+                                <span class="md:hidden text-xs text-gray-500 uppercase font-semibold">Filière</span>
+                                <span class="text-xs text-gray-400" th:text="${classe.filiere?.nom ?: '-'}"></span>
+                            </div>
+
+                            <!-- Étudiants -->
+                            <div class="flex items-center justify-between md:justify-start border-t border-white/5 pt-3 md:pt-0 md:border-0 order-4 md:order-5">
+                                <span class="md:hidden text-xs text-gray-500 uppercase font-semibold">Étudiants</span>
+                                <span class="text-xs text-gray-400" th:text="${classe.getNombreEtudiants()}"></span>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- PARAMÈTRES + BOUTON -->
-            <div class="bg-bgcard border border-white/5 rounded-2xl p-5">
-                <div class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="bg-bgcard border border-white/5 rounded-2xl p-5 mt-4">
+                <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-300 mb-1">Année cible <span class="text-red-400">*</span></label>
                         <select name="nouvelleAnneeId"
-                                class="w-full bg-bgsurface border border-white/10 rounded-lg py-2.5 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary" required>
+                                class="w-full bg-bgsurface border border-white/10 rounded-lg py-2.5 px-3 text-sm text-gray-200 focus:outline-none focus:border-primary cursor-pointer" required>
                             <option value="" disabled selected>Sélectionner une année</option>
                             <option th:each="annee : ${annees}" th:value="${annee.id}" th:text="${annee.nom}"></option>
                         </select>
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 justify-end">
                         <a th:href="@{/admin/migration(institutId=${selectedInstitutId})}"
-                           class="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-gray-300 hover:bg-white/5 transition-colors">Annuler</a>
+                           class="px-5 py-2.5 rounded-lg border border-white/10 text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center justify-center">Annuler</a>
                         <button type="submit"
-                                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow hover:shadow-lg transition-all">
+                                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium shadow hover:shadow-lg transition-all cursor-pointer">
                             Lancer la migration
                         </button>
                     </div>
@@ -123,18 +150,30 @@
             row.classList.toggle('hidden', q && !nom.includes(q));
         });
     }
+
     function majCompteur() {
         const n = document.querySelectorAll('input[name="ids"]:checked').length;
         document.getElementById('compteur').textContent = n + ' sélectionnée(s)';
+
+        // Cache dynamiquement l'affichage de l'erreur si l'utilisateur finit par cocher une case
+        if (n > 0) {
+            const msgErreur = document.getElementById('msg-erreur');
+            if (msgErreur) {
+                msgErreur.classList.add('hidden');
+            }
+        }
     }
+
     function toutSelectionner() {
         document.querySelectorAll('.item-row:not(.hidden) input[name="ids"]').forEach(cb => cb.checked = true);
         majCompteur();
     }
+
     function toutDeselectionner() {
         document.querySelectorAll('input[name="ids"]').forEach(cb => cb.checked = false);
         majCompteur();
     }
+
     document.getElementById('formMigration').addEventListener('submit', function(e) {
         const n = document.querySelectorAll('input[name="ids"]:checked').length;
         if (n === 0) {

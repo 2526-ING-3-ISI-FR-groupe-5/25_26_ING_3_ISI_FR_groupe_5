@@ -54,11 +54,21 @@ public class DashboardController {
                 .findFirst()
                 .orElse("INCONNU");
 
-        // 2. Institut
+        // 2. ✅ Institut — forcer le chargement avant fermeture de session
         Institut institut = utilisateur.getInstitut();
-        Long institutId = institut != null ? institut.getId() : null;
+        Long institutId = null;
+        String institutNom = "Global";
 
-        // 3. ✅ CONTEXTE ACTIF (remplace l'ancien findByActiveTrue)
+        if (institut != null) {
+            try {
+                institutId = institut.getId();
+                institutNom = institut.getNom();
+            } catch (Exception e) {
+                log.warn("Impossible de charger l'institut pour {}: {}", utilisateur.getEmail(), e.getMessage());
+            }
+        }
+
+        // 3. Contexte actif
         Annee_academique anneeActive = null;
         Semestre semestreActif = null;
         if (institutId != null) {
@@ -73,7 +83,7 @@ public class DashboardController {
         boolean showInstitutSelector = estSuperAdmin;
         String currentInstitutName = estSuperAdmin
                 ? securityService.getCurrentInstitutName()
-                : (institut != null ? institut.getNom() : "Global");
+                : institutNom;
 
         // 5. Permissions fines
         boolean peutVoirJournal = estSuperAdmin || estAdminInstitut;
@@ -83,6 +93,7 @@ public class DashboardController {
         // 6. Exposition au modèle
         model.addAttribute("utilisateur", utilisateur);
         model.addAttribute("institut", institut);
+        model.addAttribute("institutId", institutId);
         model.addAttribute("anneeActive", anneeActive);
         model.addAttribute("semestreActif", semestreActif);
         model.addAttribute("rolePrincipal", rolePrincipal);
