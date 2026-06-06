@@ -4,16 +4,19 @@
 // de présence quand le réseau est indisponible.
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'carnet-rouge-v2';
+const CACHE_NAME = 'carnet-rouge-v3';
 const SYNC_TAG   = 'sync-presence';
 const DB_NAME    = 'carnet-rouge-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'pending-presences';
 
-// Pages et ressources à mettre en cache pour le mode offline
+// Pages et ressources à mettre en cache pour le mode offline.
+// ⚠️ Ne mettre ici QUE des pages non-personnalisées (le formulaire de
+// validation est OK car il poste avec le cookie de session du user courant).
+// Les pages comme /etudiant/mon-espace contiennent des données utilisateur
+// et ne doivent pas être servies à un autre utilisateur en cas de logout.
 const CACHED_URLS = [
     '/etudiant/valider-presence',
-    '/etudiant/mon-espace',
     '/css/output.css',
     '/favicon/icon-192x192.png',
     '/favicon/icon-512x512.png',
@@ -88,12 +91,22 @@ self.addEventListener('fetch', event => {
 async function networkFirst(request) {
     try {
         const response = await fetch(request);
-        // Mettre à jour le cache avec la réponse fraîche
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone());
+
+        // Ne mettre en cache que :
+        //   - les réponses 2xx (pas 4xx/5xx ni les pages d'erreur)
+        //   - les réponses NON redirigées (souvent vers /login si la session a expiré)
+        //   - les pages explicitement whitelistées (pour éviter de stocker
+        //     du contenu user-specific qui fuiterait à l'utilisateur suivant)
+        const url = new URL(request.url);
+        const isWhitelisted = CACHED_URLS.includes(url.pathname);
+
+        if (response.ok && !response.redirected && isWhitelisted) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+        }
         return response;
     } catch {
-        // Pas de réseau → servir depuis le cache
+        // Pas de réseau → servir depuis le cache si on a quelque chose
         const cached = await caches.match(request);
         if (cached) return cached;
         // Fallback sur la page offline
@@ -106,8 +119,11 @@ async function cacheFirst(request) {
     if (cached) return cached;
     try {
         const response = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone());
+        // Ne pas cacher les erreurs même pour les assets
+        if (response.ok && !response.redirected) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+        }
         return response;
     } catch {
         return new Response('Ressource non disponible offline', { status: 503 });
@@ -153,8 +169,14 @@ async function syncPresences() {
                 credentials: 'include',
             });
 
-            if (response.ok || response.redirected) {
-                // Succès → supprimer de IndexedDB
+            // ⚠️ Spring Security redirige vers /login quand la session
+            // a expiré. Ne PAS considérer ça comme un succès : il faut
+            // garder la présence pour quand l'utilisateur se reconnecte.
+            const redirectedToLogin = response.redirected
+                && response.url.includes('/login');
+
+            if ((response.ok || response.redirected) && !redirectedToLogin) {
+                // Succès réel → supprimer de IndexedDB
                 await deletePending(db, pending.id);
                 console.log('[SW] Presence synchronisee :', pending.id);
 
@@ -164,6 +186,16 @@ async function syncPresences() {
                     icon: '/favicon/icon-192x192.png',
                     badge: '/favicon/icon-192x192.png',
                     tag: 'presence-ok',
+                });
+            } else if (redirectedToLogin) {
+                // Session expirée — garde la présence pour le prochain sync
+                // (qui aura lieu après reconnexion de l'utilisateur)
+                console.warn('[SW] Session expiree, presence gardee pour reconnexion');
+                await self.registration.showNotification('CarnetRouge', {
+                    body: 'Reconnectez-vous pour finaliser l\'enregistrement de votre presence.',
+                    icon: '/favicon/icon-192x192.png',
+                    tag: 'presence-reauth',
+                    requireInteraction: false,
                 });
             } else {
                 console.warn('[SW] Echec sync presence :', response.status, response.statusText);
@@ -227,12 +259,23 @@ function deletePending(db, id) {
 
 // Exposé pour être appelé depuis la page PWA
 self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'STORE_PRESENCE') {
+    if (!event.data) return;
+
+    if (event.data.type === 'STORE_PRESENCE') {
         openDB().then(db => {
             const tx    = db.transaction(STORE_NAME, 'readwrite');
             const store = tx.objectStore(STORE_NAME);
-            store.add(event.data.payload);
-            console.log('[SW] Presence stockee en attente de sync');
+            const req   = store.add(event.data.payload);
+            req.onsuccess = () => console.log('[SW] Presence stockee en attente de sync');
+            req.onerror   = e  => console.error('[SW] Echec stockage presence :', e.target.error);
+        });
+    }
+
+    // ✅ À appeler depuis le bouton "Se déconnecter" pour éviter qu'un
+    //    utilisateur suivant voie les pages cachées de l'utilisateur courant.
+    if (event.data.type === 'CLEAR_CACHE') {
+        caches.delete(CACHE_NAME).then(() => {
+            console.log('[SW] Cache vide (deconnexion)');
         });
     }
 });
