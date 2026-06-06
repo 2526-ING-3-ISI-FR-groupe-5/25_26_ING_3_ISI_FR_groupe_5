@@ -207,9 +207,19 @@ public class AppelsMvcController {
             Authentication authentication,
             RedirectAttributes ra) {
         try {
+            MethodeValidation methodeEnum;
+            try {
+                methodeEnum = MethodeValidation.valueOf(methode);
+            } catch (IllegalArgumentException ex) {
+                ra.addFlashAttribute("erreur",
+                        "Methode de validation invalide : " + methode
+                                + ". Valeurs attendues : MANUELLE, QR_CODE, CODE_PIN.");
+                return "redirect:/enseignant/appels/" + id + "/appel";
+            }
+
             SessionAppelRequest req = new SessionAppelRequest();
             req.setPlageHoraireId(id);
-            req.setMethode(MethodeValidation.valueOf(methode));
+            req.setMethode(methodeEnum);
             req.setDureeMinutes(dureeMinutes);
             Utilisateur user = resolveUtilisateur(authentication);
             if (user == null) throw new RuntimeException("Utilisateur introuvable");
