@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.AnneeAcademiqueRepository;
@@ -18,10 +19,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 import java.time.LocalDate;
 import java.util.List;
 
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEACADEMIQUEACTIVER;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEACADEMIQUENOTFOUND;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.ANNEEACDEMIQUEEXISTEXCEPTION;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 
 @Slf4j
 @Service
@@ -57,11 +55,11 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
                     .orElseThrow(() -> new RuntimeException("Institut introuvable"));
 
             if (anneeRepo.existsByNomAndInstitutId(nom, institutId)) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("L'année académique " + nom + " existe déjà pour cet institut");
+                throw new IllegalStateException("L'année académique " + nom + " existe déjà pour cet institut");
             }
 
             if (dateDebut.isAfter(dateFin)) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("La date de début doit être antérieure à la date de fin");
+                throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
             }
 
             List<Annee_academique> anneesInstitut = anneeRepo.findByInstitutId(institutId);
@@ -70,7 +68,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             );
 
             if (overlap) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante pour cet institut");
+                throw new IllegalStateException("Les dates chevauchent une année académique existante pour cet institut");
             }
 
             Annee_academique annee = new Annee_academique();
@@ -85,7 +83,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             // ✅ Journalisation
             journalService.journaliserCreationAnnee(acteur, saved.getId(), saved.getNom());
 
-        } catch (ANNEEACDEMIQUEEXISTEXCEPTION e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             journalService.journaliserEchec(acteur, TypeAction.ANNEE_ACADEMIQUE_CREEE,
                     "Annee_academique", null, e.getMessage());
             throw e;
@@ -112,7 +110,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             }
 
             if (dateDebut.isAfter(dateFin)) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("La date de début doit être antérieure à la date de fin");
+                throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
             }
 
             List<Annee_academique> anneesInstitut = anneeRepo.findByInstitutId(annee.getInstitut().getId());
@@ -121,7 +119,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
                     .anyMatch(a -> (dateDebut.isBefore(a.getDateFin()) && dateFin.isAfter(a.getDateDebut())));
 
             if (overlap) {
-                throw new ANNEEACDEMIQUEEXISTEXCEPTION("Les dates chevauchent une année académique existante pour cet institut");
+                throw new IllegalStateException("Les dates chevauchent une année académique existante pour cet institut");
             }
 
             annee.setNom(nom);
@@ -135,7 +133,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
 
             return saved;
 
-        } catch (ANNEEACDEMIQUEEXISTEXCEPTION e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             journalService.journaliserEchec(acteur, TypeAction.ANNEE_ACADEMIQUE_MODIFIEE,
                     "Annee_academique", id, e.getMessage());
             throw e;
@@ -229,7 +227,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             throw new RuntimeException("Veuillez sélectionner un institut");
         }
         return anneeRepo.findByInstitutIdAndActiveTrue(institutId)
-                .orElseThrow(() -> new ANNEACADEMIQUEACTIVER("Aucune année académique active pour cet institut"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune année académique active pour cet institut"));
     }
 
     @Override
@@ -244,7 +242,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
     @Override
     public Annee_academique findById(Long id) {
         Annee_academique annee = anneeRepo.findById(id)
-                .orElseThrow(() -> new ANNEACADEMIQUENOTFOUND("Année académique introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Année académique introuvable"));
 
         if (!securityService.canAccessInstitut(annee.getInstitut().getId())) {
             throw new AccessDeniedException("Vous n'avez pas accès à cette année académique");
@@ -273,7 +271,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             }
 
             if (annee.isActive()) {
-                throw new IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU("Impossible de supprimer l'année en cours");
+                throw new IllegalStateException("Impossible de supprimer l'année en cours");
             }
 
             anneeRepo.delete(annee);
@@ -281,7 +279,7 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             // ✅ Journalisation
             journalService.journaliserSuppressionAnnee(acteur, anneeId, annee.getNom());
 
-        } catch (IMPOSSIBLLEDESUPRIMERANNEEACADEMIQU e) {
+        } catch (IllegalStateException e) {
             journalService.journaliserEchec(acteur, TypeAction.ANNEE_ACADEMIQUE_SUPPRIMEE,
                     "Annee_academique", anneeId, e.getMessage());
             throw e;
@@ -308,6 +306,18 @@ public class AnneeAcademiqueService implements IAnneeAcademiqueService {
             throw new AccessDeniedException("Vous n'avez pas accès à cet institut");
         }
         return anneeRepo.findByInstitutIdAndActiveTrue(institutId)
-                .orElseThrow(() -> new ANNEACADEMIQUEACTIVER("Aucune année académique active pour cet institut"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune année académique active pour cet institut"));
+    }
+
+    /**
+     * ✅ Récupère le semestre actif pour un institut donné.
+     * Utilisé pour filtrer les classes par semestre en cours.
+     */
+    public Semestre getSemestreActif(Long institutId) {
+        if (!securityService.canAccessInstitut(institutId)) {
+            throw new AccessDeniedException("Vous n'avez pas accès à cet institut");
+        }
+        return semestreRepo.findByAnneeAcademique_Institut_IdAndActiveTrue(institutId)
+                .orElse(null);
     }
 }

@@ -9,7 +9,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Util
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeAction;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.DuplicateResourceException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Exception.TypeServiceREQUIRE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.CycleRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.InterfaceService.ICycleService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
@@ -29,7 +28,7 @@ public class CycleService implements ICycleService {
     public Cycle creer(Cycle cycle, Utilisateur acteur) {
         try {
             if (cycle.getTypeCycle() == null) {
-                throw new RuntimeException("Le type de cycle est obligatoire");
+                throw new IllegalArgumentException("Le type de cycle est obligatoire");
             }
 
             if (cycleRepo.existsByTypeCycle(cycle.getTypeCycle())) {
@@ -61,7 +60,7 @@ public class CycleService implements ICycleService {
             Cycle cycle = findById(id);
 
             if (data.getTypeCycle() == null) {
-                throw new TypeServiceREQUIRE("Le type de cycle est obligatoire");
+                throw new IllegalArgumentException("Le type de cycle est obligatoire");
             }
 
             cycle.setTypeCycle(data.getTypeCycle());
@@ -72,7 +71,7 @@ public class CycleService implements ICycleService {
 
             return saved;
 
-        } catch (TypeServiceREQUIRE e) {
+        } catch (IllegalArgumentException e) {
             journalService.journaliserEchec(acteur, TypeAction.CYCLE_MODIFIE,
                     "Cycle", id, e.getMessage());
             throw e;
