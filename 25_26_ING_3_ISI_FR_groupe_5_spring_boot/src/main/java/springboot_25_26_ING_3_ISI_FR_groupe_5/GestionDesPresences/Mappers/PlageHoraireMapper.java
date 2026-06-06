@@ -38,6 +38,10 @@ public interface PlageHoraireMapper {
     @Mapping(target = "dureeHeures",     expression = "java(plage.getDureeHeures())")
     @Mapping(target = "multiJours",      expression = "java(plage.isMultiJours())")
 
+    // ── Etat d'appel (pour badges UI dans liste-cours.html) ──
+    @Mapping(target = "appelEnCours",    expression = "java(plage.isAppelEnCours())")
+    @Mapping(target = "coursTermine",    expression = "java(plage.isCoursTermine())")
+
     // ── UE (via programmationUE) ──
     @Mapping(target = "ue.id",       source = "programmationUE.ue.id")
     @Mapping(target = "ue.nom",      source = "programmationUE.ue.nom")

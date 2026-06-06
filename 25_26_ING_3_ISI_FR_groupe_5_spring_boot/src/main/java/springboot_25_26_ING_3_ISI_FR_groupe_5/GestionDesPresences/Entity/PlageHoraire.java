@@ -196,4 +196,26 @@ public class PlageHoraire extends Auditable { // ✅ Auditable ajouté
         return this.heureDebut.isBefore(fin)
                 && this.heureFin.isAfter(debut);
     }
+
+    // ============================================
+    // Helpers — état d'appel (pour DTO / template)
+    // ============================================
+
+    /**
+     * Vrai s'il existe au moins une session d'appel actuellement
+     * active et non terminée sur cette plage.
+     */
+    public boolean isAppelEnCours() {
+        if (sessions == null || sessions.isEmpty()) return false;
+        return sessions.stream()
+                .anyMatch(s -> s.isActif() && !s.isCoursTermine());
+    }
+
+    /**
+     * Vrai si au moins une session a été marquée comme cours terminé.
+     */
+    public boolean isCoursTermine() {
+        if (sessions == null || sessions.isEmpty()) return false;
+        return sessions.stream().anyMatch(SessionAppel::isCoursTermine);
+    }
 }
