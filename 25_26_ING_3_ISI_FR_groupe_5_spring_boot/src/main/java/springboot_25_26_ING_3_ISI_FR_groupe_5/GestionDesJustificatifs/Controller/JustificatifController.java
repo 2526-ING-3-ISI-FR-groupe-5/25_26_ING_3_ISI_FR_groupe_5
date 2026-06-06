@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.DTO.justificatif.JustificatifRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Services.ServiceImple.JustificatifService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Services.InterfaceService.IJustificatifService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EtudiantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Enum.TypeJustificatif;
@@ -21,7 +21,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Enum.TypeJ
 @RequiredArgsConstructor
 public class JustificatifController {
 
-    private final JustificatifService justificatifService;
+    private final IJustificatifService justificatifService;
     private final InstitutSecurityService securityService;
     private final EtudiantService etudiantService;
 
@@ -134,7 +134,7 @@ public class JustificatifController {
                           RedirectAttributes redirectAttributes) {
         try {
             justificatifService.refuser(id, validateur, commentaire);
-            redirectAttributes.addFlashAttribute("errorMessage", "Justificatif refusé.");
+            redirectAttributes.addFlashAttribute("successMessage", "Justificatif refusé.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
