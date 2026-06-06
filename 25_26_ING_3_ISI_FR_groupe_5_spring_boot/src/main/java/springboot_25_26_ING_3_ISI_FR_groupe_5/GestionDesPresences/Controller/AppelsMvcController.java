@@ -23,6 +23,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Servi
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -157,9 +158,11 @@ public class AppelsMvcController {
             if (user instanceof Enseignant e) req.setEnseignantId(e.getId());
             appelsService.enregistrerAppelManuel(req);
             ra.addFlashAttribute("succes", "Presences enregistrees avec succes !");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur check manuel plage {}", id, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -186,9 +189,11 @@ public class AppelsMvcController {
             if (user instanceof Enseignant e) req.setEnseignantId(e.getId());
             appelsService.marquerRetard(req);
             ra.addFlashAttribute("succes", "Retard enregistre !");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur retard plage {} etudiant {}", id, etudiantId, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -222,12 +227,14 @@ public class AppelsMvcController {
             req.setMethode(methodeEnum);
             req.setDureeMinutes(dureeMinutes);
             Utilisateur user = resolveUtilisateur(authentication);
-            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            if (user == null) throw new IllegalStateException("Utilisateur introuvable");
             sessionAppelService.creer(req, user.getId());
             ra.addFlashAttribute("succes", "Session " + methode + " lancee !");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur lancement session plage {}", id, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -245,13 +252,15 @@ public class AppelsMvcController {
             RedirectAttributes ra) {
         try {
             Utilisateur user = resolveUtilisateur(authentication);
-            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            if (user == null) throw new IllegalStateException("Utilisateur introuvable");
             sessionAppelService.creerSessionOffline(id, user.getId());
             ra.addFlashAttribute("succes",
                     "Session offline lancee ! Dictez le code aux etudiants sans reseau.");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur lancement session offline plage {}", id, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -271,12 +280,14 @@ public class AppelsMvcController {
             RedirectAttributes ra) {
         try {
             Utilisateur user = resolveUtilisateur(authentication);
-            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            if (user == null) throw new IllegalStateException("Utilisateur introuvable");
             sessionAppelService.renouvelerCode(sid, dureeMinutes, user.getId());
             ra.addFlashAttribute("succes", "Code renouvele avec succes !");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur renouvellement code session {}", sid, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -299,12 +310,14 @@ public class AppelsMvcController {
             RedirectAttributes ra) {
         try {
             Utilisateur user = resolveUtilisateur(authentication);
-            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            if (user == null) throw new IllegalStateException("Utilisateur introuvable");
             sessionAppelService.arreterSession(sid, user.getId());
             ra.addFlashAttribute("succes", "Session arretee.");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur arret session {}", sid, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -321,12 +334,14 @@ public class AppelsMvcController {
             RedirectAttributes ra) {
         try {
             Utilisateur user = resolveUtilisateur(authentication);
-            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            if (user == null) throw new IllegalStateException("Utilisateur introuvable");
             sessionAppelService.terminerCours(sid, user.getId());
             ra.addFlashAttribute("succes", "Cours termine. Les absences ont ete enregistrees.");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur terminaison cours session {}", sid, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
@@ -346,9 +361,11 @@ public class AppelsMvcController {
         try {
             appelsService.ajusterHeures(aid, nbHeuresPresent);
             ra.addFlashAttribute("succes", "Heures ajustees.");
+        } catch (IllegalStateException | IllegalArgumentException | ResourceNotFoundException e) {
+            ra.addFlashAttribute("erreur", e.getMessage());
         } catch (Exception e) {
             log.error("Erreur ajustement heures appel {}", aid, e);
-            ra.addFlashAttribute("erreur", e.getMessage());
+            ra.addFlashAttribute("erreur", "Une erreur inattendue s'est produite. Reessayez.");
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
