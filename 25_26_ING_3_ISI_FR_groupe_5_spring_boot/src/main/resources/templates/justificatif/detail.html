@@ -70,7 +70,7 @@
             <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Étudiant</h2>
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg"
-                     th:text="${#strings.substring(justificatif.etudiant.prenom, 0, 1)}">A</div>
+                     th:text="${justificatif.etudiant != null and justificatif.etudiant.prenom != null and !#strings.isEmpty(justificatif.etudiant.prenom) ? #strings.substring(justificatif.etudiant.prenom, 0, 1) : '?'}">A</div>
                 <div>
                     <div class="text-base font-semibold text-gray-900 dark:text-white"
                          th:text="${justificatif.etudiant.prenom} + ' ' + ${justificatif.etudiant.nom}"></div>
@@ -172,6 +172,7 @@
                 <!-- Refuser -->
                 <form th:action="@{/justificatifs/assistant/{id}/refuser(id=${justificatif.id})}"
                       method="post" class="flex-1" id="form-refuser">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="commentaire" id="commentaire-refus">
                     <button type="submit"
                             onclick="document.getElementById('commentaire-refus').value = document.getElementById('commentaire').value"
@@ -186,6 +187,7 @@
                 <!-- Valider -->
                 <form th:action="@{/justificatifs/assistant/{id}/valider(id=${justificatif.id})}"
                       method="post" class="flex-1">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" name="commentaire" id="commentaire-validation">
                     <button type="submit"
                             onclick="document.getElementById('commentaire-validation').value = document.getElementById('commentaire').value"

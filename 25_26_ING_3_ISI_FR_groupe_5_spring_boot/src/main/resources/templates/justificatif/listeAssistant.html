@@ -74,7 +74,7 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm"
-                                 th:text="${#strings.substring(j.etudiant.prenom, 0, 1)}">A</div>
+                                 th:text="${j.etudiant != null and j.etudiant.prenom != null and !#strings.isEmpty(j.etudiant.prenom) ? #strings.substring(j.etudiant.prenom, 0, 1) : '?'}">A</div>
                             <div>
                                 <div class="text-sm font-semibold text-gray-900 dark:text-white"
                                      th:text="${j.etudiant.prenom} + ' ' + ${j.etudiant.nom}"></div>
