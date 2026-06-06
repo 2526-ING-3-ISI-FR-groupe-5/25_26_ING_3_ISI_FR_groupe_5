@@ -14,46 +14,59 @@
                     linear-gradient(90deg, rgba(79,126,248,0.04) 1px, transparent 1px);
             background-size: 48px 48px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-        }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes lineGrow {
-            from { transform: scaleX(0); transform-origin: left; }
-            to   { transform: scaleX(1); }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes lineGrow { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }
         .animate-fade-in { animation: fadeIn 0.6s ease both; }
         .animate-fade-up { animation: fadeUp 0.7s ease both; }
         .animate-fade-up-delay { animation: fadeUp 0.8s 0.2s ease both; }
         .animate-fade-up-slow { animation: fadeUp 0.7s 0.15s ease both; }
-        .animate-fade-in-delay { animation: fadeIn 0.8s 0.4s ease both; }
         .animate-slide-in { animation: slideIn 0.3s ease both; }
         .animate-line-grow { animation: lineGrow 2s ease both; }
     </style>
 </head>
 <body class="bg-bgdeep text-gray-200 font-sans min-h-screen flex flex-col md:flex-row">
 
-<!-- ═══ LEFT PANEL ═══ -->
-<div class="bg-bgcard relative overflow-hidden flex flex-col justify-between
-            min-h-[220px] md:min-h-screen
-            p-8 md:p-10 lg:p-12
+<!--
+═══════════════════════════════════════════════════════════════════════════
+  CONVENTION DES CHAMPS DE SAISIE (à réutiliser dans tous les templates)
+  ═══════════════════════════════════════════════════════════════════════════
+
+  Wrapper :       <div class="relative group">
+  Icône gauche :  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4
+                              text-gray-500 pointer-events-none transition-colors
+                              group-focus-within:text-primary" ...>
+  Input :         <input class="w-full pl-10 pr-4 py-3
+                                bg-bgsurface border border-white/10 rounded-xl
+                                text-sm text-gray-200 placeholder-gray-500
+                                outline-none transition-all duration-200
+                                focus:border-primary focus:ring-4 focus:ring-primary/10"
+                         ...>
+
+  Variantes :
+    - Sans icône gauche      → remplacer `pl-10` par `pl-4`
+    - Avec action à droite   → utiliser `pr-12` au lieu de `pr-4`
+    - État erreur            → ajouter `!border-red-500/40 !ring-red-500/10`
+    - Désactivé              → ajouter `disabled:opacity-50 disabled:cursor-not-allowed`
+
+  Label : `block text-[0.72rem] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2`
+═══════════════════════════════════════════════════════════════════════════
+-->
+
+<!-- ═══ LEFT PANEL (compact mobile, décoratif desktop) ═══ -->
+<div class="bg-bgcard relative overflow-hidden flex flex-row md:flex-col justify-between items-center md:items-stretch
+            min-h-[90px] md:min-h-screen
+            px-6 py-4 md:p-10 lg:p-12
             w-full md:w-[46%] shrink-0">
 
-    <!-- Grid pattern -->
-    <div class="absolute inset-0 grid-pattern animate-grid-drift"></div>
+    <!-- Grid pattern (desktop uniquement pour ne pas surcharger mobile) -->
+    <div class="absolute inset-0 grid-pattern hidden md:block"></div>
 
-    <!-- Orbes -->
-    <div class="absolute w-[300px] md:w-[420px] h-[300px] md:h-[420px] rounded-full blur-[80px] pointer-events-none -top-20 -right-20 animate-orb-float"
+    <!-- Orbes (desktop uniquement) -->
+    <div class="absolute w-[420px] h-[420px] rounded-full blur-[80px] pointer-events-none -top-20 -right-20 hidden md:block"
          style="background:radial-gradient(circle,rgba(79,126,248,0.28) 0%,transparent 70%)"></div>
-    <div class="absolute w-[200px] md:w-[300px] h-[200px] md:h-[300px] rounded-full blur-[80px] pointer-events-none bottom-10 -left-16 animate-orb-float-reverse"
+    <div class="absolute w-[300px] h-[300px] rounded-full blur-[80px] pointer-events-none bottom-10 -left-16 hidden md:block"
          style="background:radial-gradient(circle,rgba(107,148,255,0.12) 0%,transparent 70%)"></div>
 
     <!-- Lignes décoratives (desktop uniquement) -->
@@ -66,17 +79,22 @@
         <div class="h-0.5 bg-white rounded-sm animate-line-grow w-[60px] [animation-delay:0.95s]"></div>
     </div>
 
-    <!-- Brand (animation fade-in) -->
-    <div class="relative z-10 flex items-center gap-3.5 animate-fade-in">
-        <div class="w-11 h-11 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_32px_rgba(79,126,248,0.5)]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Brand -->
+    <div class="relative z-10 flex items-center gap-3 md:gap-3.5 animate-fade-in">
+        <div class="w-9 h-9 md:w-11 md:h-11 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_24px_rgba(79,126,248,0.45)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
             </svg>
         </div>
-        <span class="font-serif text-[1.6rem] font-bold text-white tracking-tight">Carnet<span class="text-primary">Rouge</span></span>
+        <span class="font-serif text-[1.25rem] md:text-[1.6rem] font-bold text-white tracking-tight">Carnet<span class="text-primary">Rouge</span></span>
     </div>
 
-    <!-- Quote (animation fade-up avec délai) -->
+    <!-- Tagline mobile (visible seulement sur petit écran, à côté du logo) -->
+    <span class="md:hidden text-[0.65rem] font-semibold tracking-[0.15em] uppercase text-primary/70">
+        Plateforme académique
+    </span>
+
+    <!-- Quote desktop (animation fade-up avec délai) -->
     <div class="relative z-10 hidden md:block animate-fade-up-delay">
         <div class="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-primary mb-5 flex items-center gap-2.5">
             <span class="w-7 h-px bg-primary"></span> Plateforme Académique
@@ -87,106 +105,147 @@
             académique.
         </h2>
         <p class="mt-5 text-sm text-white/30 leading-relaxed max-w-[300px]">
-            Accédez à vos notes, étudiants et ressources pédagogiques en toute sécurité depuis un seul endroit.
+            Accédez à votre espace personnel, vos données et vos outils pédagogiques en toute sécurité.
         </p>
     </div>
 
-    <!-- Stats (animation fade-in avec délai) -->
-    <div class="relative z-10 gap-8 hidden md:flex animate-fade-in-delay">
-        <div>
-            <div class="font-serif text-[1.8rem] font-bold text-white tracking-tight">12<span class="text-primary">K+</span></div>
-            <div class="text-[0.68rem] text-white/30 uppercase tracking-[0.1em] mt-0.5">Étudiants</div>
-        </div>
-        <div class="w-px bg-white/5 self-stretch"></div>
-        <div>
-            <div class="font-serif text-[1.8rem] font-bold text-white tracking-tight">340<span class="text-primary">+</span></div>
-            <div class="text-[0.68rem] text-white/30 uppercase tracking-[0.1em] mt-0.5">Enseignants</div>
-        </div>
-        <div class="w-px bg-white/5 self-stretch"></div>
-        <div>
-            <div class="font-serif text-[1.8rem] font-bold text-white tracking-tight">98<span class="text-primary">%</span></div>
-            <div class="text-[0.68rem] text-white/30 uppercase tracking-[0.1em] mt-0.5">Disponibilité</div>
+    <!-- Citation desktop (placeholder de bas de panneau) -->
+    <div class="relative z-10 hidden md:block">
+        <div class="flex items-center gap-3 text-[0.7rem] text-white/40">
+            <span class="w-7 h-px bg-white/15"></span>
+            <span class="font-medium tracking-[0.1em] uppercase">Espace sécurisé</span>
         </div>
     </div>
 </div>
 
-<!-- ═══ RIGHT PANEL ═══ -->
+<!-- ═══ RIGHT PANEL — Formulaire ═══ -->
 <div class="flex-1 flex items-start md:items-center justify-center
-            p-7 sm:p-10 lg:p-12
+            px-5 sm:px-8 md:px-10 lg:px-12
+            py-8 sm:py-10
             w-full md:w-auto
             bg-bgdeep">
 
-    <!-- Formulaire (animation fade-up) -->
-    <div class="w-full max-w-[380px] animate-fade-up-slow">
+    <div class="w-full max-w-[400px] animate-fade-up-slow">
 
         <!-- Header -->
-        <div class="mb-10">
+        <div class="mb-8 md:mb-10">
             <div class="text-[0.65rem] font-bold tracking-[0.2em] uppercase text-primary mb-2.5 flex items-center gap-2">
                 Authentification
                 <span class="flex-1 h-px bg-white/10"></span>
             </div>
-            <h1 class="font-serif text-[1.9rem] md:text-[2.4rem] font-bold leading-[1.1] text-gray-100 tracking-tight">
-                Bon<br>retour, <span class="text-primary italic">professeur.</span>
+            <h1 class="font-serif text-[1.75rem] sm:text-[2rem] md:text-[2.4rem] font-bold leading-[1.1] text-gray-100 tracking-tight">
+                Heureux de vous<br>
+                <span class="text-primary italic">revoir.</span>
             </h1>
-            <p class="mt-2.5 text-[0.82rem] text-gray-400">Veuillez entrer vos identifiants pour accéder à votre espace.</p>
+            <p class="mt-2.5 text-[0.82rem] text-gray-400">
+                Connectez-vous pour accéder à votre espace.
+            </p>
         </div>
 
-        <!-- Alertes (animation slide-in) -->
-        <div th:if="${param.error}" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-300 text-[0.82rem] mb-6 animate-slide-in">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Identifiants incorrects. Veuillez réessayer.</span>
+        <!-- Alertes -->
+        <div th:if="${param.error}"
+             class="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-300 text-[0.82rem] mb-5 animate-slide-in">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Identifiants incorrects. Vérifiez votre email et votre mot de passe.</span>
         </div>
 
-        <div th:if="${param.expired}" class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20 text-amber-300 text-[0.82rem] mb-6 animate-slide-in">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span>Session expirée. Merci de vous reconnecter.</span>
+        <div th:if="${param.expired}"
+             class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20 text-amber-300 text-[0.82rem] mb-5 animate-slide-in">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>Votre session a expiré. Veuillez vous reconnecter pour continuer.</span>
         </div>
 
-        <div th:if="${param.logout}" class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/20 text-emerald-300 text-[0.82rem] mb-6 animate-slide-in">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            <span>Déconnexion réussie. À bientôt !</span>
+        <div th:if="${param.logout}"
+             class="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/20 text-emerald-300 text-[0.82rem] mb-5 animate-slide-in">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Vous êtes déconnecté. À très bientôt !</span>
         </div>
 
-        <div th:if="${message}" class="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/20 text-primary/80 text-[0.82rem] mb-6 animate-slide-in">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div th:if="${message}"
+             class="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/20 text-primary/80 text-[0.82rem] mb-5 animate-slide-in">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
             <span th:text="${message}"></span>
         </div>
 
-        <div th:if="${erreur}" class="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-300 text-[0.82rem] mb-6 animate-slide-in">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div th:if="${erreur}"
+             class="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/8 border border-red-500/20 text-red-300 text-[0.82rem] mb-5 animate-slide-in">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             <span th:text="${erreur}"></span>
         </div>
 
         <!-- Formulaire -->
-        <form th:action="@{/login}" method="post" class="space-y-[22px]">
+        <form th:action="@{/login}" method="post" class="space-y-5" novalidate>
 
-            <!-- Email -->
+            <!-- Email — pattern champ avec icône gauche -->
             <div>
-                <label for="email" class="block text-[0.72rem] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">Adresse email</label>
+                <label for="email" class="block text-[0.72rem] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">
+                    Adresse email
+                </label>
                 <div class="relative group">
-                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-colors group-focus-within:text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-colors group-focus-within:text-primary"
+                         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
                     <input id="email" type="email" name="email" placeholder="votre@email.com"
-                           class="w-full pl-10 pr-4 py-3 bg-bgsurface border border-white/10 rounded-xl text-[0.88rem] text-gray-200 placeholder-gray-500 outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
-                           required autofocus autocomplete="email" />
+                           class="w-full pl-10 pr-4 py-3 bg-bgsurface border border-white/10 rounded-xl text-sm text-gray-200 placeholder-gray-500 outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                           required autofocus autocomplete="email" inputmode="email" />
                 </div>
             </div>
 
-            <!-- Mot de passe -->
+            <!-- Mot de passe — pattern champ avec icône gauche + action droite -->
             <div>
-                <label for="password" class="block text-[0.72rem] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">Mot de passe</label>
+                <div class="flex items-center justify-between mb-2">
+                    <label for="password" class="block text-[0.72rem] font-bold tracking-[0.1em] uppercase text-gray-400">
+                        Mot de passe
+                    </label>
+                    <a href="#" class="text-[0.7rem] text-primary/70 hover:text-primary transition-colors tracking-tight">
+                        Oublié ?
+                    </a>
+                </div>
                 <div class="relative group">
-                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-colors group-focus-within:text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none transition-colors group-focus-within:text-primary"
+                         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
                     <input id="password" type="password" name="password" placeholder="••••••••"
-                           class="w-full pl-10 pr-12 py-3 bg-bgsurface border border-white/10 rounded-xl text-[0.88rem] text-gray-200 placeholder-gray-500 outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                           class="w-full pl-10 pr-12 py-3 bg-bgsurface border border-white/10 rounded-xl text-sm text-gray-200 placeholder-gray-500 outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
                            required autocomplete="current-password" />
-                    <button type="button" onclick="togglePwd()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition-colors p-0.5" tabindex="-1">
-                        <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <button type="button" onclick="togglePwd()"
+                            aria-label="Afficher/masquer le mot de passe"
+                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition-colors p-0.5"
+                            tabindex="-1">
+                        <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
                     </button>
                 </div>
             </div>
 
             <!-- Bouton -->
-            <button type="submit" class="group w-full py-3.5 bg-primary hover:bg-primaryhover text-white font-bold tracking-[0.05em] uppercase text-[0.88rem] rounded-xl relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(79,126,248,0.35)] active:translate-y-0 mt-2">
+            <button type="submit"
+                    class="group w-full py-3.5 bg-primary hover:bg-primaryhover text-white font-bold tracking-[0.05em] uppercase text-[0.88rem] rounded-xl relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(79,126,248,0.35)] active:translate-y-0 mt-2">
                 <span class="relative z-10 flex items-center justify-center gap-2.5">
                     Se connecter
                     <span class="w-5 h-5 bg-white/15 rounded-full flex items-center justify-center text-[0.7rem] transition-transform duration-200 group-hover:translate-x-1">→</span>
@@ -197,7 +256,7 @@
         <!-- Footer -->
         <div class="flex items-center gap-3 mt-7">
             <span class="flex-1 h-px bg-white/10"></span>
-            <span class="text-[0.7rem] text-gray-500 tracking-wider">CarnetRouge · Plateforme Sécurisée</span>
+            <span class="text-[0.7rem] text-gray-500 tracking-wider whitespace-nowrap">CarnetRouge · Espace sécurisé</span>
             <span class="flex-1 h-px bg-white/10"></span>
         </div>
 
