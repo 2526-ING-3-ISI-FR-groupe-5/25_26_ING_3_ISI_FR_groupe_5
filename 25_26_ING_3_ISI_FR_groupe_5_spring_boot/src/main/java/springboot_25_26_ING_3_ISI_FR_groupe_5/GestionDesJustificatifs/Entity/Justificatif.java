@@ -77,23 +77,9 @@ public class Justificatif extends Auditable {
     @Builder.Default
     private Set<Appels> appels = new HashSet<>();
 
-    @ManyToMany(mappedBy = "justificatifs", fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<Fichier> fichiers = new HashSet<>();
-
     // ══════════════════════════════════════════
     // HELPERS
     // ══════════════════════════════════════════
-
-    public void addFichier(Fichier fichier) {
-        fichiers.add(fichier);
-        fichier.getJustificatifs().add(this);
-    }
-
-    public void removeFichier(Fichier fichier) {
-        fichiers.remove(fichier);
-        fichier.getJustificatifs().remove(this);
-    }
 
     public void addAppel(Appels appel) {
         appels.add(appel);
