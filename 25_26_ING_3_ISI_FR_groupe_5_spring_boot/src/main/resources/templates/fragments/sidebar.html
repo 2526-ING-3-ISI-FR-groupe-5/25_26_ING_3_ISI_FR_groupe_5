@@ -17,7 +17,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
 -->
 
 <aside th:fragment="sidebar" id="sidebar"
-       th:with="currentPath=${#httpServletRequest.requestURI}"
+       th:with="currentPath=${#httpServletRequest != null and #httpServletRequest.requestURI != null ? #httpServletRequest.requestURI : ''}"
        class="group w-64 h-full bg-white dark:bg-bgcard border-r border-gray-200 dark:border-white/5
               flex flex-col shrink-0 transition-[width] duration-200 ease-out">
 
@@ -74,7 +74,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
             <ul class="space-y-0.5">
                 <li>
                     <a th:href="@{/dashboard}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/dashboard') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/dashboard') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -94,7 +94,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
             <ul class="space-y-0.5">
                 <li>
                     <a th:href="@{/admin/utilisateurs}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/utilisateurs') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/utilisateurs') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -105,7 +105,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/etudiants}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/etudiants') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/etudiants') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -116,7 +116,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/enseignant/admin/liste}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/enseignant/admin') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/enseignant/admin') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -127,7 +127,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/migration}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/migration') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/migration') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -142,7 +142,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/inscriptions}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/inscriptions') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/inscriptions') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -153,7 +153,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/classes}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/classes') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/classes') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -173,7 +173,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
             <ul class="space-y-0.5">
                 <li>
                     <a th:href="@{/admin/ecoles}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/ecoles') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/ecoles') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -184,7 +184,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/cycles}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/cycles') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/cycles') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -195,7 +195,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/filieres}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/filieres') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/filieres') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -206,7 +206,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/specialites}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/specialites') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/specialites') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -217,7 +217,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/ues}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/ues') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/ues') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -237,7 +237,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
             <ul class="space-y-0.5">
                 <li>
                     <a th:href="@{/admin/annees}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/annees') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/annees') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -248,7 +248,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/admin/semestres}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/admin/semestres') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/admin/semestres') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
@@ -259,7 +259,7 @@ SIDEBAR — style shadcn/ui en Tailwind pur
                 </li>
                 <li>
                     <a th:href="@{/emploisDeTemps}"
-                       th:classappend="${currentPath != null and #strings.startsWith(currentPath, '/emploisDeTemps') ?
+                       th:classappend="${#strings.startsWith(currentPath, '/emploisDeTemps') ?
                             'bg-gray-100 dark:bg-bgsurface text-gray-900 dark:text-gray-50' :
                             'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/70 dark:hover:bg-bgsurface/60'}"
                        class="nav-link group/item relative flex items-center gap-2.5 px-2 py-1.5 rounded-md font-medium transition-colors">
