@@ -113,16 +113,21 @@
         }
 
         /* ── MODAL ── */
-        #mbg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.22); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
-        #mbg.on { display: flex; }
-        #modal { background: var(--surface); border-radius: 12px; width: 340px; padding: 22px; box-shadow: 0 16px 48px rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 16px; }
-        #modal h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+        #mbg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity .18s ease; }
+        #mbg.on { display: flex; opacity: 1; }
+        #modal { background: var(--surface); border-radius: 14px; width: 360px; max-width: calc(100vw - 32px); padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 16px; transform: translateY(8px) scale(.98); transition: transform .22s cubic-bezier(.16,1,.3,1); position: relative; }
+        #mbg.on #modal { transform: translateY(0) scale(1); }
+        #m-close { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; color: var(--t3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; transition: background .12s, color .12s; }
+        #m-close:hover { background: var(--bg); color: var(--text); }
+        #modal h3 { font-size: 16px; font-weight: 600; color: var(--text); padding-right: 32px; }
         .mrow { display: flex; gap: 8px; margin-top: 5px; }
-        .mrow button { padding: 9px; border-radius: 7px; font-family: var(--font); font-size: 13px; cursor: pointer; transition: opacity .12s; border: none; }
+        .mrow button { padding: 9px; border-radius: 7px; font-family: var(--font); font-size: 13px; cursor: pointer; transition: opacity .12s, background .12s; border: none; }
         .mc { background: transparent; border: 1px solid var(--border); color: var(--t2); flex: 1; }
+        .mc:hover { background: var(--bg); }
         .md { background: #dc2626; color: #fff; font-weight: 500; flex: 1; }
         .md:hover { opacity: .85; }
         .msave { flex: 2; }
+        .cta:disabled { opacity: .55; cursor: not-allowed; }
 
         /* ── TOAST ── */
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(50px); opacity: 0; background: var(--text); color: #fff; padding: 9px 18px; border-radius: 100px; font-size: 12px; font-weight: 500; z-index: 300; transition: transform .25s, opacity .25s; pointer-events: none; white-space: nowrap; }
@@ -133,7 +138,11 @@
 
 <div id="topbar">
     <div class="logo">
-        <span th:text="${classe.nom + ' - ' + classe.filiere}">Classe</span>
+        <span th:text="${classe.nom}">Classe</span>
+        <span th:if="${classe.niveau != null and classe.niveau.specialite != null and classe.niveau.specialite.filiere != null}"
+              style="color: var(--t3); margin-left: 6px;"
+              th:text="'· ' + ${classe.niveau.specialite.filiere.nom}">
+        </span>
     </div>
     <div class="nav">
         <button class="nb" id="btn-prev">‹</button>
@@ -178,6 +187,7 @@
 
 <div id="mbg">
     <div id="modal">
+        <button type="button" id="m-close" aria-label="Fermer">×</button>
         <h3 id="m-titre-matiere">Titre de la matière</h3>
         <p id="m-desc-pause" style="display:none; font-size:13px; color:var(--t2);">Voulez-vous supprimer cette pause ?</p>
         <div id="m-config-cours">
@@ -225,7 +235,7 @@
         const DEBUT_SEMAINE = /*[[${debutSemaine}]]*/ '2024-01-01';
 
         // ═══════════════════════════════════════════════════
-        // JWT
+        // JWT + CSRF
         // ═══════════════════════════════════════════════════
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -234,19 +244,19 @@
             return null;
         }
 
-        const getHeaders = () => {
-            const headers = { 'Content-Type': 'application/json' };
-            const token = getCookie('JWT_TOKEN');
-            if (token) headers['Authorization'] = 'Bearer ' + token;
-            return headers;
-        };
+        // CSRF lu depuis les <meta> exposes par Spring Security
+        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-XSRF-TOKEN';
 
-        const getFormHeaders = () => {
-            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        function applyAuthHeaders(headers) {
             const token = getCookie('JWT_TOKEN');
             if (token) headers['Authorization'] = 'Bearer ' + token;
+            if (csrfToken) headers[csrfHeader] = csrfToken;
             return headers;
-        };
+        }
+
+        const getHeaders     = () => applyAuthHeaders({ 'Content-Type': 'application/json' });
+        const getFormHeaders = () => applyAuthHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
 
         // ═══════════════════════════════════════════════════
         // STATE ET UTILS
@@ -380,7 +390,13 @@
         }
 
         $('m-cancel').addEventListener('click', () => closeModal(true));
+        $('m-close').addEventListener('click', () => closeModal(true));
         $('mbg').addEventListener('click', e => { if (e.target === $('mbg')) closeModal(true); });
+
+        // Fermeture modale au clavier (Escape)
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && $('mbg').classList.contains('on')) closeModal(true);
+        });
 
         // ── SUPPRIMER ──
         $('m-delete').addEventListener('click', async () => {
