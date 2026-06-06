@@ -35,8 +35,4 @@ public interface UERepository extends JpaRepository<UE, Long> {
         """)
     List<UE> findByAnneeAcademiqueId(@Param("anneeId") Long anneeId);
 
-    // ✅ Compatibilité legacy (marqué pour migration future)
-    @Deprecated
-    @Query("SELECT u FROM UE u")
-    List<UE> findAllUes();
 }

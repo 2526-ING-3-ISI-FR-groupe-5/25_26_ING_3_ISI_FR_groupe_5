@@ -145,14 +145,6 @@ public class Classe extends Auditable {
                 && getNombreEtudiants(annee) >= capaciteMax;
     }
 
-    /**
-     * @deprecated Utiliser isPleine(Annee_academique) partout où l'année est connue.
-     */
-    @Deprecated
-    public boolean isPleine() {
-        return capaciteMax != null && getNombreEtudiants() >= capaciteMax;
-    }
-
     /** Nombre total d'inscriptions toutes années confondues (usage stats/admin). */
     public int getNombreTotalInscriptions() {
         return inscriptions != null ? inscriptions.size() : 0;
