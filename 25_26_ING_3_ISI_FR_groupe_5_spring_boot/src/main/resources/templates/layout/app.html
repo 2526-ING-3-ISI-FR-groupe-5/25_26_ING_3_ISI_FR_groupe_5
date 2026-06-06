@@ -16,77 +16,68 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link th:href="@{/css/output.css}" rel="stylesheet" type="text/css" />
     <style>
-        /* ── Scrollbar fine ── */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 1px; height: 1px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 1px; }
 
-        /* ─────────────────────────────────────── */
-        /* SIDEBAR — état & animations            */
-        /* ─────────────────────────────────────── */
+        #sidebar { transition: width 0.25s ease, transform 0.25s ease; }
+        #sidebar.collapsed { width: 68px !important; }
 
-        #sidebar {
-            transition: width 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        #sidebar.collapsed { width: 64px !important; }
-
-        /* Animation des labels (opacité + largeur) */
-        #sidebar .sidebar-label,
-        #sidebar .logo-text {
-            transition: opacity 0.12s ease, max-width 0.2s ease;
+        #sidebar .sidebar-label {
+            transition: opacity 0.15s ease, max-width 0.25s ease;
             max-width: 200px;
             overflow: hidden;
             white-space: nowrap;
         }
-        #sidebar.collapsed .sidebar-label,
-        #sidebar.collapsed .logo-text {
+        #sidebar.collapsed .sidebar-label {
             opacity: 0;
             max-width: 0;
             pointer-events: none;
         }
 
-        /* Section labels disparaissent complètement en collapsed */
         #sidebar .sidebar-section-label {
-            transition: opacity 0.12s ease, max-height 0.2s ease, margin 0.2s ease;
+            transition: opacity 0.15s ease, max-height 0.25s ease;
             max-height: 40px;
             overflow: hidden;
         }
         #sidebar.collapsed .sidebar-section-label {
             opacity: 0;
             max-height: 0;
-            margin-bottom: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
-        /* Centre les icônes des menu items en collapsed */
-        #sidebar.collapsed .nav-link {
-            justify-content: center;
-            gap: 0;
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+        #sidebar .logo-text {
+            transition: opacity 0.15s ease, max-width 0.25s ease;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #sidebar.collapsed .logo-text {
+            opacity: 0;
+            max-width: 0;
+            overflow: hidden;
         }
 
-        /* Toggle icon : rotation à 180° quand collapsed */
         #sidebar.collapsed .toggle-icon { transform: rotate(180deg); }
 
-        /* ── Tooltip (visible uniquement quand collapsed + hover) ── */
+        .nav-link { position: relative; }
         .nav-link .tooltip {
             display: none;
             position: absolute;
-            left: calc(100% + 8px);
+            left: calc(100% + 10px);
             top: 50%;
             transform: translateY(-50%);
-            background: #0f1729;
+            background: #1e2230;
             border: 1px solid rgba(255,255,255,0.08);
             color: #e2e8f0;
             font-size: 12px;
-            font-weight: 500;
-            padding: 4px 10px;
-            border-radius: 6px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
             white-space: nowrap;
             z-index: 100;
             pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
         .nav-link .tooltip::before {
             content: '';
@@ -94,12 +85,11 @@
             right: 100%;
             top: 50%;
             transform: translateY(-50%);
-            border: 4px solid transparent;
-            border-right-color: #0f1729;
+            border: 5px solid transparent;
+            border-right-color: #1e2230;
         }
         #sidebar.collapsed .nav-link:hover .tooltip { display: flex; }
 
-        /* ── Overlay mobile ── */
         #sidebar-overlay {
             display: none;
             position: fixed;
@@ -111,23 +101,21 @@
         }
         #sidebar-overlay.active { display: block; }
 
-        /* ── Sélecteur institut (navbar) ── */
         .institut-selector {
             background: transparent;
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            padding: 5px 10px;
+            border-radius: 8px;
+            padding: 6px 12px;
             font-size: 13px;
             color: #e2e8f0;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
         }
         .institut-selector:hover {
             background: rgba(255,255,255,0.05);
             border-color: rgba(255,255,255,0.2);
         }
 
-        /* ── Mobile : la sidebar devient un drawer ── */
         @media (max-width: 1023px) {
             #sidebar {
                 position: fixed;
@@ -138,16 +126,9 @@
                 box-shadow: 4px 0 24px rgba(0,0,0,0.18);
             }
             #sidebar.mobile-open { transform: translateX(0); }
-            /* En mobile, jamais collapsed visuellement */
-            #sidebar.collapsed .nav-link {
-                justify-content: flex-start;
-                gap: 0.625rem;
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            #sidebar.collapsed .sidebar-label,
-            #sidebar.collapsed .logo-text { opacity: 1; max-width: 200px; }
+            #sidebar.collapsed .sidebar-label { opacity: 1; max-width: 200px; }
             #sidebar.collapsed .sidebar-section-label { opacity: 1; max-height: 40px; }
+            #sidebar.collapsed .logo-text { opacity: 1; max-width: 200px; }
         }
     </style>
 </head>
