@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Services.
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
@@ -251,6 +252,17 @@ public class JustificatifService implements IJustificatifService {
     @Transactional
     public void supprimer(Long id, Utilisateur auteur) {
         Justificatif j = findById(id);
+
+        // Ownership — un étudiant ne peut supprimer que ses propres justificatifs.
+        // Admin & assistant : pas de restriction (déjà gardés par @PreAuthorize côté controller).
+        if (auteur instanceof Etudiant) {
+            if (j.getEtudiant() == null
+                    || !auteur.getId().equals(j.getEtudiant().getId())) {
+                throw new AccessDeniedException(
+                        "Vous ne pouvez supprimer que vos propres justificatifs."
+                );
+            }
+        }
 
         // Vérifier que le justificatif n'est pas validé
         if (j.isValide()) {

@@ -17,7 +17,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Enum.TypeJustificatif;
 
 @Controller
-@RequestMapping("enseignant/justificatifs")
+@RequestMapping("/justificatifs")
 @RequiredArgsConstructor
 public class JustificatifController {
 

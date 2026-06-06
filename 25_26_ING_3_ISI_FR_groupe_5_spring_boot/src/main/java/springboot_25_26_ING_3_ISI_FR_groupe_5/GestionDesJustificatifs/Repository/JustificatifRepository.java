@@ -1,21 +1,13 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Repository;
 
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Entity.Justificatif;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 
 @Repository
 public interface JustificatifRepository extends JpaRepository<Justificatif, Long> {
@@ -44,16 +36,9 @@ public interface JustificatifRepository extends JpaRepository<Justificatif, Long
 
     List<Justificatif> findByEtudiantIdOrderByCreatedAtDesc(Long etudiantId);
 
-    boolean existsByEtudiantIdAndDateDebutAbsence(@NotNull(message = "L'étudiant est obligatoire") Long etudiantId, LocalDateTime dateDebutAbsence);
-
-
-    // Nécessaire pour getRetardsByPlage()
-
-
-    // ✅ Vérification doublon
-    boolean existsByEtudiantIdAndDateDebutAbsence(
-            Long etudiantId,
-            LocalDate dateDebutAbsence
-    );
-
+    /**
+     * Vérification de doublon avant soumission.
+     * Note : compare LocalDateTime exact (heure incluse).
+     */
+    boolean existsByEtudiantIdAndDateDebutAbsence(Long etudiantId, LocalDateTime dateDebutAbsence);
 }
