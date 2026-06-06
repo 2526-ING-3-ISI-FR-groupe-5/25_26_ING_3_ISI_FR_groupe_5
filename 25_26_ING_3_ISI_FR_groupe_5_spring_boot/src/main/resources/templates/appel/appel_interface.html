@@ -8,23 +8,55 @@
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        /* Checkbox compatible tous navigateurs */
+        .custom-checkbox {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .custom-checkbox:checked {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px; top: 2px;
+            width: 5px; height: 9px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+        .custom-checkbox:hover { border-color: #22c55e; }
     </style>
 </head>
-<body>
+<body class="bg-bgdeep text-gray-200 font-sans">
 
 <div layout:fragment="content">
     <div class="max-w-[1200px] mx-auto px-4 py-6">
 
-        <!-- EN-TETE & STATISTIQUES -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <!-- EN-TETE -->
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
             <div>
-                <a th:href="@{/enseignant/mon-espace}" class="text-[12px] text-gray-500 hover:text-primary mb-2 inline-flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                <a th:href="@{/enseignant/mon-espace}"
+                   class="text-[12px] text-gray-500 hover:text-primary mb-2 inline-flex items-center gap-1 transition-colors cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
                     Retour au dashboard
                 </a>
-                <h1 class="font-serif text-[clamp(1.6rem,4vw,2rem)] leading-[1.1] text-gray-100"
+                <h1 class="font-serif text-[clamp(1.6rem,4vw,2rem)] leading-[1.1] text-gray-100 font-semibold"
                     th:text="${plageHoraire.titre ?: plageHoraire.classe?.nom}">Titre du cours</h1>
                 <p class="text-[13px] text-gray-400 mt-1">
                     <span th:text="${plageHoraire.jour}">Lundi</span> ·
@@ -33,226 +65,320 @@
                     <span th:text="${(plageHoraire.dureeMinutes != null ? plageHoraire.dureeMinutes / 60 : 2) + 'h'}">2h</span>
                 </p>
             </div>
-            <div class="flex items-center gap-4 text-sm">
-                <span class="text-emerald-400">&#10003; <strong th:text="${nbPresents}">0</strong> presents</span>
-                <span class="text-amber-400" th:if="${nbRetards > 0}">&#9200; <strong th:text="${nbRetards}">0</strong> retards</span>
-                <span class="text-red-400">&#10007; <strong th:text="${nbAbsents}">0</strong> absents</span>
+            <div class="flex flex-wrap items-center gap-3 text-sm font-medium">
+            <span class="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                &#10003; <strong th:text="${nbPresents}">0</strong> presents
+            </span>
+                <span class="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full"
+                      th:if="${nbRetards > 0}">
+                &#9200; <strong th:text="${nbRetards}">0</strong> retards
+            </span>
+                <span class="text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full">
+                &#10007; <strong th:text="${nbAbsents}">0</strong> absents
+            </span>
             </div>
         </div>
 
         <!-- MESSAGES FLASH -->
-        <div th:if="${succes}" class="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm flex items-center gap-2 animate-fade-in">
-            <span th:text="${succes}"></span>
-        </div>
-        <div th:if="${erreur}" class="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-center gap-2 animate-fade-in">
-            <span th:text="${erreur}"></span>
-        </div>
+        <div th:if="${succes}" class="mb-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm animate-fade-in" th:text="${succes}"></div>
+        <div th:if="${erreur}" class="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm animate-fade-in" th:text="${erreur}"></div>
 
-        <!-- ✅ SESSION ACTIVE AVEC QR CODE + PIN -->
+        <!-- ═══════════════════════════════════════ -->
+        <!-- SESSION NORMALE ACTIVE (QR / PIN)      -->
+        <!-- ═══════════════════════════════════════ -->
         <div th:if="${sessionActive != null && sessionActive.actif}"
-             class="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl animate-fade-in">
+             class="mb-4 p-5 bg-primary/10 border border-primary/20 rounded-2xl animate-fade-in">
             <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <div class="flex-1">
-                    <p class="font-semibold text-primary text-sm">Session <span th:text="${sessionActive.methode}"></span> active</p>
+                    <p class="font-semibold text-primary text-xs tracking-widest uppercase mb-3">
+                        Session <span th:text="${sessionActive.methode}"></span> active
+                    </p>
 
-                    <!-- ✅ QR Code (si disponible) -->
-                    <div th:if="${sessionActive.hasQrCode()}" class="mt-3 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                        <img th:src="'data:image/png;base64,' + ${sessionActive.qrCodeBase64}"
-                             alt="QR Code" class="w-40 h-40 rounded-lg bg-white p-2"/>
+                    <!-- QR Code + PIN -->
+                    <div th:if="${sessionActive.hasQrCode()}"
+                         class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                        <div class="bg-white p-2 rounded-xl shadow-lg shrink-0">
+                            <img th:src="'data:image/png;base64,' + ${sessionActive.qrCodeBase64}"
+                                 alt="QR Code appel"
+                                 class="w-36 h-36 block"/>
+                        </div>
                         <div>
-                            <p class="text-[11px] text-gray-400">Ou saisissez le code :</p>
-                            <p class="text-3xl font-bold text-white tracking-widest font-mono"
+                            <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">
+                                Ou saisissez le code :
+                            </p>
+                            <p class="text-4xl font-bold text-white tracking-widest font-mono"
                                th:text="${sessionActive.code}">000000</p>
                         </div>
                     </div>
 
-                    <!-- ✅ PIN seul (si pas de QR) -->
-                    <div th:unless="${sessionActive.hasQrCode()}" class="mt-1">
+                    <!-- PIN seul (sans QR) -->
+                    <div th:unless="${sessionActive.hasQrCode()}">
+                        <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Code PIN</p>
                         <p class="text-4xl font-bold text-white tracking-widest font-mono"
                            th:text="${sessionActive.code}">000000</p>
                     </div>
 
-                    <p class="text-[11px] text-gray-400 mt-2">Expire le
-                        <span th:text="${#temporals.format(sessionActive.dateExpiration, 'dd/MM HH:mm')}"></span>
+                    <p class="text-[11px] text-gray-500 mt-3">
+                        Expire le <span th:text="${#temporals.format(sessionActive.dateExpiration, 'dd/MM HH:mm')}"></span>
                     </p>
                 </div>
-                <div class="flex gap-2 shrink-0">
-                    <!-- Renouveler -->
-                    <form th:action="@{/enseignant/appels/{id}/renouveler-session/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button class="btn btn-sm bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary rounded-lg h-8 text-xs">Renouveler</button>
+
+                <!-- Actions session normale -->
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    <form th:action="@{/enseignant/appels/{id}/renouveler-code/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}"
+                          method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary transition-colors">
+                            Renouveler
+                        </button>
                     </form>
-                    <!-- Arreter -->
-                    <form th:action="@{/enseignant/appels/{id}/arreter-session/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button class="btn btn-sm btn-ghost border border-white/10 text-gray-400 rounded-lg h-8 text-xs hover:bg-white/5">Arreter</button>
+                    <form th:action="@{/enseignant/appels/{id}/arreter-session/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}"
+                          method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-gray-400 hover:bg-white/5 transition-colors">
+                            Arreter
+                        </button>
                     </form>
-                    <!-- Terminer -->
                     <form th:action="@{/enseignant/appels/{id}/terminer/{sid}(id=${plageHoraire.id}, sid=${sessionActive.id})}"
-                          method="post" onsubmit="return confirm('Terminer le cours ? Cette action est irreversible.')">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button class="btn btn-sm bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-lg h-8 text-xs">Terminer le cours</button>
+                          method="post"
+                          onsubmit="return confirm('Terminer le cours ? Cette action est irreversible.')">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 transition-colors">
+                            Terminer le cours
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- ACTIONS RAPIDES (SI AUCUNE SESSION ACTIVE) -->
-        <div th:if="${sessionActive == null || !sessionActive.actif}" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <!-- ═══════════════════════════════════════ -->
+        <!-- SESSION OFFLINE ACTIVE              -->
+        <!-- ═══════════════════════════════════════ -->
+        <div th:if="${sessionOffline != null && sessionOffline.actif}"
+             class="mb-4 p-5 bg-amber-500/10 border border-amber-500/20 rounded-2xl animate-fade-in">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div>
+                    <p class="font-semibold text-amber-400 text-xs tracking-widest uppercase mb-2">
+                        Session offline active
+                        <span class="ml-2 text-[10px] font-normal text-amber-400/60 normal-case">
+                        valable jusqu'a la fin du cours
+                    </span>
+                    </p>
+                    <p class="text-[11px] text-gray-400 mb-2">
+                        Dictez ce code aux etudiants sans reseau. Ils valideront quand la connexion reviendra.
+                    </p>
+                    <p class="text-3xl font-bold text-white tracking-[0.3em] font-mono"
+                       th:text="${sessionOffline.code}">ABCD1234</p>
+                </div>
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    <form th:action="@{/enseignant/appels/{id}/renouveler-code/{sid}(id=${plageHoraire.id}, sid=${sessionOffline.id})}"
+                          method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-400 transition-colors">
+                            Nouveau code
+                        </button>
+                    </form>
+                    <form th:action="@{/enseignant/appels/{id}/arreter-session/{sid}(id=${plageHoraire.id}, sid=${sessionOffline.id})}"
+                          method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-gray-400 hover:bg-white/5 transition-colors">
+                            Arreter
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- ACTIONS RAPIDES (AUCUNE SESSION)        -->
+        <!-- ═══════════════════════════════════════ -->
+        <div th:if="${(sessionActive == null || !sessionActive.actif)}"
+             class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">
+
+            <!-- QR Code -->
             <form th:action="@{/enseignant/appels/{id}/lancer-session(id=${plageHoraire.id})}" method="post"
-                  class="bg-bgcard border border-white/5 rounded-[16px] p-4 hover:border-primary/20 transition-colors">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                  class="bg-bgcard border border-white/5 rounded-[16px] p-5 hover:border-primary/20 transition-all">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="methode" value="QR_CODE">
                 <input type="hidden" name="dureeMinutes" value="3">
-                <h4 class="font-medium text-gray-200 text-sm mb-2">QR Code + PIN</h4>
-                <p class="text-[11px] text-gray-500 mb-3">Les etudiants scannent le QR ou saisissent le code</p>
-                <button type="submit" class="btn btn-sm bg-primary hover:bg-primaryhover border-none text-white w-full rounded-lg h-8 text-xs">Generer QR</button>
+                <h4 class="font-medium text-gray-200 text-sm mb-1.5">QR Code + PIN</h4>
+                <p class="text-[11px] text-gray-500 mb-4">Les etudiants scannent ou saisissent le code (3 min)</p>
+                <button type="submit" class="w-full py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-xs font-medium transition-colors">
+                    Generer QR
+                </button>
             </form>
+
+            <!-- PIN seul -->
             <form th:action="@{/enseignant/appels/{id}/lancer-session(id=${plageHoraire.id})}" method="post"
-                  class="bg-bgcard border border-white/5 rounded-[16px] p-4 hover:border-primary/20 transition-colors">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                  class="bg-bgcard border border-white/5 rounded-[16px] p-5 hover:border-primary/20 transition-all">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="methode" value="CODE_PIN">
                 <input type="hidden" name="dureeMinutes" value="3">
-                <h4 class="font-medium text-gray-200 text-sm mb-2">Code PIN seul</h4>
-                <p class="text-[11px] text-gray-500 mb-3">Les etudiants saisissent le code manuellement</p>
-                <button type="submit" class="btn btn-sm bg-primary hover:bg-primaryhover border-none text-white w-full rounded-lg h-8 text-xs">Generer PIN</button>
+                <h4 class="font-medium text-gray-200 text-sm mb-1.5">Code PIN seul</h4>
+                <p class="text-[11px] text-gray-500 mb-4">Les etudiants saisissent le code manuellement (3 min)</p>
+                <button type="submit" class="w-full py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-xs font-medium transition-colors">
+                    Generer PIN
+                </button>
+            </form>
+
+            <!-- Session offline -->
+            <form th:if="${sessionOffline == null || !sessionOffline.actif}"
+                  th:action="@{/enseignant/appels/{id}/lancer-session-offline(id=${plageHoraire.id})}" method="post"
+                  class="bg-bgcard border border-amber-500/20 rounded-[16px] p-5 hover:border-amber-500/40 transition-all">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <h4 class="font-medium text-amber-400 text-sm mb-1.5">Code offline</h4>
+                <p class="text-[11px] text-gray-500 mb-4">Pour les etudiants sans reseau — valable toute la duree du cours</p>
+                <button type="submit" class="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-400 rounded-lg text-xs font-medium transition-colors">
+                    Generer code offline
+                </button>
             </form>
         </div>
 
-        <!-- GESTION DES RETARDS -->
+        <!-- ═══════════════════════════════════════ -->
+        <!-- GESTION DES RETARDS                    -->
+        <!-- ═══════════════════════════════════════ -->
         <div th:if="${plageHoraire.heureDebut != null
-                      and (plageHoraire.heureDebut.hour < 8
-                           or (plageHoraire.heureDebut.hour == 8 and plageHoraire.heureDebut.minute <= 30))}"
+                  and (plageHoraire.heureDebut.hour < 8
+                       or (plageHoraire.heureDebut.hour == 8 and plageHoraire.heureDebut.minute <= 30))}"
              class="bg-bgcard border border-amber-500/20 rounded-[22px] overflow-hidden mb-6">
-            <div class="flex items-center justify-between p-4 md:p-5 border-b border-amber-500/10 bg-amber-500/5">
+            <div class="flex items-center justify-between p-4 border-b border-amber-500/10 bg-amber-500/5">
                 <div>
                     <h2 class="text-[15px] font-semibold text-amber-400">Gestion des retards</h2>
-                    <p class="text-[11px] text-gray-400 mt-0.5">Premier cours du matin — Les retards sont autorises</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Premier cours du matin</p>
                 </div>
-                <span class="text-[11px] text-amber-400/70" th:text="${nbRetards} + ' retard(s)'">0 retard(s)</span>
+                <span class="text-[11px] text-amber-400/70 font-semibold bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full"
+                      th:text="${nbRetards} + ' retard(s)'">0 retard(s)</span>
             </div>
-
             <div class="divide-y divide-white/5 max-h-[350px] overflow-y-auto">
                 <div th:each="appel : ${appels}"
                      th:if="${appel.statut?.name() == 'EN_ATTENTE' || appel.statut?.name() == 'RETARD'}"
-                     class="flex items-center justify-between p-3 md:p-4 hover:bg-bgsurface/30 transition-colors animate-fade-in">
-
+                     class="flex items-center justify-between p-3 hover:bg-bgsurface/30 transition-colors">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-9 h-9 rounded-lg bg-bgsubtle border border-white/5 flex items-center justify-center text-xs font-bold shrink-0"
-                             th:classappend="${appel.statut?.name() == 'RETARD' ? '!bg-amber-500/20 !text-amber-400 !border-amber-500/30' : 'text-gray-400'}"
-                             th:text="${#strings.substring(appel.etudiantNom,0,1) + #strings.substring(appel.etudiantPrenom,0,1)}">AB</div>
+                        <div th:with="colors=${ {'#4f7ef8','#a855f7','#ef4444','#3b82f6','#22c55e','#f59e0b','#06b6d4','#ec4899'} }, col=${colors[appel.etudiantId % 8]}"
+                             th:style="'background:' + ${col} + '22; color:' + ${col} + '; border:1px solid ' + ${col} + '44;'"
+                             class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
+                             th:text="${(appel.etudiantNom != null ? #strings.substring(appel.etudiantNom,0,1) : '') + (appel.etudiantPrenom != null ? #strings.substring(appel.etudiantPrenom,0,1) : '')}">AB</div>
                         <div class="min-w-0">
-                            <p class="text-[13px] font-medium text-gray-200 truncate"
+                            <p class="text-[13px] font-semibold text-gray-200 truncate"
                                th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></p>
                             <p class="text-[11px] text-gray-500" th:text="${appel.etudiantMatricule}"></p>
-                            <div th:if="${appel.statut?.name() == 'RETARD'}" class="flex items-center gap-2 mt-1">
+                            <div th:if="${appel.statut?.name() == 'RETARD'}" class="flex items-center gap-2 mt-0.5">
                                 <span class="text-[10px] text-amber-400/80">Arrive a <span th:text="${appel.heureArrivee}"></span></span>
                                 <span class="text-[10px] font-bold text-amber-400">(+<span th:text="${appel.retardMinutes}"></span> min)</span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="shrink-0">
                         <th:block th:if="${appel.statut?.name() != 'RETARD'}">
-                            <form th:action="@{/enseignant/appels/{id}/marquer-retard(id=${plageHoraire.id})}" method="post"
-                                  class="flex items-center gap-1.5">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <form th:action="@{/enseignant/appels/{id}/marquer-retard(id=${plageHoraire.id})}"
+                                  method="post" class="flex items-center gap-1.5">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <input type="hidden" name="etudiantId" th:value="${appel.etudiantId}">
-                                <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
                                 <input type="time" name="heureArrivee" required
-                                       class="bg-bgsubtle border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 w-24 focus:border-amber-500/50 focus:outline-none"
+                                       class="bg-bgsurface border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 w-24 focus:border-amber-500/50 focus:outline-none"
                                        th:min="${plageHoraire.heureDebut}" th:max="${plageHoraire.heureFin}">
-                                <button type="submit"
-                                        class="btn btn-xs bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-400 rounded-lg h-7 text-[10px] px-2">
+                                <button type="submit" class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-semibold">
                                     Retard
                                 </button>
                             </form>
                         </th:block>
                         <span th:if="${appel.statut?.name() == 'RETARD'}"
                               class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            En retard
-                        </span>
+                        En retard
+                    </span>
                     </div>
                 </div>
-
-                <div th:if="${#lists.isEmpty(appels)}" class="p-8 text-center text-gray-500">
-                    <p class="text-sm">Tous les etudiants sont a l'heure</p>
+                <div th:if="${#lists.isEmpty(appels)}" class="p-8 text-center text-gray-500 text-sm">
+                    Tous les etudiants sont a l'heure
                 </div>
             </div>
         </div>
 
-        <!-- CHECK MANUEL DES PRESENCES -->
+        <!-- ═══════════════════════════════════════ -->
+        <!-- CHECK MANUEL DES PRESENCES              -->
+        <!-- ═══════════════════════════════════════ -->
         <div class="bg-bgcard border border-white/5 rounded-[22px] overflow-hidden mb-8">
-            <div class="flex items-center justify-between p-4 md:p-5 border-b border-white/5 bg-bgsurface/30">
+            <div class="flex items-center justify-between p-4 border-b border-white/5 bg-bgsurface/30">
                 <h2 class="text-[15px] font-semibold text-gray-200">Check manuel</h2>
-                <div class="flex items-center gap-3">
-                    <button type="button" onclick="toggleAll(true)" class="text-[11px] text-emerald-400 hover:text-emerald-300">Tout cocher</button>
-                    <button type="button" onclick="toggleAll(false)" class="text-[11px] text-red-400 hover:text-red-300">Tout decocher</button>
-                    <span class="text-[11px] text-gray-500" th:text="${#lists.size(appels)} + ' etudiants'">0 etudiants</span>
+                <div class="flex items-center gap-2 text-xs">
+                    <button type="button" onclick="toggleAll(true)"
+                            class="text-emerald-400 hover:text-emerald-300 font-semibold px-2 py-1 rounded hover:bg-emerald-500/5 cursor-pointer">
+                        Tout cocher
+                    </button>
+                    <div class="w-px h-3.5 bg-white/10"></div>
+                    <button type="button" onclick="toggleAll(false)"
+                            class="text-red-400 hover:text-red-300 font-semibold px-2 py-1 rounded hover:bg-red-500/5 cursor-pointer">
+                        Tout decocher
+                    </button>
+                    <div class="w-px h-3.5 bg-white/10"></div>
+                    <span class="text-gray-500 font-medium" th:text="${#lists.size(appels)} + ' etudiants'">0</span>
                 </div>
             </div>
 
-            <div id="msg-erreur-check" class="hidden mx-4 mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-                Veuillez selectionner au moins un etudiant present.
+            <!-- Message d'erreur dynamique -->
+            <div id="msg-erreur-check"
+                 class="hidden mx-4 mt-3 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                Aucun étudiant sélectionné. Si vous validez, tous les étudiants seront marqués absents.
             </div>
 
             <form th:action="@{/enseignant/appels/{id}/check-manuel(id=${plageHoraire.id})}"
                   method="post" id="form-check-manuel">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" name="plageHoraireId" th:value="${plageHoraire.id}">
 
                 <div class="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
                     <div th:each="appel, iterStat : ${appels}"
-                         class="flex items-center justify-between p-3 md:p-4 hover:bg-bgsurface/30 transition-colors animate-fade-in"
-                         th:style="'animation-delay: ' + ${iterStat.index * 50} + 'ms'">
-
-                        <input type="checkbox" name="etudiantIdsPresents" th:value="${appel.etudiantId}"
-                               th:checked="${appel.present || appel.statut?.name() == 'PRESENT'}"
-                               class="hidden peer" th:id="'present-' + ${appel.etudiantId}">
+                         class="flex items-center justify-between p-3 hover:bg-bgsurface/30 transition-colors animate-fade-in"
+                         th:style="'animation-delay: ' + ${iterStat.index * 40} + 'ms'">
 
                         <div class="flex items-center gap-3 min-w-0">
-                            <label th:for="'present-' + ${appel.etudiantId}" class="cursor-pointer">
-                                <div class="w-9 h-9 rounded-lg bg-bgsubtle border border-white/5 flex items-center justify-center text-xs font-bold shrink-0"
-                                     th:classappend="${appel.present ? '!bg-emerald-500/20 !text-emerald-400 !border-emerald-500/30' : 'text-gray-400'}"
-                                     th:text="${#strings.substring(appel.etudiantNom,0,1) + #strings.substring(appel.etudiantPrenom,0,1)}">AB</div>
+                            <!-- Checkbox -->
+                            <input type="checkbox"
+                                   name="etudiantIdsPresents"
+                                   th:value="${appel.etudiantId}"
+                                   th:checked="${appel.present || appel.statut?.name() == 'PRESENT'}"
+                                   th:id="'cb-' + ${appel.etudiantId}"
+                                   class="custom-checkbox"
+                                   onchange="updateErrorState()">
+
+                            <label th:for="'cb-' + ${appel.etudiantId}" class="cursor-pointer flex items-center gap-3">
+                                <div th:with="colors=${ {'#4f7ef8','#a855f7','#ef4444','#3b82f6','#22c55e','#f59e0b','#06b6d4','#ec4899'} }, col=${colors[appel.etudiantId % 8]}"
+                                     th:style="'background:' + ${col} + '22; color:' + ${col} + '; border:1px solid ' + ${col} + '44;'"
+                                     class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
+                                     th:text="${(appel.etudiantNom != null ? #strings.substring(appel.etudiantNom,0,1) : '') + (appel.etudiantPrenom != null ? #strings.substring(appel.etudiantPrenom,0,1) : '')}">AB</div>
+                                <div class="min-w-0">
+                                    <p class="text-[13px] font-semibold text-gray-200 truncate hover:text-primary transition-colors"
+                                       th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></p>
+                                    <p class="text-[11px] text-gray-500" th:text="${appel.etudiantMatricule}"></p>
+                                </div>
                             </label>
-                            <div class="min-w-0">
-                                <label th:for="'present-' + ${appel.etudiantId}"
-                                       class="text-[13px] font-medium text-gray-200 truncate cursor-pointer hover:text-primary"
-                                       th:text="${appel.etudiantNom + ' ' + appel.etudiantPrenom}"></label>
-                                <p class="text-[11px] text-gray-500" th:text="${appel.etudiantMatricule}"></p>
-                            </div>
                         </div>
 
                         <div class="flex items-center gap-2 shrink-0">
+                            <!-- Ajustement heures -->
                             <div th:if="${appel.statut?.name() == 'PARTIEL' || appel.nbHeuresPresent > 0}"
-                                 class="flex items-center gap-1 bg-bgsubtle rounded-lg p-1">
-                                <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}"
-                                      method="post" class="inline">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                 class="flex items-center gap-1 bg-bgsurface rounded-lg p-1">
+                                <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent - 1}">
-                                    <button type="submit"
-                                            class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6"
-                                            th:disabled="${appel.nbHeuresPresent <= 0}">-</button>
+                                    <button type="submit" class="w-6 h-6 rounded text-gray-400 hover:text-white hover:bg-white/10 text-sm flex items-center justify-center" th:disabled="${appel.nbHeuresPresent <= 0}">-</button>
                                 </form>
                                 <span class="text-[13px] font-mono font-medium text-gray-200 w-8 text-center"
                                       th:text="${appel.nbHeuresPresent + 'h'}"></span>
-                                <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}"
-                                      method="post" class="inline">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <form th:action="@{/enseignant/appels/{id}/ajuster-heures/{aid}(id=${plageHoraire.id}, aid=${appel.id})}" method="post" class="inline">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <input type="hidden" name="nbHeuresPresent" th:value="${appel.nbHeuresPresent + 1}">
-                                    <button type="submit"
-                                            class="btn btn-square btn-xs btn-ghost text-gray-400 rounded-md w-6 h-6"
-                                            th:disabled="${appel.nbHeuresPresent >= plageHoraire.dureeMinutes / 60}">+</button>
+                                    <button type="submit" class="w-6 h-6 rounded text-gray-400 hover:text-white hover:bg-white/10 text-sm flex items-center justify-center" th:disabled="${appel.nbHeuresPresent >= plageHoraire.dureeHeures}">+</button>
                                 </form>
                             </div>
 
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                            <!-- Badge statut -->
+                            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border"
                                   th:classappend="${appel.statut?.name() == 'PRESENT'}  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                 (${appel.statut?.name() == 'RETARD'}   ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                 (${appel.statut?.name() == 'PARTIEL'}  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                 (${appel.statut?.name() == 'ABSENT'}   ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                                                          'bg-gray-500/10 text-gray-400 border-gray-500/20')))"
+                                             (${appel.statut?.name() == 'RETARD'}   ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                             (${appel.statut?.name() == 'PARTIEL'}  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                             (${appel.statut?.name() == 'ABSENT'}   ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                                                      'bg-gray-500/10 text-gray-400 border-gray-500/20')))"
                                   th:text="${appel.statutLibelle ?: appel.statut?.name()}">Statut</span>
                         </div>
                     </div>
@@ -260,33 +386,36 @@
 
                 <div class="p-4 border-t border-white/5">
                     <button type="submit"
-                            class="btn bg-primary hover:bg-primaryhover border-none text-white font-medium w-full h-10 rounded-xl transition-all">
+                            class="w-full py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-all cursor-pointer">
                         Enregistrer les presences
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- SESSIONS RECENTES -->
+        <!-- ═══════════════════════════════════════ -->
+        <!-- SESSIONS RECENTES                       -->
+        <!-- ═══════════════════════════════════════ -->
         <div th:if="${sessions != null and not #lists.isEmpty(sessions)}"
              class="bg-bgcard border border-white/5 rounded-[22px] overflow-hidden">
-            <div class="p-4 md:p-5 border-b border-white/5 bg-bgsurface/30">
+            <div class="p-4 border-b border-white/5 bg-bgsurface/30">
                 <h2 class="text-[15px] font-semibold text-gray-200">Sessions recentes</h2>
             </div>
             <div class="divide-y divide-white/5">
                 <div th:each="session : ${sessions}"
-                     class="p-3 md:p-4 flex items-center justify-between hover:bg-bgsurface/30 transition-colors">
+                     class="p-3 flex items-center justify-between hover:bg-bgsurface/30 transition-colors">
                     <div class="flex items-center gap-3">
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
-                              th:classappend="${session.actif ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}"
-                              th:text="${session.actif ? 'Actif' : 'Termine'}"></span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                          th:classappend="${session.actif ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}"
+                          th:text="${session.actif ? 'Actif' : 'Termine'}"></span>
                         <div>
-                            <p class="text-[13px] text-gray-300" th:text="${session.methode}"></p>
+                            <p class="text-[13px] text-gray-300 font-medium"
+                               th:text="${session.methode + (session.typeSession?.name() == 'OFFLINE' ? ' (offline)' : '')}"></p>
                             <p class="text-[11px] text-gray-500"
                                th:text="${#temporals.format(session.dateGeneration, 'dd/MM HH:mm')}"></p>
                         </div>
                     </div>
-                    <span class="text-[12px] text-gray-500"
+                    <span class="text-[12px] text-gray-500 font-medium"
                           th:text="${session.nbPresents + '/' + session.totalEtudiants + ' presents'}"></span>
                 </div>
             </div>
@@ -296,24 +425,90 @@
 </div>
 
 <script layout:fragment="scripts">
-    function toggleAll(checked) {
-        document.querySelectorAll('input[name="etudiantIdsPresents"]').forEach(cb => cb.checked = checked);
+    function updateErrorState() {
+        const n = document.querySelectorAll('input[name="etudiantIdsPresents"]:checked').length;
+        // On cache l'avertissement de "tout le monde absent" si au moins un étudiant est coché
+        if (n > 0) {
+            document.getElementById('msg-erreur-check').classList.add('hidden');
+        }
     }
 
-    document.getElementById('form-check-manuel')?.addEventListener('submit', function(e) {
-        const nbCoches = document.querySelectorAll('input[name="etudiantIdsPresents"]:checked').length;
-        const total    = document.querySelectorAll('input[name="etudiantIdsPresents"]').length;
-        const msgErreur = document.getElementById('msg-erreur-check');
+    function toggleAll(checked) {
+        document.querySelectorAll('input[name="etudiantIdsPresents"]').forEach(cb => cb.checked = checked);
+        updateErrorState();
+    }
 
-        if (nbCoches === 0 && total > 0) {
-            e.preventDefault();
-            msgErreur.classList.remove('hidden');
-            msgErreur.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.addEventListener("DOMContentLoaded", function() {
+        const token = localStorage.getItem("jwt_token") || localStorage.getItem("token") || sessionStorage.getItem("jwt_token") || sessionStorage.getItem("token");
+
+        // ✅ Intercepter toutes les soumissions de formulaires POST pour ajouter le token JWT si présent dans le stockage
+        if (token) {
+            document.querySelectorAll("form[method='post']").forEach(form => {
+                form.addEventListener("submit", function(e) {
+
+                    // Si on valide le formulaire manuel de présence
+                    if (form.id === 'form-check-manuel') {
+                        const n = document.querySelectorAll('input[name="etudiantIdsPresents"]:checked').length;
+                        const total = document.querySelectorAll('input[name="etudiantIdsPresents"]').length;
+                        if (n === 0 && total > 0) {
+                            const confirmerAbsenceTotale = confirm("Vous n'avez sélectionné aucun étudiant présent. Êtes-vous sûr de vouloir enregistrer l'absence de toute la classe ?");
+                            if (!confirmerAbsenceTotale) {
+                                e.preventDefault();
+                                const msg = document.getElementById('msg-erreur-check');
+                                msg.classList.remove('hidden');
+                                msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                return;
+                            }
+                        }
+                    }
+
+                    e.preventDefault(); // Bloquer la soumission HTML standard
+
+                    const formData = new FormData(form);
+                    const url = form.getAttribute("action");
+
+                    const params = new URLSearchParams();
+                    for (const pair of formData) {
+                        params.append(pair[0], pair[1]);
+                    }
+
+                    fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + token,
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: params
+                    })
+                        .then(response => {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                alert("Erreur lors de l'enregistrement. (Status: " + response.status + ")");
+                            }
+                        })
+                        .catch(error => console.error("Erreur d'envoi JWT :", error));
+                });
+            });
         } else {
-            msgErreur.classList.add('hidden');
+            // ✅ Fallback : Si pas de token en stockage local (ex: utilisation de Cookies), on applique la validation standard
+            document.getElementById('form-check-manuel')?.addEventListener('submit', function(e) {
+                const n = document.querySelectorAll('input[name="etudiantIdsPresents"]:checked').length;
+                const total = document.querySelectorAll('input[name="etudiantIdsPresents"]').length;
+                if (n === 0 && total > 0) {
+                    const confirmerAbsenceTotale = confirm("Vous n'avez sélectionné aucun étudiant présent. Êtes-vous sûr de vouloir enregistrer l'absence de toute la classe ?");
+                    if (!confirmerAbsenceTotale) {
+                        e.preventDefault();
+                        const msg = document.getElementById('msg-erreur-check');
+                        msg.classList.remove('hidden');
+                        msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            });
         }
     });
 </script>
-
 </body>
 </html>

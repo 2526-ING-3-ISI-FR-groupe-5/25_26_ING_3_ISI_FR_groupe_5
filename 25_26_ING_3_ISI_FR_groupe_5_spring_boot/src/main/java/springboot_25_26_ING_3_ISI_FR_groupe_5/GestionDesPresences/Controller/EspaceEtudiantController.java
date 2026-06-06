@@ -57,7 +57,7 @@ public class EspaceEtudiantController {
                 appelsMapper.toResponseList(appelsService.getByEtudiant(etudiant.getId())));
         model.addAttribute("etudiant", etudiant);
 
-        return "etudiant/dashboardEtudiant";
+        return "etudiants/dashboardEtudiant";
     }
 
     // ══════════════════════════════════════════
@@ -76,11 +76,11 @@ public class EspaceEtudiantController {
 
             // ✅ Session normale (en ligne — code PIN 6 chiffres, 3 min)
             try {
-                model.addAttribute("session",
+                model.addAttribute("sessionActive",
                         sessionAppelService.getSessionActivePourClasse(classeId));
             } catch (Exception e) {
                 log.debug("Aucune session normale : {}", e.getMessage());
-                model.addAttribute("session", null);
+                model.addAttribute("sessionActive", null);
             }
 
             // ✅ AJOUTÉ — Session offline (code 8 caractères, durée du cours)
@@ -93,11 +93,11 @@ public class EspaceEtudiantController {
             }
 
         } else {
-            model.addAttribute("session", null);
+            model.addAttribute("sessionActive", null);
             model.addAttribute("sessionOffline", null);
         }
 
-        return "etudiant/valider-presence";
+        return "appel/valider-presence";
     }
 
     // ══════════════════════════════════════════
@@ -124,7 +124,7 @@ public class EspaceEtudiantController {
                 && (req.getLatitudeEtudiant() == null || req.getLongitudeEtudiant() == null)) {
             ra.addFlashAttribute("erreur",
                     "Position GPS manquante. Autorisez la geolocalisation et reessayez.");
-            return "redirect:/etudiant/valider-presence";
+            return "redirect:/etudiant/valider-presence";  // route (URL) — pas la vue
         }
 
         try {
@@ -148,6 +148,6 @@ public class EspaceEtudiantController {
             ra.addFlashAttribute("erreur", msg);
         }
 
-        return "redirect:/etudiant/valider-presence";
+        return "redirect:/etudiant/valider-presence";  // route (URL) — pas la vue
     }
 }

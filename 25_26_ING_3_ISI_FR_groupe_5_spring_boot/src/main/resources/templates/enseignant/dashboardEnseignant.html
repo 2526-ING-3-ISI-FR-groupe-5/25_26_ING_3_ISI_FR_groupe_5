@@ -142,7 +142,7 @@
                             <p class="text-[11px] text-gray-500 mb-4"
                                th:text="${cours.salle != null ? 'Salle ' + cours.salle : ''}">Salle</p>
 
-                            <a th:href="@{/enseignant/appels/cours/{id}(id=${cours.id})}"
+                            <a th:href="@{/enseignant/appels/{id}/appel(id=${cours.id})}"
                                class="btn btn-sm w-full bg-primary/10 hover:bg-primary border border-primary/20 text-primary hover:text-white rounded-lg h-8 text-[11px] transition-all">
                                 Faire l'appel
                             </a>

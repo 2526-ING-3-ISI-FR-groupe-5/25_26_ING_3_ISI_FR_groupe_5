@@ -11,11 +11,13 @@
         <!-- Header -->
         <div class="flex items-center gap-4 mb-8">
             <div class="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-2xl font-bold text-primary">
-                <span th:text="${#strings.substring(#authentication.principal.prenom,0,1)}">U</span>
+                <span th:text="${etudiant != null and etudiant.prenom != null and !#strings.isEmpty(etudiant.prenom) ? #strings.substring(etudiant.prenom,0,1) : 'U'}">U</span>
             </div>
             <div>
-                <h1 class="text-2xl font-serif text-white" th:text="${#authentication.principal.prenom + ' ' + #authentication.principal.nom}">Nom Étudiant</h1>
-                <p class="text-sm text-gray-500" th:text="${#authentication.principal.classe.nom}">Classe</p>
+                <h1 class="text-2xl font-serif text-white"
+                    th:text="${etudiant != null ? (etudiant.prenom ?: '') + ' ' + (etudiant.nom ?: '') : 'Etudiant'}">Nom Étudiant</h1>
+                <p class="text-sm text-gray-500"
+                   th:text="${etudiant != null and etudiant.classe != null ? etudiant.classe.nom : 'Non affecte'}">Classe</p>
             </div>
         </div>
 
@@ -23,19 +25,23 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-bgcard border border-white/5 p-4 rounded-2xl text-center">
                 <p class="text-[10px] text-gray-500 uppercase mb-1">Taux Présence</p>
-                <p class="text-2xl font-bold text-emerald-400" th:text="${stats.tauxPresence + '%'}">0%</p>
+                <p class="text-2xl font-bold text-emerald-400"
+                   th:text="${(stats != null ? stats.tauxPresence : 0) + '%'}">0%</p>
             </div>
             <div class="bg-bgcard border border-white/5 p-4 rounded-2xl text-center">
                 <p class="text-[10px] text-gray-500 uppercase mb-1">Absences NJ</p>
-                <p class="text-2xl font-bold text-red-400" th:text="${stats.nbAbsencesNJ}">0</p>
+                <p class="text-2xl font-bold text-red-400"
+                   th:text="${stats != null ? stats.nbAbsencesNJ : 0}">0</p>
             </div>
             <div class="bg-bgcard border border-white/5 p-4 rounded-2xl text-center">
                 <p class="text-[10px] text-gray-500 uppercase mb-1">Retards</p>
-                <p class="text-2xl font-bold text-amber-400" th:text="${stats.nbRetards}">0</p>
+                <p class="text-2xl font-bold text-amber-400"
+                   th:text="${stats != null ? stats.nbRetards : 0}">0</p>
             </div>
             <div class="bg-bgcard border border-white/5 p-4 rounded-2xl text-center">
                 <p class="text-[10px] text-gray-500 uppercase mb-1">Justifiées</p>
-                <p class="text-2xl font-bold text-blue-400" th:text="${stats.nbAbsencesJ}">0</p>
+                <p class="text-2xl font-bold text-blue-400"
+                   th:text="${stats != null ? stats.nbAbsencesJ : 0}">0</p>
             </div>
         </div>
 

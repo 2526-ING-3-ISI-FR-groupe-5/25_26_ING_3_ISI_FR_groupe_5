@@ -34,7 +34,7 @@
                     </svg>
                 </div>
                 <h1 class="font-serif text-2xl text-white mb-1">Valider ma presence</h1>
-                <!-- ✅ Indicateur QR Scan -->
+                <!-- Indicateur QR Scan -->
                 <p id="qr-indicator" class="hidden text-xs text-primary mt-1">Detection QR Code en cours...</p>
             </div>
 
@@ -43,8 +43,8 @@
                 Vous etes hors ligne. Votre presence sera synchronisee quand le reseau reviendra.
             </div>
 
-            <!-- PAS DE SESSION -->
-            <div th:if="${session == null and sessionOffline == null}"
+            <!-- PAS DE SESSION (Modifié : renommé session en sessionActive) -->
+            <div th:if="${sessionActive == null and sessionOffline == null}"
                  class="bg-bgcard border border-white/5 rounded-2xl p-6 text-center fade-in">
                 <div class="text-4xl mb-4">&#128683;</div>
                 <h2 class="font-semibold text-gray-200 mb-2">Aucune session active</h2>
@@ -56,7 +56,7 @@
             </div>
 
             <!-- SESSION DISPONIBLE -->
-            <div th:if="${session != null or sessionOffline != null}" class="space-y-4 fade-in">
+            <div th:if="${sessionActive != null or sessionOffline != null}" class="space-y-4 fade-in">
 
                 <!-- FLASH -->
                 <div th:if="${erreur}" class="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm" th:text="${erreur}"></div>
@@ -69,7 +69,7 @@
                 </div>
 
                 <!-- SESSION NORMALE (en ligne) -->
-                <div th:if="${session != null}" id="bloc-normal">
+                <div th:if="${sessionActive != null}" id="bloc-normal">
                     <div class="bg-bgcard border border-white/5 rounded-2xl p-4 mb-3">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs text-gray-500 uppercase">Session en ligne</span>
@@ -77,13 +77,14 @@
                         </div>
                         <p class="text-xs text-gray-400">
                             Expire a <span class="text-gray-200 font-medium"
-                                           th:text="${#temporals.format(session.dateExpiration, 'HH:mm')}"></span>
+                                           th:text="${#temporals.format(sessionActive.dateExpiration, 'HH:mm')}"></span>
                         </p>
                     </div>
 
                     <form th:action="@{/etudiant/valider-presence}" method="post" id="formNormal" class="space-y-3">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <input type="hidden" name="sessionAppelId" id="session-id-normal" th:value="${session.id}"/>
+                        <!-- ✅ Modifié : CSRF sécurisé (null-safe) -->
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="sessionAppelId" id="session-id-normal" th:value="${sessionActive.id}"/>
                         <input type="hidden" name="latitudeEtudiant"  id="lat-normal"/>
                         <input type="hidden" name="longitudeEtudiant" id="lng-normal"/>
 
@@ -127,7 +128,8 @@
                         </div>
 
                         <input type="hidden" id="offline-session-id" th:value="${sessionOffline.id}"/>
-                        <input type="hidden" id="offline-csrf" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <!-- ✅ Modifié : CSRF sécurisé (null-safe) -->
+                        <input type="hidden" id="offline-csrf" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                         <button type="button" id="btn-offline" disabled
                                 onclick="stockerPresenceOffline()"
@@ -184,7 +186,7 @@
         let geoOk     = false;
 
         // ══════════════════════════════════════════
-        // ✅ AUTO-VALIDATION VIA QR CODE
+        // AUTO-VALIDATION VIA QR CODE
         // ══════════════════════════════════════════
         const urlParams = new URLSearchParams(window.location.search);
         const qrSessionId = urlParams.get('session');
@@ -292,7 +294,7 @@
             pinOffline.addEventListener('input', () => { pinOffline.value = pinOffline.value.toUpperCase(); });
         }
 
-        // ── Formulaire normal ───────────────────────────────────
+        // ── Formulaire normal avec support JWT ───────────────────
         const formNormal = document.getElementById('formNormal');
         if (formNormal) {
             formNormal.addEventListener('submit', e => {
@@ -301,9 +303,61 @@
                     if (geoRequis) geoRequis.classList.remove('hidden');
                     return;
                 }
-                if (btnNormal) {
-                    btnNormal.disabled = true;
-                    btnNormal.innerHTML = '<svg class="w-4 h-4 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Validation en cours...';
+
+                // ✅ Ajout du Token JWT s'il est stocké localement
+                const token = localStorage.getItem("jwt_token") || localStorage.getItem("token") || sessionStorage.getItem("jwt_token") || sessionStorage.getItem("token");
+
+                if (token) {
+                    e.preventDefault(); // On bloque la soumission classique pour utiliser fetch avec l'en-tête JWT
+
+                    if (btnNormal) {
+                        btnNormal.disabled = true;
+                        btnNormal.innerHTML = '<svg class="w-4 h-4 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Validation en cours...';
+                    }
+
+                    const formData = new FormData(formNormal);
+                    const url = formNormal.getAttribute("action");
+
+                    const params = new URLSearchParams();
+                    for (const pair of formData) {
+                        params.append(pair[0], pair[1]);
+                    }
+
+                    fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + token,
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: params
+                    })
+                        .then(response => {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                response.text().then(text => alert("Erreur d'enregistrement : " + text));
+                                if (btnNormal) {
+                                    btnNormal.disabled = false;
+                                    btnNormal.textContent = 'Valider ma presence';
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Erreur d'envoi du formulaire :", error);
+                            if (btnNormal) {
+                                btnNormal.disabled = false;
+                                btnNormal.textContent = 'Valider ma presence';
+                            }
+                        });
+                } else {
+                    // Si aucun token n'est stocké (utilisation de cookies d'authentification),
+                    // on soumet normalement le formulaire.
+                    if (btnNormal) {
+                        btnNormal.disabled = true;
+                        btnNormal.innerHTML = '<svg class="w-4 h-4 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Validation en cours...';
+                    }
                 }
             });
         }
