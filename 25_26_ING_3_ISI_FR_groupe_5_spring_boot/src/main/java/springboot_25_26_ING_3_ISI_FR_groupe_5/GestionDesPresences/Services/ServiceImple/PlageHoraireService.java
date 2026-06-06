@@ -80,6 +80,25 @@ public class PlageHoraireService implements IPlageHoraireService {
                 .toList();
     }
 
+
+    @Transactional(readOnly = true)
+    public List<PlageHoraireResponse> findByEnseignantId(Long enseignantId) {
+        return plageHoraireRepository.findByEnseignantId(enseignantId)
+                .stream()
+                .map(plageHoraireMapper::toResponse)
+                .toList();
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public List<PlageHoraireResponse> findByEnseignantAndJour(Long enseignantId, LocalDate jour) {
+        return plageHoraireRepository.findCoursEnseignantAujourdhui(enseignantId, jour)
+                .stream()
+                .map(plageHoraireMapper::toResponse)
+                .toList();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<PlageHoraireResponse> getByClasseAndSemaine(

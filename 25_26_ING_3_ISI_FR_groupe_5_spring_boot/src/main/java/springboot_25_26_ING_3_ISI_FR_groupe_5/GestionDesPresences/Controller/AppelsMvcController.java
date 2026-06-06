@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,20 +21,12 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Servi
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.PlageHoraireService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.SessionAppelService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.time.LocalTime;
 import java.util.List;
 
-/**
- * Controller MVC pour les vues Thymeleaf du module appel.
- *
- * ✅ CORRIGÉ — Ce controller remplace les routes dupliquées qui existaient
- * dans EspaceEnseignantController. Les routes /enseignant/appels/** sont
- * gérées ici uniquement pour éviter AmbiguousHandlerMappingException.
- *
- * EspaceEnseignantController ne doit PAS déclarer ces mêmes routes.
- */
 @Slf4j
 @Controller
 @RequestMapping("/enseignant/appels")
@@ -43,21 +37,58 @@ public class AppelsMvcController {
     private final PlageHoraireService plageHoraireService;
     private final SessionAppelService sessionAppelService;
     private final AppelsRepository appelsRepository;
+    private final EnseignantRepository enseignantRepository;
+
+    // ══════════════════════════════════════════
+    // LISTE DES COURS DE L'ENSEIGNANT
+    // GET /enseignant/appels
+    // ══════════════════════════════════════════
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
+    public String listeCours(
+            Model model,
+            Authentication authentication) {
+
+        Utilisateur user = resolveUtilisateur(authentication);
+        if (user == null) {
+            log.error("Utilisateur introuvable dans le contexte d'authentification");
+            return "error/500";
+        }
+        log.info("Liste des cours pour {}", user.getEmail());
+
+        List<PlageHoraireResponse> plages = plageHoraireService.findByEnseignantId(user.getId());
+
+        model.addAttribute("plages", plages);
+        model.addAttribute("currentInstitutName",
+                user.getInstitut() != null ? user.getInstitut().getNom() : "Global");
+
+        // Compter les sessions actives — 1 seule requête (au lieu de N)
+        long nbSessionsActives = sessionAppelService.countPlagesAvecSessionActive(user.getId());
+        model.addAttribute("nbSessionsActives", nbSessionsActives);
+
+        return "appel/liste-cours";
+    }
 
     // ══════════════════════════════════════════
     // AFFICHAGE PAGE D'APPEL
+    // GET /enseignant/appels/{id}/appel
     // ══════════════════════════════════════════
 
-    /**
-     * GET /enseignant/appels/{id}/appel
-     * Affiche la page d'appel pour une plage horaire.
-     */
     @GetMapping("/{id}/appel")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
     public String afficherAppel(
             @PathVariable Long id,
             Model model,
-            @AuthenticationPrincipal Utilisateur user) {
+            Authentication authentication) {
+
+        Utilisateur user = resolveUtilisateur(authentication);
+        if (user == null) {
+            log.error("Utilisateur introuvable dans le contexte d'authentification");
+            return "error/500";
+        }
+
+        log.info("Affichage appel plage {} par {}", id, user.getEmail());
 
         PlageHoraireResponse plage = plageHoraireService.findById(id);
         model.addAttribute("plageHoraire", plage);
@@ -65,15 +96,16 @@ public class AppelsMvcController {
         var appels = appelsService.getByPlageHoraire(id);
         model.addAttribute("appels", appels);
 
-        model.addAttribute("nbPresents",
-                appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.PRESENT).size());
-        model.addAttribute("nbRetards",
-                appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.RETARD).size());
-        model.addAttribute("nbAbsents",
-                appelsRepository.findByPlageHoraireIdAndStatut(id, StatutPresence.ABSENT).size());
+        // 1 seule requête GROUP BY au lieu de 3 SELECT séparés
+        var compteurs = new java.util.EnumMap<StatutPresence, Long>(StatutPresence.class);
+        for (Object[] row : appelsRepository.countByPlageGroupedByStatut(id)) {
+            compteurs.put((StatutPresence) row[0], (Long) row[1]);
+        }
+        model.addAttribute("nbPresents", compteurs.getOrDefault(StatutPresence.PRESENT, 0L));
+        model.addAttribute("nbRetards", compteurs.getOrDefault(StatutPresence.RETARD, 0L));
+        model.addAttribute("nbAbsents", compteurs.getOrDefault(StatutPresence.ABSENT, 0L));
 
-        // ✅ CORRIGÉ — getSessionActive() lançait une exception si pas de session active
-        // → null-safe avec try/catch
+        // Session normale active
         try {
             model.addAttribute("sessionActive", sessionAppelService.getSessionActive(id));
         } catch (Exception e) {
@@ -81,21 +113,33 @@ public class AppelsMvcController {
             model.addAttribute("sessionActive", null);
         }
 
+        // Session offline active pour cette plage
+        try {
+            if (plage.getClasse() != null && plage.getClasse().getId() != null) {
+                model.addAttribute("sessionOffline",
+                        sessionAppelService.getSessionOfflineActive(plage.getClasse().getId()));
+            } else {
+                model.addAttribute("sessionOffline", null);
+            }
+        } catch (Exception e) {
+            log.debug("Aucune session offline pour la plage {} : {}", id, e.getMessage());
+            model.addAttribute("sessionOffline", null);
+        }
+
         model.addAttribute("sessions", sessionAppelService.getByPlage(id));
 
-        // ✅ CORRIGÉ — règle métier : premier cours du matin = heureDebut <= 08h30
-        // AVANT : heureDebut.hour < 9 (acceptait 08h59)
         LocalTime heureDebut = plage.getHeureDebut();
         boolean estPremierCoursMatin = heureDebut != null
                 && (heureDebut.getHour() < 8
                 || (heureDebut.getHour() == 8 && heureDebut.getMinute() <= 30));
         model.addAttribute("estPremierCoursMatin", estPremierCoursMatin);
 
-        return "enseignant/appel_interface";
+        return "appel/appel_interface";
     }
 
     // ══════════════════════════════════════════
-    // CHECK MANUEL DES PRÉSENCES
+    // CHECK MANUEL DES PRESENCES
+    // POST /enseignant/appels/{id}/check-manuel
     // ══════════════════════════════════════════
 
     @PostMapping("/{id}/check-manuel")
@@ -103,12 +147,13 @@ public class AppelsMvcController {
     public String checkManuel(
             @PathVariable Long id,
             @RequestParam(required = false) List<Long> etudiantIdsPresents,
-            @AuthenticationPrincipal Utilisateur user,
+            Authentication authentication,
             RedirectAttributes ra) {
         try {
             AppelsCheckManuelRequest req = new AppelsCheckManuelRequest();
             req.setPlageHoraireId(id);
             req.setEtudiantIdsPresents(etudiantIdsPresents != null ? etudiantIdsPresents : List.of());
+            Utilisateur user = resolveUtilisateur(authentication);
             if (user instanceof Enseignant e) req.setEnseignantId(e.getId());
             appelsService.enregistrerAppelManuel(req);
             ra.addFlashAttribute("succes", "Presences enregistrees avec succes !");
@@ -121,6 +166,7 @@ public class AppelsMvcController {
 
     // ══════════════════════════════════════════
     // RETARD
+    // POST /enseignant/appels/{id}/marquer-retard
     // ══════════════════════════════════════════
 
     @PostMapping("/{id}/marquer-retard")
@@ -129,13 +175,14 @@ public class AppelsMvcController {
             @PathVariable Long id,
             @RequestParam Long etudiantId,
             @RequestParam LocalTime heureArrivee,
-            @AuthenticationPrincipal Utilisateur user,
+            Authentication authentication,
             RedirectAttributes ra) {
         try {
             AppelRetardRequest req = new AppelRetardRequest();
             req.setEtudiantId(etudiantId);
             req.setPlageHoraireId(id);
             req.setHeureArrivee(heureArrivee);
+            Utilisateur user = resolveUtilisateur(authentication);
             if (user instanceof Enseignant e) req.setEnseignantId(e.getId());
             appelsService.marquerRetard(req);
             ra.addFlashAttribute("succes", "Retard enregistre !");
@@ -147,7 +194,8 @@ public class AppelsMvcController {
     }
 
     // ══════════════════════════════════════════
-    // SESSION QR / PIN
+    // SESSION QR / PIN — NORMALE
+    // POST /enseignant/appels/{id}/lancer-session
     // ══════════════════════════════════════════
 
     @PostMapping("/{id}/lancer-session")
@@ -156,13 +204,15 @@ public class AppelsMvcController {
             @PathVariable Long id,
             @RequestParam String methode,
             @RequestParam(defaultValue = "3") int dureeMinutes,
-            @AuthenticationPrincipal Utilisateur user,
+            Authentication authentication,
             RedirectAttributes ra) {
         try {
             SessionAppelRequest req = new SessionAppelRequest();
             req.setPlageHoraireId(id);
             req.setMethode(MethodeValidation.valueOf(methode));
             req.setDureeMinutes(dureeMinutes);
+            Utilisateur user = resolveUtilisateur(authentication);
+            if (user == null) throw new RuntimeException("Utilisateur introuvable");
             sessionAppelService.creer(req, user.getId());
             ra.addFlashAttribute("succes", "Session " + methode + " lancee !");
         } catch (Exception e) {
@@ -172,14 +222,75 @@ public class AppelsMvcController {
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
 
+    // ══════════════════════════════════════════
+    // SESSION OFFLINE
+    // POST /enseignant/appels/{id}/lancer-session-offline
+    // ══════════════════════════════════════════
+
+    @PostMapping("/{id}/lancer-session-offline")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
+    public String lancerSessionOffline(
+            @PathVariable Long id,
+            Authentication authentication,
+            RedirectAttributes ra) {
+        try {
+            Utilisateur user = resolveUtilisateur(authentication);
+            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            sessionAppelService.creerSessionOffline(id, user.getId());
+            ra.addFlashAttribute("succes",
+                    "Session offline lancee ! Dictez le code aux etudiants sans reseau.");
+        } catch (Exception e) {
+            log.error("Erreur lancement session offline plage {}", id, e);
+            ra.addFlashAttribute("erreur", e.getMessage());
+        }
+        return "redirect:/enseignant/appels/" + id + "/appel";
+    }
+
+    // ══════════════════════════════════════════
+    // RENOUVELER LE CODE QR/PIN
+    // POST /enseignant/appels/{id}/renouveler-code/{sid}
+    // ══════════════════════════════════════════
+
+    @PostMapping("/{id}/renouveler-code/{sid}")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
+    public String renouvelerCode(
+            @PathVariable Long id,
+            @PathVariable Long sid,
+            @RequestParam(defaultValue = "3") int dureeMinutes,
+            Authentication authentication,
+            RedirectAttributes ra) {
+        try {
+            Utilisateur user = resolveUtilisateur(authentication);
+            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            sessionAppelService.renouvelerCode(sid, dureeMinutes, user.getId());
+            ra.addFlashAttribute("succes", "Code renouvele avec succes !");
+        } catch (Exception e) {
+            log.error("Erreur renouvellement code session {}", sid, e);
+            ra.addFlashAttribute("erreur", e.getMessage());
+        }
+        return "redirect:/enseignant/appels/" + id + "/appel";
+    }
+
+    // ══════════════════════════════════════════
+    // ARRETER / TERMINER
+    // POST /enseignant/appels/{id}/arreter-session/{sid}
+    // POST /enseignant/appels/{id}/terminer/{sid}
+    // ══════════════════════════════════════════
+
+    /**
+     * ✅ CORRIGÉ — Transmission du user.getId() pour validation d'identité.
+     */
     @PostMapping("/{id}/arreter-session/{sid}")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
     public String arreterSession(
             @PathVariable Long id,
             @PathVariable Long sid,
+            Authentication authentication,
             RedirectAttributes ra) {
         try {
-            sessionAppelService.arreterSession(sid);
+            Utilisateur user = resolveUtilisateur(authentication);
+            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            sessionAppelService.arreterSession(sid, user.getId());
             ra.addFlashAttribute("succes", "Session arretee.");
         } catch (Exception e) {
             log.error("Erreur arret session {}", sid, e);
@@ -188,14 +299,20 @@ public class AppelsMvcController {
         return "redirect:/enseignant/appels/" + id + "/appel";
     }
 
+    /**
+     * ✅ CORRIGÉ — Transmission du user.getId() pour validation d'identité.
+     */
     @PostMapping("/{id}/terminer/{sid}")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ASSISTANT')")
     public String terminerCours(
             @PathVariable Long id,
             @PathVariable Long sid,
+            Authentication authentication,
             RedirectAttributes ra) {
         try {
-            sessionAppelService.terminerCours(sid);
+            Utilisateur user = resolveUtilisateur(authentication);
+            if (user == null) throw new RuntimeException("Utilisateur introuvable");
+            sessionAppelService.terminerCours(sid, user.getId());
             ra.addFlashAttribute("succes", "Cours termine. Les absences ont ete enregistrees.");
         } catch (Exception e) {
             log.error("Erreur terminaison cours session {}", sid, e);
@@ -206,6 +323,7 @@ public class AppelsMvcController {
 
     // ══════════════════════════════════════════
     // AJUSTEMENT HEURES
+    // POST /enseignant/appels/{id}/ajuster-heures/{aid}
     // ══════════════════════════════════════════
 
     @PostMapping("/{id}/ajuster-heures/{aid}")
@@ -223,5 +341,20 @@ public class AppelsMvcController {
             ra.addFlashAttribute("erreur", e.getMessage());
         }
         return "redirect:/enseignant/appels/" + id + "/appel";
+    }
+
+
+    // ══════════════════════════════════════════
+    // UTIL
+    // ══════════════════════════════════════════
+    private Utilisateur resolveUtilisateur(Authentication authentication) {
+        if (authentication == null) return null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Utilisateur) return (Utilisateur) principal;
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails) principal).getUsername();
+            return enseignantRepository.findByEmail(username).orElse(null);
+        }
+        return null;
     }
 }

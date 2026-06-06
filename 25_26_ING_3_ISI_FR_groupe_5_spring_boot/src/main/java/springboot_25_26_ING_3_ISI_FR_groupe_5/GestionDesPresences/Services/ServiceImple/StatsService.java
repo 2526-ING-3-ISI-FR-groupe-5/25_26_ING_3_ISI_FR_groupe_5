@@ -79,16 +79,13 @@ public class StatsService implements IStatsService {
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * Progression de l'enseignant pour le semestre actif.
-     * Conservé pour compatibilité avec le dashboard.
+     * Progression de l'enseignant pour l'année académique active.
      */
     @Override
     public List<EnseignantUEStatsDTO> getProgressionEnseignant(Long enseignantId) {
-        // Utilise encore la méthode dépréciée pour le semestre actif
-        // → à remplacer par getProgressionEnseignantParAnnee(enseignantId, anneeActiveId)
-        // dès que le contexte actif est accessible ici
+        Long anneeActiveId = anneeService.getAnneeActive().getId();
         List<ProgrammationUE> programmations =
-                programmationRepository.findByEnseignantsIdAndSemestreActifTrue(enseignantId);
+                programmationRepository.findByEnseignantIdAndAnneeId(enseignantId, anneeActiveId);
         return buildProgression(programmations);
     }
 

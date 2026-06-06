@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.PresenceConstants;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
@@ -27,12 +28,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etud
         )
 )
 public class Appels {
-
-    /**
-     * Seuil heure de début pour considérer un cours comme "premier cours du matin".
-     * Un retard n'est applicable que si heureDebut <= ce seuil.
-     */
-    public static final LocalTime SEUIL_PREMIER_COURS = LocalTime.of(8, 30);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -173,7 +168,7 @@ public class Appels {
      */
     public boolean isRetardAutorise() {
         if (plageHoraire == null) return false;
-        return !plageHoraire.getHeureDebut().isAfter(SEUIL_PREMIER_COURS);
+        return !plageHoraire.getHeureDebut().isAfter(PresenceConstants.SEUIL_PREMIER_COURS);
     }
 
     /**

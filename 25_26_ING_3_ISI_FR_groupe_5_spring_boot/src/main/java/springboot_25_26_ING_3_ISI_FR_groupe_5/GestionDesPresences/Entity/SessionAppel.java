@@ -2,6 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.PresenceConstants;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeValidation;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.TypeSession;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
@@ -127,11 +128,9 @@ public class SessionAppel {
     // HELPERS — RETARD (premier cours du matin)
     // ══════════════════════════════════════════
 
-    private static final LocalTime SEUIL_PREMIER_COURS = LocalTime.of(8, 30);
-
     public boolean estPremierCoursDuMatin() {
         if (plageHoraire == null || plageHoraire.getHeureDebut() == null) return false;
-        return !plageHoraire.getHeureDebut().isAfter(SEUIL_PREMIER_COURS);
+        return !plageHoraire.getHeureDebut().isAfter(PresenceConstants.SEUIL_PREMIER_COURS);
     }
 
     // ══════════════════════════════════════════

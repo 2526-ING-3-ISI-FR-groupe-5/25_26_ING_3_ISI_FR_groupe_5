@@ -307,7 +307,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/supprimer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
     @ResponseBody
     public Map<String, Object> supprimer(
             @PathVariable Long id,

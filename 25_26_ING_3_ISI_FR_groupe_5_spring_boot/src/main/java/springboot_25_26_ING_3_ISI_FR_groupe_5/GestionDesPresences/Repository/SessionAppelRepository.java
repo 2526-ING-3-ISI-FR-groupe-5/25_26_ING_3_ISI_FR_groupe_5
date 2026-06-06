@@ -96,6 +96,19 @@ public interface SessionAppelRepository extends JpaRepository<SessionAppel, Long
      */
     long countByPlageHoraireIdAndCoursTermineTrue(Long plageHoraireId);
 
+    /**
+     * Compte le nombre de plages distinctes ayant une session active
+     * parmi celles où un enseignant intervient.
+     * Évite l'effet N+1 du calcul plage par plage côté contrôleur.
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT s.plageHoraire.id) FROM SessionAppel s
+        JOIN s.plageHoraire.enseignants e
+        WHERE e.id = :enseignantId
+        AND s.actif = true
+    """)
+    long countPlagesAvecSessionActiveByEnseignant(@Param("enseignantId") Long enseignantId);
+
     // ═══════════════════════════════════════════════════════════
     // MULTI-INSTITUTS
     // ═══════════════════════════════════════════════════════════

@@ -17,6 +17,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.Servi
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -51,11 +52,24 @@ public class SessionAppelController {
             @PathVariable Long plageHoraireId,
             @AuthenticationPrincipal Utilisateur utilisateur) {
         try {
-            var response = sessionAppelMapper.toResponse(
-                    sessionAppelService.getSessionActive(plageHoraireId));
+            var session = sessionAppelService.getSessionActive(plageHoraireId);
+
+            // Sécurité : un étudiant ne peut consulter que les sessions de sa classe
+            if (utilisateur instanceof Etudiant etudiant) {
+                var classeSession = session.getPlageHoraire() != null
+                        ? session.getPlageHoraire().getClasse() : null;
+                if (classeSession == null
+                        || etudiant.getClasse() == null
+                        || !classeSession.getId().equals(etudiant.getClasse().getId())) {
+                    return ResponseEntity.status(403).build();
+                }
+            }
+
+            var response = sessionAppelMapper.toResponse(session);
             masquerCodePourEtudiant(response, utilisateur);
             return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
+        } catch (ResourceNotFoundException e) {
+            // Cas normal : aucune session active pour cette plage
             return ResponseEntity.noContent().build();
         }
     }
@@ -65,6 +79,14 @@ public class SessionAppelController {
     public ResponseEntity<SessionAppelResponse> getSessionActivePourClasse(
             @PathVariable Long classeId,
             @AuthenticationPrincipal Utilisateur utilisateur) {
+
+        // Sécurité : un étudiant ne peut consulter que sa propre classe
+        if (utilisateur instanceof Etudiant etudiant) {
+            if (etudiant.getClasse() == null
+                    || !classeId.equals(etudiant.getClasse().getId())) {
+                return ResponseEntity.status(403).build();
+            }
+        }
 
         var session = sessionAppelService.getSessionActivePourClasse(classeId);
         if (session == null) return ResponseEntity.noContent().build();
@@ -80,12 +102,6 @@ public class SessionAppelController {
     // POST — Créer une session
     // ══════════════════════════════════════════
 
-    /**
-     * ✅ CORRIGÉ — Cast sécurisé sur l'enseignant connecté.
-     * Avant : enseignant.getId() appelé sur un Utilisateur générique
-     * → silencieusement incorrect si ce n'est pas un Enseignant.
-     * Après : vérification instanceof + 403 propre.
-     */
     @PostMapping
     @PreAuthorize("hasRole('ENSEIGNANT')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -106,14 +122,9 @@ public class SessionAppelController {
     }
 
     // ══════════════════════════════════════════
-    // PUT — Actions sur une session
+    // PUT — Actions sur une session (Sécurisées)
     // ══════════════════════════════════════════
 
-    /**
-     * ✅ CORRIGÉ — On passe l'enseignantId au service pour vérifier
-     * que seul l'enseignant propriétaire peut renouveler son code.
-     * Avant : n'importe quel enseignant pouvait renouveler n'importe quelle session.
-     */
     @PutMapping("/{id}/renouveler")
     @PreAuthorize("hasRole('ENSEIGNANT')")
     public ResponseEntity<SessionAppelResponse> renouvelerCode(
@@ -133,18 +144,42 @@ public class SessionAppelController {
                         sessionAppelService.renouvelerCode(id, dureeMinutes, enseignant.getId())));
     }
 
+    /**
+     * ✅ CORRIGÉ — Cast sécurisé et transmission du enseignant.getId()
+     */
     @PutMapping("/{id}/terminer")
     @PreAuthorize("hasRole('ENSEIGNANT')")
-    public SessionAppelResponse terminerCours(@PathVariable Long id) {
-        log.info("ENSEIGNANT termine le cours - session: {}", id);
-        return sessionAppelMapper.toResponse(sessionAppelService.terminerCours(id));
+    public ResponseEntity<SessionAppelResponse> terminerCours(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Utilisateur utilisateur) {
+
+        if (!(utilisateur instanceof Enseignant enseignant)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        log.info("ENSEIGNANT {} termine le cours - session: {}", enseignant.getId(), id);
+        return ResponseEntity.ok(
+                sessionAppelMapper.toResponse(
+                        sessionAppelService.terminerCours(id, enseignant.getId())));
     }
 
+    /**
+     * ✅ CORRIGÉ — Cast sécurisé et transmission du enseignant.getId()
+     */
     @PutMapping("/{id}/arreter")
     @PreAuthorize("hasRole('ENSEIGNANT')")
-    public SessionAppelResponse arreterSession(@PathVariable Long id) {
-        log.info("ENSEIGNANT arrête la session {}", id);
-        return sessionAppelMapper.toResponse(sessionAppelService.arreterSession(id));
+    public ResponseEntity<SessionAppelResponse> arreterSession(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Utilisateur utilisateur) {
+
+        if (!(utilisateur instanceof Enseignant enseignant)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        log.info("ENSEIGNANT {} arrête la session {}", enseignant.getId(), id);
+        return ResponseEntity.ok(
+                sessionAppelMapper.toResponse(
+                        sessionAppelService.arreterSession(id, enseignant.getId())));
     }
 
     // ══════════════════════════════════════════

@@ -12,9 +12,11 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.UE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutContexteActifRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.DuplicateResourceException;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.ProgrammationUERepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.InterfaceProgrammeUE;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IProgrammationUEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.ClassesService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SemestreService;
@@ -28,7 +30,7 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProgrammationUEService implements InterfaceProgrammeUE {
+public class ProgrammationUEService implements IProgrammationUEService {
 
     private final ProgrammationUERepository programmationRepo;
     private final UEService ueService;
@@ -54,12 +56,12 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
         Classe classe = classesService.findById(classeId);
 
         Long institutId = getInstitutIdFromClasse(classe);
-        if (!securityService.canManageInstitut(getCurrentUser(), institutId)) {
+        if (!securityService.canManageInstitut(institutId)) {
             throw new AccessDeniedException("Vous n'avez pas les droits sur cet institut");
         }
 
         if (programmationRepo.existsByUeIdAndClasseIdAndSemestreId(ueId, classeId, semestreId)) {
-            throw new RuntimeException("Cette UE est déjà programmée pour cette classe et ce semestre");
+            throw new DuplicateResourceException("ProgrammationUE", "UE " + ueId + " Classe " + classeId + " Semestre " + semestreId);
         }
 
         Set<Enseignant> enseignants = resolveEnseignants(enseignantIds, institutId);
@@ -88,16 +90,16 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
         ProgrammationUE programmation = findById(id);
 
         Long institutId = getInstitutIdFromProgrammation(programmation);
-        if (!securityService.canManageInstitut(getCurrentUser(), institutId)) {
+        if (!securityService.canManageInstitut(institutId)) {
             throw new AccessDeniedException("Accès refusé à cet institut");
         }
 
         InstitutContexteActif contexteActif = contexteRepo.findByInstitutId(institutId)
-                .orElseThrow(() -> new RuntimeException("Aucun contexte actif pour cet institut"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucun contexte actif pour cet institut"));
 
         if (!programmation.getSemestre().getAnneeAcademique().getId()
                 .equals(contexteActif.getAnneeAcademique().getId())) {
-            throw new RuntimeException("Impossible de modifier une programmation d'une année fermée");
+            throw new IllegalStateException("Impossible de modifier une programmation d'une année fermée");
         }
 
         programmation.setDheure(dheure);
@@ -121,16 +123,16 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
         ProgrammationUE programmation = findById(id);
 
         Long institutId = getInstitutIdFromProgrammation(programmation);
-        if (!securityService.canManageInstitut(getCurrentUser(), institutId)) {
+        if (!securityService.canManageInstitut(institutId)) {
             throw new AccessDeniedException("Accès refusé à cet institut");
         }
 
         InstitutContexteActif contexteActif = contexteRepo.findByInstitutId(institutId)
-                .orElseThrow(() -> new RuntimeException("Aucun contexte actif pour cet institut"));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucun contexte actif pour cet institut"));
 
         if (!programmation.getSemestre().getAnneeAcademique().getId()
                 .equals(contexteActif.getAnneeAcademique().getId())) {
-            throw new RuntimeException("Impossible de supprimer une programmation d'une année fermée");
+            throw new IllegalStateException("Impossible de supprimer une programmation d'une année fermée");
         }
 
         log.info("Programmation supprimée : id={}", id);
@@ -194,7 +196,7 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
     @Override
     public ProgrammationUE findById(Long id) {
         ProgrammationUE prog = programmationRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Programmation introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Programmation introuvable : " + id));
         if (!securityService.canAccessInstitut(getInstitutIdFromProgrammation(prog))) {
             throw new AccessDeniedException("Accès refusé");
         }
@@ -205,15 +207,22 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
     @Transactional(readOnly = true)
     public List<ProgrammationUE> getProgrammationsByEnseignant(Long enseignantId) {
         Long institutCible = securityService.getInstitutIdCourant();
-        return institutCible != null
-                ? programmationRepo.findByEnseignantIdAndInstitutId(enseignantId, institutCible)
-                : programmationRepo.findByEnseignantId(enseignantId);
+        if (institutCible != null) {
+            return programmationRepo.findByEnseignantIdAndInstitutId(enseignantId, institutCible);
+        }
+        Long anneeActiveId = anneeService.getAnneeActive().getId();
+        return programmationRepo.findByEnseignantIdAndAnneeId(enseignantId, anneeActiveId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Classe> getClassesByEnseignant(Long enseignantId) {
-        return programmationRepo.findClassesByEnseignantId(enseignantId);
+        Long anneeActiveId = anneeService.getAnneeActive().getId();
+        return programmationRepo.findByEnseignantIdAndAnneeId(enseignantId, anneeActiveId)
+                .stream()
+                .map(ProgrammationUE::getClasse)
+                .distinct()
+                .toList();
     }
 
     public List<ProgrammationUE> getByClasse(Long classeId) {
@@ -233,7 +242,7 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
 
     @Transactional(readOnly = true)
     public List<ProgrammationUE> getProgrammationsMigrables(Long sourceAnneeId, Long institutId) {
-        if (!securityService.canManageInstitut(getCurrentUser(), institutId)) {
+        if (!securityService.canManageInstitut(institutId)) {
             throw new AccessDeniedException("Accès refusé");
         }
         return programmationRepo.findMigrablesBySourceAnneeAndInstitut(sourceAnneeId, institutId);
@@ -276,7 +285,7 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
 
         List<Semestre> nouveauxSemestres = semestreService.getByAnnee(nouvelleAnneeId);
         if (nouveauxSemestres.isEmpty()) {
-            throw new RuntimeException("Veuillez d'abord créer les semestres de la nouvelle année");
+            throw new IllegalStateException("Veuillez d'abord créer les semestres de la nouvelle année");
         }
 
         int clones = 0;
@@ -314,7 +323,7 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
         Set<Enseignant> enseignants = new HashSet<>();
         for (Long ensId : enseignantIds) {
             Enseignant ens = enseignantRepo.findById(ensId)
-                    .orElseThrow(() -> new RuntimeException("Enseignant introuvable : " + ensId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable : " + ensId));
             if (institutId != null && ens.getInstitut() != null
                     && !ens.getInstitut().getId().equals(institutId)) {
                 throw new AccessDeniedException(
@@ -334,13 +343,9 @@ public class ProgrammationUEService implements InterfaceProgrammeUE {
                 || classe.getNiveau().getFiliere() == null
                 || classe.getNiveau().getFiliere().getEcole() == null
                 || classe.getNiveau().getFiliere().getEcole().getInstitut() == null) {
-            throw new RuntimeException("Chemin académique incomplet pour déterminer l'institut");
+            throw new IllegalStateException("Chemin académique incomplet pour déterminer l'institut");
         }
         return classe.getNiveau().getFiliere().getEcole().getInstitut().getId();
     }
 
-    private Enseignant getCurrentUser() {
-        return (Enseignant) org.springframework.security.core.context
-                .SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
 }

@@ -7,16 +7,27 @@ import java.util.List;
 
 public interface ISessionAppelService {
 
-    // Recherche
+    // ══════════════════════════════════════════
+    // RECHERCHE
+    // ══════════════════════════════════════════
+
     SessionAppel findById(Long id);
     List<SessionAppel> getByPlage(Long plageHoraireId);
     SessionAppel getSessionActive(Long plageHoraireId);
     SessionAppel getSessionActivePourClasse(Long classeId);
+    SessionAppel getSessionOfflineActive(Long classeId);
 
-    // Création et gestion
+    // ══════════════════════════════════════════
+    // CRÉATION ET GESTION
+    // ══════════════════════════════════════════
+
     SessionAppel creer(SessionAppelRequest req, Long enseignantId);
-    SessionAppel terminerCours(Long sessionId);
-    SessionAppel arreterSession(Long sessionId);
+    SessionAppel creerSessionOffline(Long plageHoraireId, Long enseignantId);
 
+    // ✅ Signatures mises à jour avec enseignantId pour les contrôles de sécurité
+    SessionAppel terminerCours(Long sessionId, Long enseignantId);
+    SessionAppel arreterSession(Long sessionId, Long enseignantId);
 
+    SessionAppel renouvelerCode(Long sessionId, int dureeMinutes, Long enseignantId);
+    void supprimer(Long id);
 }

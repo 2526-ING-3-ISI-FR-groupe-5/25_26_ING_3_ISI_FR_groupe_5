@@ -28,11 +28,37 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     List<Appels> findByEtudiantIdAndStatut(Long etudiantId, StatutPresence statut);
     Optional<Appels> findByEtudiantIdAndPlageHoraireId(Long etudiantId, Long plageHoraireId);
 
+    /**
+     * Compte les appels regroupés par statut pour une plage horaire.
+     * Une seule requête SQL au lieu d'une par statut.
+     * Retourne une liste de [StatutPresence, Long] — à transformer en Map côté service.
+     */
+    @Query("""
+        SELECT a.statut, COUNT(a) FROM Appels a
+        WHERE a.plageHoraire.id = :plageHoraireId
+        GROUP BY a.statut
+    """)
+    List<Object[]> countByPlageGroupedByStatut(@Param("plageHoraireId") Long plageHoraireId);
+
     @Query("SELECT a FROM Appels a JOIN FETCH a.plageHoraire WHERE a.enseignant.id = :enseignantId ORDER BY a.dateValidation DESC")
     Page<Appels> findByEnseignantIdWithPlage(@Param("enseignantId") Long enseignantId, Pageable pageable);
 
     @Query("SELECT a FROM Appels a JOIN FETCH a.etudiant JOIN FETCH a.plageHoraire WHERE a.id = :id")
     Appels findByIdWithDetails(@Param("id") Long id);
+
+    /**
+     * ✅ AJOUTÉ — Évite le problème d'effet N+1 en chargeant d'un coup
+     * l'étudiant, l'institut, l'enseignant et la plage horaire pour le mapping.
+     */
+    @Query("""
+        SELECT a FROM Appels a 
+        JOIN FETCH a.etudiant e
+        JOIN FETCH e.institut i
+        JOIN FETCH a.plageHoraire p
+        LEFT JOIN FETCH a.enseignant ens
+        WHERE a.plageHoraire.id = :plageHoraireId
+    """)
+    List<Appels> findByPlageHoraireIdWithDetails(@Param("plageHoraireId") Long plageHoraireId);
 
     // ═══════════════════════════════════════════════════════════
     // MULTI-INSTITUTS
@@ -69,16 +95,6 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
         SELECT COUNT(a) FROM Appels a
         WHERE a.etudiant.id = :etudiantId
         AND a.plageHoraire.semestre.active = true
-        AND a.statut = :statut
-    """)
-    long countByEtudiantAndStatutInActiveSemestre(
-            @Param("etudiantId") Long etudiantId,
-            @Param("statut") StatutPresence statut);
-
-    @Query("""
-        SELECT COUNT(a) FROM Appels a
-        WHERE a.etudiant.id = :etudiantId
-        AND a.plageHoraire.semestre.active = true
         AND a.statut = 'ABSENT'
         AND a.justificatif IS NULL
     """)
@@ -89,13 +105,10 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
 
     // ═══════════════════════════════════════════════════════════
     // ✅ AJOUTÉ — STATISTIQUES PAR ANNÉE (pour consultation N-1, N-2...)
-    // Permet de consulter l'historique d'une année précise,
-    // pas seulement l'année dont le semestre est actif.
     // ═══════════════════════════════════════════════════════════
 
     /**
      * Compte les appels d'un statut donné pour un étudiant sur une année précise.
-     * Remplace countByEtudiantAndStatutAndSemestreActif() pour les années historiques.
      */
     @Query("""
         SELECT COUNT(a) FROM Appels a
@@ -124,7 +137,6 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
 
     /**
      * Somme des heures de présence d'un étudiant sur une année précise.
-     * Utile pour le récap des heures au retour à N-1.
      */
     @Query("""
         SELECT COALESCE(SUM(a.nbHeuresPresent), 0) FROM Appels a
@@ -137,7 +149,6 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
 
     /**
      * Tous les appels d'un étudiant pour une année précise.
-     * Utile pour afficher l'historique complet de présence d'une année.
      */
     @Query("""
         SELECT a FROM Appels a
@@ -151,7 +162,6 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
 
     /**
      * Tous les appels d'un étudiant pour une année et un statut précis.
-     * Ex: toutes les absences de l'étudiant sur N-1.
      */
     @Query("""
         SELECT a FROM Appels a

@@ -222,48 +222,4 @@ public interface ProgrammationUERepository extends JpaRepository<ProgrammationUE
             @Param("enseignantId") Long enseignantId,
             @Param("anneeId") Long anneeId);
 
-    // ═══════════════════════════════════════════════════════════
-    // DÉPRÉCIÉES — à supprimer après migration complète
-    // ═══════════════════════════════════════════════════════════
-
-    /** @deprecated Utiliser findByClasseIdAndAnneeAcademiqueId */
-    @Deprecated
-    @Query("""
-        SELECT p FROM ProgrammationUE p
-        WHERE p.classe.id = :classeId
-        AND p.semestre.anneeAcademique.active = true
-        ORDER BY p.ue.nom ASC
-    """)
-    List<ProgrammationUE> findByClasseIdAndAnneeActive(@Param("classeId") Long classeId);
-
-    /** @deprecated Utiliser findByEnseignantIdAndInstitutId */
-    @Deprecated
-    @Query("""
-        SELECT DISTINCT p FROM ProgrammationUE p
-        JOIN p.enseignants e
-        WHERE e.id = :enseignantId
-        AND p.semestre.anneeAcademique.active = true
-    """)
-    List<ProgrammationUE> findByEnseignantId(@Param("enseignantId") Long enseignantId);
-
-    /** @deprecated Utiliser findByEnseignantIdAndAnneeId */
-    @Deprecated
-    @Query("""
-        SELECT DISTINCT p FROM ProgrammationUE p
-        JOIN p.enseignants e
-        WHERE e.id = :enseignantId
-        AND p.semestre.active = true
-    """)
-    List<ProgrammationUE> findByEnseignantsIdAndSemestreActifTrue(
-            @Param("enseignantId") Long enseignantId);
-
-    /** @deprecated Utiliser avec filtrage institut + année explicite */
-    @Deprecated
-    @Query("""
-        SELECT DISTINCT p.classe FROM ProgrammationUE p
-        JOIN p.enseignants e
-        WHERE e.id = :enseignantId
-        AND p.semestre.anneeAcademique.active = true
-    """)
-    List<Classe> findClassesByEnseignantId(@Param("enseignantId") Long enseignantId);
 }

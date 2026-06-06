@@ -15,6 +15,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeVa
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.SessionAppelRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.ISessionAppelService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
 
@@ -27,7 +29,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class SessionAppelService {
+public class SessionAppelService implements ISessionAppelService {
 
     private final SessionAppelRepository sessionAppelRepository;
     private final AppelsRepository appelsRepository;
@@ -45,7 +47,7 @@ public class SessionAppelService {
     @Transactional(readOnly = true)
     public SessionAppel findById(Long id) {
         return sessionAppelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable : " + id));
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +58,7 @@ public class SessionAppelService {
     @Transactional(readOnly = true)
     public SessionAppel getSessionActive(Long plageHoraireId) {
         return sessionAppelRepository.findByPlageHoraireIdAndActifTrue(plageHoraireId)
-                .orElseThrow(() -> new RuntimeException("Aucune session active pour cette plage."));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune session active pour cette plage."));
     }
 
     @Transactional(readOnly = true)
@@ -69,26 +71,19 @@ public class SessionAppelService {
         return sessionAppelRepository.findOfflineActiveByClasseId(classeId).orElse(null);
     }
 
+    /**
+     * Compte les plages ayant une session active pour un enseignant
+     * (1 requête au lieu de N).
+     */
+    @Transactional(readOnly = true)
+    public long countPlagesAvecSessionActive(Long enseignantId) {
+        return sessionAppelRepository.countPlagesAvecSessionActiveByEnseignant(enseignantId);
+    }
+
     // ══════════════════════════════════════════
     // CRÉER SESSION NORMALE
     // ══════════════════════════════════════════
 
-    /**
-     * Crée une session normale.
-     *
-     * ✅ MODIFIÉ — QR_CODE et CODE_PIN utilisent maintenant le MÊME PIN 6 chiffres.
-     *
-     * AVANT : QR_CODE → UUID aléatoire (ex: "a3f8-...")
-     *         CODE_PIN → 6 chiffres (ex: "847291")
-     *         → deux codes différents, deux méthodes incompatibles
-     *
-     * APRÈS : les deux → PIN 6 chiffres (ex: "847291")
-     *         Le QR Code encode l'URL complète contenant ce PIN.
-     *         L'étudiant peut scanner OU taper le même code.
-     *
-     * Le QR Code base64 est retourné via session.getQrCodeBase64()
-     * pour affichage dans le template enseignant.
-     */
     public SessionAppel creer(SessionAppelRequest req, Long enseignantId) {
         PlageHoraire plage = plageHoraireService.findEntityById(req.getPlageHoraireId());
         Enseignant enseignant = enseignantService.findById(enseignantId);
@@ -103,7 +98,7 @@ public class SessionAppelService {
 
         int duree = req.getDureeMinutes() != null ? req.getDureeMinutes() : 3;
 
-        // ✅ PIN 6 chiffres — même code pour QR et PIN
+        // PIN 6 chiffres — même code pour QR et PIN
         String pin = genererPin();
 
         SessionAppel session = SessionAppel.builder()
@@ -111,7 +106,7 @@ public class SessionAppelService {
                 .enseignant(enseignant)
                 .methode(req.getMethode())
                 .typeSession(TypeSession.NORMALE)
-                .code(pin)                          // ✅ toujours le PIN
+                .code(pin)                          // toujours le PIN
                 .dateGeneration(LocalDateTime.now())
                 .dateExpiration(LocalDateTime.now().plusMinutes(duree))
                 .actif(true)
@@ -123,8 +118,7 @@ public class SessionAppelService {
 
         SessionAppel saved = sessionAppelRepository.save(session);
 
-        // ✅ Générer le QR Code contenant l'URL avec le PIN
-        // Le QR encode : https://monapp.com/etudiant/valider-presence?session=123&pin=847291
+        // Générer le QR Code contenant l'URL avec le PIN
         if (req.getMethode() == MethodeValidation.QR_CODE) {
             String qrBase64 = qrCodeService.genererQRCodeSession(saved.getId(), pin);
             saved.setQrCodeBase64(qrBase64);
@@ -137,15 +131,11 @@ public class SessionAppelService {
         return saved;
     }
 
+
     // ══════════════════════════════════════════
     // CRÉER SESSION OFFLINE
     // ══════════════════════════════════════════
 
-    /**
-     * Crée une session offline avec code 8 caractères alphanumériques.
-     * Pas d'expiration par temps — expire à la fin du cours.
-     * Pas de QR Code — code dicté ou affiché au tableau.
-     */
     public SessionAppel creerSessionOffline(Long plageHoraireId, Long enseignantId) {
         PlageHoraire plage = plageHoraireService.findEntityById(plageHoraireId);
         Enseignant enseignant = enseignantService.findById(enseignantId);
@@ -178,11 +168,20 @@ public class SessionAppelService {
     }
 
     // ══════════════════════════════════════════
-    // ACTIONS
+    // ACTIONS (SÉCURISÉES)
     // ══════════════════════════════════════════
 
-    public SessionAppel terminerCours(Long sessionId) {
+    /**
+     * ✅ CORRIGÉ — Validation de l'identité de l'enseignant lors de la fin du cours.
+     */
+    public SessionAppel terminerCours(Long sessionId, Long enseignantId) {
         SessionAppel session = findById(sessionId);
+
+        if (!session.getEnseignant().getId().equals(enseignantId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Vous ne pouvez clôturer que les sessions que vous avez créées.");
+        }
+
         cloturerAppelsEnAttente(session);
         session.setCoursTermine(true);
         session.setActif(false);
@@ -201,24 +200,29 @@ public class SessionAppelService {
         return sessionAppelRepository.save(session);
     }
 
-    public SessionAppel arreterSession(Long sessionId) {
+    /**
+     * ✅ CORRIGÉ — Validation de l'identité de l'enseignant pour stopper une session.
+     */
+    public SessionAppel arreterSession(Long sessionId, Long enseignantId) {
         SessionAppel session = findById(sessionId);
+
+        if (!session.getEnseignant().getId().equals(enseignantId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Vous ne pouvez arrêter que les sessions que vous avez créées.");
+        }
+
         session.setActif(false);
         return sessionAppelRepository.save(session);
     }
 
-    /**
-     * Renouvelle le code d'une session.
-     * ✅ MODIFIÉ — génère un nouveau PIN 6 chiffres et un nouveau QR Code si nécessaire.
-     */
     public SessionAppel renouvelerCode(Long sessionId, int dureeMinutes, Long enseignantId) {
         SessionAppel session = findById(sessionId);
 
         if (session.isCoursTermine()) {
-            throw new RuntimeException("Le cours est deja termine.");
+            throw new IllegalStateException("Le cours est deja termine.");
         }
         if (!session.getEnseignant().getId().equals(enseignantId)) {
-            throw new RuntimeException(
+            throw new org.springframework.security.access.AccessDeniedException(
                     "Vous ne pouvez renouveler que le code d'une session que vous avez creee.");
         }
 
@@ -251,7 +255,7 @@ public class SessionAppelService {
                 .orElseThrow(() -> new EntityNotFoundException("Session introuvable : " + id));
 
         if (session.isCoursTermine()) {
-            throw new RuntimeException(
+            throw new IllegalStateException(
                     "Impossible de supprimer une session dont le cours est termine.");
         }
 
@@ -266,18 +270,10 @@ public class SessionAppelService {
     // PRIVÉ
     // ══════════════════════════════════════════
 
-    /**
-     * ✅ MODIFIÉ — Un seul générateur de PIN 6 chiffres pour QR et CODE_PIN.
-     * QR_CODE n'utilise plus UUID — il encode ce PIN dans l'URL du QR.
-     */
     private String genererPin() {
         return String.format("%06d", new SecureRandom().nextInt(999999));
     }
 
-    /**
-     * Code offline 8 caractères alphanumériques sans ambiguïté visuelle.
-     * (pas de 0/O, 1/I/L)
-     */
     private String genererCodeOffline() {
         SecureRandom rnd = new SecureRandom();
         StringBuilder sb = new StringBuilder(8);

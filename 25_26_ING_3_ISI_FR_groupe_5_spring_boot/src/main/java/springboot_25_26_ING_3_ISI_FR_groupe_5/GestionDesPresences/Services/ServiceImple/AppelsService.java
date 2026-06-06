@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IAppelsService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IPlageHoraireService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.ISessionAppelService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.appel.AppelRetardRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.appel.AppelsCheckManuelRequest;
@@ -17,6 +19,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Session
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.MethodeValidation;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.StatutPresence;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.AppelsRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EtudiantRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EtudiantService;
@@ -36,15 +39,15 @@ public class AppelsService implements IAppelsService {
     private final EtudiantService etudiantService;
     private final EtudiantRepository etudiantRepository;
     private final EnseignantService enseignantService;
-    private final PlageHoraireService plageHoraireService;
-    private final SessionAppelService sessionAppelService;
+    private final IPlageHoraireService plageHoraireService;
+    private final ISessionAppelService sessionAppelService;
 
     // ── RECHERCHE ──
 
     @Transactional(readOnly = true)
     public Appels findById(Long id) {
         return appelsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Appel introuvable : " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Appel introuvable : " + id));
     }
 
     @Transactional(readOnly = true)
@@ -92,11 +95,12 @@ public class AppelsService implements IAppelsService {
         PlageHoraire ph = plageHoraireService.findEntityById(req.getPlageHoraireId());
         Enseignant ens = enseignantService.findById(req.getEnseignantId());
 
-        // ✅ CORRIGÉ — session null acceptable, loggée proprement
         SessionAppel session = getSessionActiveOrNull(ph.getId());
 
         initialiserAppelsPourPlage(ph, ens, session);
-        List<Appels> tousLesAppels = appelsRepository.findByPlageHoraireId(ph.getId());
+
+        // ✅ CORRIGÉ — Utilisation de la méthode optimisée pour éviter le problème N+1
+        List<Appels> tousLesAppels = appelsRepository.findByPlageHoraireIdWithDetails(ph.getId());
         List<Appels> resultats = new ArrayList<>();
         Set<Long> traites = new HashSet<>();
 
@@ -149,7 +153,7 @@ public class AppelsService implements IAppelsService {
 
         Appels a = appelsRepository
                 .findByEtudiantIdAndPlageHoraireId(req.getEtudiantId(), ph.getId())
-                .orElseThrow(() -> new RuntimeException("Appel non initialisé"));
+                .orElseThrow(() -> new IllegalStateException("Appel non initialisé"));
 
         a.marquerRetard(req.getHeureArrivee(), enseignantService.findById(req.getEnseignantId()));
         a.setCommentaire(req.getCommentaire());
@@ -195,24 +199,30 @@ public class AppelsService implements IAppelsService {
         SessionAppel session = sessionAppelService.findById(req.getSessionAppelId());
 
         if (!session.isValide()) {
-            throw new RuntimeException("Session expirée ou fermée.");
+            throw new IllegalStateException("Session expirée ou fermée.");
         }
         if (!session.getCode().equals(req.getCodeSaisi())) {
-            throw new RuntimeException("Code invalide.");
+            throw new IllegalArgumentException("Code invalide.");
         }
 
+        // ✅ CORRIGÉ — Validation explicite de la présence de coordonnées GPS si périmètre activé
         if (session.getPerimetreMetres() != null) {
+            if (req.getLatitudeEtudiant() == null || req.getLongitudeEtudiant() == null) {
+                throw new IllegalStateException(
+                        "Validation impossible : vous devez activer et autoriser la géolocalisation pour valider votre présence.");
+            }
+
             boolean estPresentPhysiquement = session.estDansLePerimetre(
                     req.getLatitudeEtudiant(), req.getLongitudeEtudiant());
             if (!estPresentPhysiquement) {
-                throw new RuntimeException(
-                        "Validation impossible : vous n'êtes pas dans l'enceinte de l'établissement.");
+                throw new IllegalStateException(
+                        "Validation impossible : vous n'êtes pas localisé dans le périmètre de l'établissement.");
             }
         }
 
         Appels appel = appelsRepository
                 .findByEtudiantIdAndPlageHoraireId(etudiantId, session.getPlageHoraire().getId())
-                .orElseThrow(() -> new RuntimeException("Appel non initialisé."));
+                .orElseThrow(() -> new IllegalStateException("Appel non initialisé."));
 
         appel.marquerPresent(session.getEnseignant(), session.getMethode());
         appel.setLatitudeEtudiant(req.getLatitudeEtudiant());
@@ -250,7 +260,7 @@ public class AppelsService implements IAppelsService {
         return liste.stream()
                 .filter(a -> a.getEtudiant().getId().equals(etuId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Étudiant id=" + etuId + " non trouvé dans la liste d'appel"));
     }
 
@@ -265,25 +275,16 @@ public class AppelsService implements IAppelsService {
         });
     }
 
-    /**
-     * ✅ CORRIGÉ — Retourne null si aucune session active,
-     * mais log l'exception pour distinguer "pas de session" d'une vraie erreur.
-     * Avant : toutes les exceptions étaient silencieusement avalées.
-     */
     private SessionAppel getSessionActiveOrNull(Long phId) {
         try {
             return sessionAppelService.getSessionActive(phId);
         } catch (RuntimeException e) {
-            // "Aucune session active" est un cas normal — on log en debug, pas en erreur
             log.debug("Aucune session active pour la plage {} : {}", phId, e.getMessage());
             return null;
         } catch (Exception e) {
-            // Toute autre exception (DB, NPE...) mérite un warning
             log.warn("Erreur inattendue lors de la récupération de la session active pour la plage {} : {}",
                     phId, e.getMessage());
             return null;
         }
     }
 }
-
-//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
