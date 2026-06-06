@@ -61,7 +61,7 @@
                 </a>
             </li>
             <li class="mt-1 pt-1 border-t border-white/5">
-                <a th:href="@{/logout}" class="text-red-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg">
+                <a th:href="@{/logout}" id="logout-link" class="text-red-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     Déconnexion
                 </a>
@@ -69,5 +69,29 @@
         </ul>
     </div>
 </nav>
+
+<!--
+    Avertit le Service Worker au moment de la déconnexion pour qu'il
+    vide son cache. Empêche qu'un utilisateur suivant voie les pages
+    cachées (mon-espace, valider-presence, etc.) de l'utilisateur courant.
+-->
+<script>
+    (function () {
+        const logoutLink = document.getElementById('logout-link');
+        if (!logoutLink) return;
+
+        logoutLink.addEventListener('click', function () {
+            try {
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
+                }
+            } catch (e) {
+                // Ne pas bloquer le logout si le SW est indisponible
+                console.warn('[logout] Echec notification SW :', e);
+            }
+            // On laisse la navigation continuer normalement (pas de preventDefault)
+        });
+    })();
+</script>
 </body>
 </html>
