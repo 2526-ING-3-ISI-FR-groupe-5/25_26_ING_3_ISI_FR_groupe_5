@@ -26,9 +26,14 @@ public interface JustificatifRepository extends JpaRepository<Justificatif, Long
         """)
     List<Justificatif> findEnAttenteByClasse(@Param("classeId") Long classeId);
 
+    /**
+     * Liste des justificatifs en attente.
+     * Si institutId est null, retourne TOUS les justificatifs en attente
+     * (pour un super admin sans contexte institut).
+     */
     @Query("""
         SELECT j FROM Justificatif j
-        WHERE j.etudiant.institut.id = :institutId
+        WHERE (:institutId IS NULL OR j.etudiant.institut.id = :institutId)
         AND j.statut = 'EN_ATTENTE'
         ORDER BY j.createdAt ASC
         """)

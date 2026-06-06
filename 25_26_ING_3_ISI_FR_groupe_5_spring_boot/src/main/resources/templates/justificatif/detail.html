@@ -89,7 +89,7 @@
                 <div>
                     <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Type</dt>
                     <dd class="text-sm font-medium text-gray-900 dark:text-white"
-                        th:text="${justificatif.type}"></dd>
+                        th:text="${justificatif.type != null ? justificatif.type.libelle : '—'}">Maladie</dd>
                 </div>
                 <div>
                     <dt class="text-xs text-gray-400 uppercase tracking-wider mb-1">Nombre d'heures</dt>

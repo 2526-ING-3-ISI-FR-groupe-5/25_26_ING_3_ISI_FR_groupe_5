@@ -75,7 +75,7 @@
                     <!-- Type -->
                     <td class="px-6 py-4">
                             <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                  th:text="${j.type}">MEDICAL</span>
+                                  th:text="${j.type != null ? j.type.libelle : '—'}">Maladie</span>
                     </td>
 
                     <!-- Période -->
@@ -96,7 +96,7 @@
                                   th:text="${#temporals.format(j.dateSoumission, 'dd/MM/yyyy')}"></span>
                     </td>
 
-                    <!-- Statut -->
+                    <!-- Statut + commentaire éventuel -->
                     <td class="px-6 py-4">
                             <span th:switch="${j.statut.name()}">
                                 <span th:case="'EN_ATTENTE'"
@@ -115,6 +115,13 @@
                                     Refusé
                                 </span>
                             </span>
+                            <!-- Commentaire de l'assistant (si présent) -->
+                            <div th:if="${j.commentaireValidation != null and !#strings.isEmpty(j.commentaireValidation)}"
+                                 class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 italic max-w-xs"
+                                 th:title="${j.commentaireValidation}">
+                                <span class="font-semibold">Note :</span>
+                                <span th:text="${j.commentaireValidation}">Commentaire</span>
+                            </div>
                     </td>
 
                     <!-- Actions -->

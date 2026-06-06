@@ -61,7 +61,7 @@
                         <option value="">— Choisir un type —</option>
                         <option th:each="type : ${typesJustificatif}"
                                 th:value="${type}"
-                                th:text="${type}"></option>
+                                th:text="${type.libelle}"></option>
                     </select>
                     <label class="label" th:if="${#fields.hasErrors('type')}">
                         <span class="label-text-alt text-red-400" th:errors="*{type}"></span>

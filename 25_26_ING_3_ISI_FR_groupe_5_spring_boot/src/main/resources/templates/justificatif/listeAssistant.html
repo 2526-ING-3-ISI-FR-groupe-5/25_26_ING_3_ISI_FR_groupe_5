@@ -87,7 +87,7 @@
                     <!-- Type -->
                     <td class="px-6 py-4">
                             <span class="text-sm text-gray-700 dark:text-gray-300"
-                                  th:text="${j.type}"></span>
+                                  th:text="${j.type != null ? j.type.libelle : '—'}">Maladie</span>
                     </td>
 
                     <!-- Période -->
