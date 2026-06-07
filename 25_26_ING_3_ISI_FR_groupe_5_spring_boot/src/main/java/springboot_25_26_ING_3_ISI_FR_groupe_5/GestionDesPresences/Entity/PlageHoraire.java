@@ -83,12 +83,23 @@ public class PlageHoraire extends Auditable { // ✅ Auditable ajouté
     @Builder.Default
     private Set<Enseignant> enseignants = new HashSet<>();
 
-    // ✅ Lien avec le système d'appel
-    @OneToMany(mappedBy = "plageHoraire", cascade = CascadeType.ALL)
+    // ⚠️ Cascade volontairement limité à PERSIST + MERGE :
+    //   Politique : on conserve l'historique de presence de TOUS les etudiants.
+    //   Sans cascade REMOVE, supprimer une PlageHoraire qui a des SessionAppel
+    //   ou des Appels associes leve une ConstraintViolationException (les FK
+    //   Appels.plage_horaire_id et SessionAppel.plage_horaire_id sont nullable=false).
+    //
+    //   Effet de bord positif : casse aussi la chaine de suppression qui passerait
+    //   par Semestre/Classe/ProgrammationUE -> PlageHoraire -> Appels, donc tous
+    //   les appels historiques sont proteges meme via les cascades amont.
+    //
+    //   Pour vraiment supprimer une plage avec des appels, le code metier doit
+    //   d'abord archiver/effacer les appels explicitement.
+    @OneToMany(mappedBy = "plageHoraire", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @Builder.Default
     private Set<SessionAppel> sessions = new HashSet<>();
 
-    @OneToMany(mappedBy = "plageHoraire", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "plageHoraire", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @Builder.Default
     private Set<Appels> appels = new HashSet<>();
 
