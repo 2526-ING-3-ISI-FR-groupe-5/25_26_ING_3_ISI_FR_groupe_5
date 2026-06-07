@@ -125,7 +125,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/creer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     public String creer(
             @Valid @ModelAttribute("form") PlageHoraireRequest request,
             BindingResult result,
@@ -155,7 +155,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/creer-recurrence")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT','ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     public String creerRecurrence(
             @Valid @ModelAttribute("formRecurrence") PlageHoraireRecurrenceRequest request,
             BindingResult result,
@@ -183,7 +183,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/drag-drop")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     @ResponseBody
     public Map<String, Object> dragDrop(
             @RequestBody PlageHoraireDragDropRequest request,
@@ -210,7 +210,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/deplacer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     @ResponseBody
     public Map<String, Object> deplacer(
             @PathVariable Long id,
@@ -264,7 +264,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/modifier")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")  // 🆕 Enseignant peut aussi modifier
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     @ResponseBody
     public Map<String, Object> modifier(
             @PathVariable Long id,
@@ -307,7 +307,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/supprimer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
     @ResponseBody
     public Map<String, Object> supprimer(
             @PathVariable Long id,

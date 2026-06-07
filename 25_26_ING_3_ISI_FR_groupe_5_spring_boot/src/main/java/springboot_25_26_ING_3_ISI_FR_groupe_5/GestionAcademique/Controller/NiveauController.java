@@ -23,7 +23,7 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/niveaux")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('ASSISTANT', 'ADMIN_INSTITUT', 'SUPER_ADMIN')")
 public class NiveauController {
 
     private final NiveauService niveauService;
