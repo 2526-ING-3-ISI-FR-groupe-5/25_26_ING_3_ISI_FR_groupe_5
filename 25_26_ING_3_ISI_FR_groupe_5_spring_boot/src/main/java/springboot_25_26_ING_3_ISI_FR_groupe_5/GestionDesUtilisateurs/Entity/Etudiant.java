@@ -46,10 +46,6 @@ public class Etudiant extends Utilisateur {
     @ManyToOne(fetch = FetchType.LAZY)
     private Classe classe;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Parent parent;
-
     @OneToMany(mappedBy = "etudiant")
     @Builder.Default
     private Set<Inscription> inscriptions = new HashSet<>();
