@@ -50,11 +50,21 @@ public class Etudiant extends Utilisateur {
     @Builder.Default
     private Set<Inscription> inscriptions = new HashSet<>();
 
-    @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL, orphanRemoval = true)
+    // ⚠️ Cascade volontairement limité à PERSIST + MERGE :
+    //   - Politique : on conserve l'historique de TOUS les utilisateurs (RGPD interne,
+    //     stats classe, audit). Pas de suppression physique d'etudiant en production,
+    //     uniquement du soft delete via etudiant.active = false.
+    //   - Sans cascade REMOVE ni orphanRemoval, un appel a etudiantRepo.delete(etu)
+    //     leve une ConstraintViolationException si l'etudiant a des appels :
+    //     c'est le comportement souhaite.
+    //   - Sans orphanRemoval, un etudiant.getAppels().clear() accidentel
+    //     n'efface rien en base.
+    @OneToMany(mappedBy = "etudiant", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @Builder.Default
     private Set<Appels> appels = new HashSet<>();
 
-    @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
+    // ⚠️ Meme regle que pour appels : on ne perd jamais un justificatif d'un etudiant.
+    @OneToMany(mappedBy = "etudiant", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @Builder.Default
     private Collection<Justificatif> justificatifs = new ArrayList<>();
 
