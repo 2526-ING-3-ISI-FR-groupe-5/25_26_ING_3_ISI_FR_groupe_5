@@ -54,10 +54,15 @@ public class Institut extends Auditable {
     // Relations
     // ============================================
 
-    // ✅ Set au lieu de Collection — cohérence
+    // ⚠️ Cascade volontairement limité à PERSIST + MERGE :
+    //   - Un institut n'est jamais supprimé en production (soft delete via active=false).
+    //   - Le cascade DELETE de CascadeType.ALL était un footgun : supprimer un institut
+    //     aurait detruit toutes les ecoles, filieres, niveaux, classes, etudiants
+    //     en cascade. Avec PERSIST + MERGE on garde la sauvegarde transitive mais
+    //     un delete sur Institut leve une ConstraintViolationException si des ecoles
+    //     existent encore, ce qui est le comportement souhaite.
     @OneToMany(mappedBy = "institut",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+            cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @Builder.Default
     private Set<Ecole> ecoles = new HashSet<>();
 
