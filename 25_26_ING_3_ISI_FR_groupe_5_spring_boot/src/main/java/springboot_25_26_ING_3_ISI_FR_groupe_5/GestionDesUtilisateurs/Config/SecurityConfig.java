@@ -119,7 +119,11 @@ public class SecurityConfig {
                         // 5. Autres rôles
                         .requestMatchers("/surveillant/**").hasAnyRole("SURVEILLANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
                         .requestMatchers("/assistant/**").hasAnyRole("ASSISTANT", "SUPER_ADMIN", "ADMIN_INSTITUT")
-                        .requestMatchers("/emploisDeTemps/**").hasAnyRole("SUPER_ADMIN", "ASSISTANT")
+                        // EDT — accessible aux utilisateurs authentifies ; le @PreAuthorize
+                        // par methode contraint WRITE aux ASSISTANT/admin et READ a tous.
+                        .requestMatchers("/emplois-du-temps/**").authenticated()
+                        // Classes — meme principe : @PreAuthorize au niveau methode gere les roles
+                        .requestMatchers("/classes/**").authenticated()
 
                         // 6. Fallback
                         .requestMatchers("/dashboard").authenticated()

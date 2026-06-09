@@ -14,7 +14,7 @@
         <!-- En-tête -->
         <div class="mb-8">
             <div class="flex items-center gap-4 mb-4">
-                <a th:href="@{/enseignant/classes}" class="btn btn-ghost btn-sm">
+                <a th:href="@{/classes}" class="btn btn-ghost btn-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -39,7 +39,7 @@
 
         <!-- Formulaire -->
         <div class="bg-white dark:bg-bgcard rounded-2xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-white/5 p-6 sm:p-8">
-            <form th:action="@{/enseignant/classes/{id}/modifier(id=${classe.id})}" th:object="${form}" method="post" class="space-y-6">
+            <form th:action="@{/classes/{id}/modifier(id=${classe.id})}" th:object="${form}" method="post" class="space-y-6">
 
                 <!-- Niveau -->
                 <div class="form-control">
@@ -65,7 +65,7 @@
 
                 <!-- Actions -->
                 <div class="flex gap-3 pt-4">
-                    <a th:href="@{/enseignant/classes}" class="flex-1 btn btn-ghost border border-white/10 text-gray-400">
+                    <a th:href="@{/classes}" class="flex-1 btn btn-ghost border border-white/10 text-gray-400">
                         Annuler
                     </a>
                     <button type="submit" class="flex-1 btn bg-primary hover:bg-primaryhover border-none text-white">

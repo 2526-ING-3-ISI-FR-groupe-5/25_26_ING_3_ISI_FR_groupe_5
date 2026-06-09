@@ -31,7 +31,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.PlageHorai
 
 @Slf4j
 @Controller
-@RequestMapping("/enseignant/emploi-du-temps")
+@RequestMapping("/emplois-du-temps")
 @RequiredArgsConstructor
 public class PlageHoraireController {
 
@@ -134,7 +134,7 @@ public class PlageHoraireController {
 
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("erreur", "Veuillez corriger les erreurs du formulaire");
-            return "redirect:/emploi-du-temps/classe/" + request.getClasseId();
+            return "redirect:/emplois-du-temps/classe/" + request.getClasseId();
         }
 
         try {
@@ -147,7 +147,7 @@ public class PlageHoraireController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur lors de la création");
         }
 
-        return "redirect:/emploi-du-temps/classe/" + request.getClasseId();
+        return "redirect:/emplois-du-temps/classe/" + request.getClasseId();
     }
 
     // ============================================
@@ -164,7 +164,7 @@ public class PlageHoraireController {
 
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("erreur", "Veuillez corriger les erreurs du formulaire");
-            return "redirect:/emploi-du-temps/classe/" + request.getClasseId();
+            return "redirect:/emplois-du-temps/classe/" + request.getClasseId();
         }
 
         try {
@@ -175,7 +175,7 @@ public class PlageHoraireController {
             redirectAttributes.addFlashAttribute("erreur", "❌ " + e.getMessage());
         }
 
-        return "redirect:/emploi-du-temps/classe/" + request.getClasseId();
+        return "redirect:/emplois-du-temps/classe/" + request.getClasseId();
     }
 
     // ============================================
@@ -256,7 +256,7 @@ public class PlageHoraireController {
             redirectAttributes.addFlashAttribute("erreur", "❌ Erreur lors de l'affectation");
         }
 
-        return "redirect:/emploi-du-temps/classe/" + classeId;
+        return "redirect:/emplois-du-temps/classe/" + classeId;
     }
 
     // ============================================

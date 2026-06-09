@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script th:inline="javascript">
-        const BASE_URL = /*[[@{/enseignant/emploi-du-temps}]]*/ '/enseignant/emploi-du-temps';
+        const BASE_URL = /*[[@{/emplois-du-temps}]]*/ '/emplois-du-temps';
     </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -616,18 +616,18 @@
         $('btn-prev').addEventListener('click', () => {
             const d = new Date(calendar.view.activeStart);
             d.setDate(d.getDate() - 7);
-            window.location.href = `/enseignant/emploi-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
+            window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
         });
 
         $('btn-next').addEventListener('click', () => {
             const d = new Date(calendar.view.activeStart);
             d.setDate(d.getDate() + 7);
-            window.location.href = `/enseignant/emploi-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
+            window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
         });
 
         $('winput').addEventListener('change', e => {
             if (e.target.value) {
-                window.location.href = `/enseignant/emploi-du-temps/classe/${CLASSE_ID}?semaine=${e.target.value}`;
+                window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${e.target.value}`;
             }
         });
         $('winput').value = DEBUT_SEMAINE;

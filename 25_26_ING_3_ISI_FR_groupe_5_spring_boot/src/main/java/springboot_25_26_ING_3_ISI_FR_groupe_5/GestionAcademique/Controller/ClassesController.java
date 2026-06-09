@@ -3,6 +3,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -12,8 +13,14 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_aca
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Niveau;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.DTO.classes.ClassesRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Inscription;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.SessionAppel;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,12 +40,12 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers.Ins
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.InscriptionService;
 
 @Controller
-@RequestMapping("/enseignant/classes")
-@PreAuthorize("hasAnyRole('ENSEIGNANT', 'ETUDIANT', 'ASSISTANT')")
+@RequestMapping("/classes")
 @RequiredArgsConstructor
 public class ClassesController {
 
     private final ClassesService classesService;
+    private final ClassesRepository classesRepo;
     private final ClassesMapper classesMapper;
     private final SpecialiteService specialiteService;
     private final SpecialiteMapper specialiteMapper;
@@ -53,68 +60,76 @@ public class ClassesController {
     private final ProgrammationUEService programmationService;
     private final ProgrammationUEMapper programmationMapper;
 
+    // ══════════════════════════════════════════
+    // LISTE — Avec pagination
+    // ══════════════════════════════════════════
+
     @GetMapping
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ETUDIANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
     public String liste(
             @RequestParam(required = false) Long specialiteId,
             @RequestParam(required = false) Long niveauId,
             @RequestParam(required = false) Long anneeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal Utilisateur user) {
+
         Annee_academique annee = null;
         try {
             annee = anneeId != null
                     ? anneeService.findById(anneeId)
                     : anneeService.getAnneeActive();
         } catch (Exception e) {
-            // ✅ Validation stricte : redirection si aucune année academique n'est disponible
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
+                    "Aucune annee academique active.");
             return "redirect:/admin/annees";
         }
 
-        // ✅ Validation : annee ne doit pas être null
         if (annee == null) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique disponible. Veuillez en créer une");
+                    "Aucune annee academique disponible.");
             return "redirect:/admin/annees";
         }
 
-        List<Classe> classesList = new ArrayList<>();
+        List<Classe> classesList = getClassesForUser(user, specialiteId, niveauId);
 
-        if (niveauId != null && niveauId > 0) {
-            classesList = classesService.getByNiveau(niveauId);
-        } else if (specialiteId != null && specialiteId > 0) {
-            List<Niveau> niveaux = niveauService.getBySpecialite(specialiteId);
-            for (Niveau niveau : niveaux) {
-                classesList.addAll(classesService.getByNiveau(niveau.getId()));
-            }
-        } else {
-            classesList = classesService.getAll();
-        }
+        int totalClasses = classesList.size();
+        int totalPages = (int) Math.ceil((double) totalClasses / size);
+        int start = page * size;
+        int end = Math.min(start + size, totalClasses);
+        List<Classe> pageContent = start < totalClasses ? classesList.subList(start, end) : List.of();
 
         List<Niveau> tousNiveaux = niveauService.getAll();
 
-        model.addAttribute("classes", classesMapper.toResponseList(classesList));
+        model.addAttribute("classes", classesMapper.toResponseList(pageContent));
         model.addAttribute("niveaux", niveauMapper.toResponseList(tousNiveaux));
         model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
         model.addAttribute("annees", anneeService.getAll());
         model.addAttribute("anneeActive", annee);
         model.addAttribute("specialiteIdSelectionne", specialiteId);
         model.addAttribute("niveauIdSelectionne", niveauId);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalClasses", totalClasses);
         model.addAttribute("form", new ClassesRequest());
 
         return "classe/liste";
     }
 
+    // ══════════════════════════════════════════
+    // DÉTAIL
+    // ══════════════════════════════════════════
+
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ETUDIANT', 'ASSISTANT', 'SUPER_ADMIN', 'ADMIN_INSTITUT')")
     public String detail(
             @PathVariable Long id,
             @RequestParam(required = false) Long anneeId,
             Model model,
-            RedirectAttributes redirectAttributes
-    ) {
-        // ✅ Validation stricte : vérifier qu'une année academique est active
+            RedirectAttributes redirectAttributes) {
+
         Annee_academique annee = null;
         try {
             annee = anneeId != null
@@ -122,14 +137,14 @@ public class ClassesController {
                     : anneeService.getAnneeActive();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
-            return "redirect:/enseignant/classes";
+                    "Aucune annee academique active. Veuillez en activer une depuis les parametres");
+            return "redirect:/classes";
         }
 
         if (annee == null) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique disponible");
-            return "redirect:/enseignant/classes";
+                    "Aucune annee academique disponible");
+            return "redirect:/classes";
         }
 
         Classe classe = classesService.findById(id);
@@ -146,14 +161,17 @@ public class ClassesController {
         return "classe/detail";
     }
 
+    // ══════════════════════════════════════════
+    // CRÉER — Assistant, Admin uniquement
+    // ══════════════════════════════════════════
+
     @PostMapping("/creer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
+    @PreAuthorize("hasAnyRole('ASSISTANT', 'ADMIN_INSTITUT', 'SUPER_ADMIN')")
     public String creer(
             @Valid @ModelAttribute("form") ClassesRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
             model.addAttribute("niveaux", niveauMapper.toResponseList(niveauService.getAll()));
@@ -162,29 +180,31 @@ public class ClassesController {
 
         try {
             classesService.creer(request.getNom(), request.getNiveauId());
-            redirectAttributes.addFlashAttribute("succes", "Classe créée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Classe creee avec succes");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/enseignant/classes";
+        return "redirect:/classes";
     }
 
+    // ══════════════════════════════════════════
+    // FORMULAIRE MODIFIER — Assistant, Admin uniquement
+    // ══════════════════════════════════════════
+
     @GetMapping("/{id}/modifier")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT')")
+    @PreAuthorize("hasAnyRole('ASSISTANT', 'ADMIN_INSTITUT', 'SUPER_ADMIN')")
     public String formulaireModifier(
             @PathVariable Long id,
             Model model,
-            RedirectAttributes redirectAttributes
-    ) {
-        // ✅ Validation: vérifier qu'une année academique est active
+            RedirectAttributes redirectAttributes) {
         try {
             Annee_academique annee = anneeService.getAnneeActive();
             model.addAttribute("anneeActive", annee);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur",
-                "Aucune année académique active. Veuillez en activer une depuis les paramètres");
-            return "redirect:/enseignant/classes";
+                    "Aucune annee academique active. Veuillez en activer une depuis les parametres");
+            return "redirect:/classes";
         }
 
         Classe classe = classesService.findById(id);
@@ -200,14 +220,18 @@ public class ClassesController {
         return "classe/modifier";
     }
 
+    // ══════════════════════════════════════════
+    // MODIFIER — Assistant, Admin uniquement
+    // ══════════════════════════════════════════
+
     @PostMapping("/{id}/modifier")
+    @PreAuthorize("hasAnyRole('ASSISTANT', 'ADMIN_INSTITUT', 'SUPER_ADMIN')")
     public String modifier(
             @PathVariable Long id,
             @Valid @ModelAttribute("form") ClassesRequest request,
             BindingResult result,
             Model model,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("classe", classesMapper.toResponse(classesService.findById(id)));
             model.addAttribute("specialites", specialiteMapper.toResponseList(specialiteService.getAll()));
@@ -217,27 +241,35 @@ public class ClassesController {
 
         try {
             classesService.modifier(id, request.getNom(), request.getNiveauId());
-            redirectAttributes.addFlashAttribute("succes", "Classe modifiée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Classe modifiee avec succes");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
 
-        return "redirect:/enseignant/classes/" + id;
+        return "redirect:/classes/" + id;
     }
+
+    // ══════════════════════════════════════════
+    // SUPPRIMER — Assistant, Admin uniquement
+    // ══════════════════════════════════════════
 
     @PostMapping("/{id}/supprimer")
+    @PreAuthorize("hasAnyRole('ASSISTANT', 'ADMIN_INSTITUT', 'SUPER_ADMIN')")
     public String supprimer(
             @PathVariable Long id,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes) {
         try {
             classesService.supprimer(id);
-            redirectAttributes.addFlashAttribute("succes", "Classe supprimée avec succès");
+            redirectAttributes.addFlashAttribute("succes", "Classe supprimee avec succes");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erreur", e.getMessage());
         }
-        return "redirect:/enseignant/classes";
+        return "redirect:/classes";
     }
+
+    // ══════════════════════════════════════════
+    // JSON — API
+    // ══════════════════════════════════════════
 
     @GetMapping("/{id}/json")
     @ResponseBody
@@ -247,5 +279,53 @@ public class ClassesController {
         request.setNom(classe.getNom());
         request.setNiveauId(classe.getNiveau().getId());
         return request;
+    }
+
+    // ══════════════════════════════════════════
+    // PRIVÉ — Filtrage par rôle
+    // ══════════════════════════════════════════
+
+    private List<Classe> getClassesForUser(Utilisateur user, Long specialiteId, Long niveauId) {
+        List<Classe> classesList;
+
+        if (user instanceof Enseignant enseignant) {
+            Long institutId = user.getInstitut() != null ? user.getInstitut().getId() : null;
+            Semestre semestreActif = (institutId != null)
+                    ? anneeService.getSemestreActif(institutId)
+                    : null;
+
+            if (semestreActif != null) {
+                classesList = classesRepo.findByEnseignantIdAndSemestreId(
+                        enseignant.getId(), semestreActif.getId());
+            } else {
+                classesList = List.of();
+            }
+
+        } else if (user instanceof Etudiant etudiant) {
+            Classe classe = etudiant.getClasse();
+            classesList = classe != null ? List.of(classe) : List.of();
+
+        } else if (user instanceof AssistantPedagogique assistant) {
+            classesList = new ArrayList<>(assistant.getClasses());
+            if (classesList.isEmpty() && user.getInstitut() != null) {
+                classesList = classesService.getByInstitut(user.getInstitut().getId());
+            }
+
+        } else {
+            classesList = classesService.getAll();
+        }
+
+        if (niveauId != null && niveauId > 0) {
+            classesList = classesList.stream()
+                    .filter(c -> c.getNiveau() != null && c.getNiveau().getId().equals(niveauId))
+                    .toList();
+        }
+        if (specialiteId != null && specialiteId > 0) {
+            classesList = classesList.stream()
+                    .filter(c -> c.getSpecialite() != null && c.getSpecialite().getId().equals(specialiteId))
+                    .toList();
+        }
+
+        return classesList;
     }
 }
