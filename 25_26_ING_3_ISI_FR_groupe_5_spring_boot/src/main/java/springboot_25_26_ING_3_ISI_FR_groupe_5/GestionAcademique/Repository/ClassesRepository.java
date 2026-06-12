@@ -68,4 +68,30 @@ public interface ClassesRepository extends JpaRepository<Classe, Long> {
     // Utilisé par MigrationService.migrerSpecialites()
     @Query("SELECT c FROM Classe c WHERE c.niveau.specialite.id = :specialiteId")
     List<Classe> findBySpecialiteId(@Param("specialiteId") Long specialiteId);
+    /**
+     * ✅ Classes où un enseignant a au moins une plage horaire.
+     */
+    @Query("""
+    SELECT DISTINCT c FROM Classe c
+    JOIN c.plagesHoraires p
+    JOIN p.enseignants e
+    WHERE e.id = :enseignantId
+    ORDER BY c.nom
+""")
+    List<Classe> findByEnseignantId(@Param("enseignantId") Long enseignantId);
+
+    /**
+     * ✅ Classes où un enseignant a des plages horaires pour un semestre donné.
+     */
+    @Query("""
+    SELECT DISTINCT c FROM Classe c
+    JOIN c.plagesHoraires p
+    JOIN p.enseignants e
+    WHERE e.id = :enseignantId
+    AND p.semestre.id = :semestreId
+    ORDER BY c.nom
+""")
+    List<Classe> findByEnseignantIdAndSemestreId(
+            @Param("enseignantId") Long enseignantId,
+            @Param("semestreId") Long semestreId);
 }

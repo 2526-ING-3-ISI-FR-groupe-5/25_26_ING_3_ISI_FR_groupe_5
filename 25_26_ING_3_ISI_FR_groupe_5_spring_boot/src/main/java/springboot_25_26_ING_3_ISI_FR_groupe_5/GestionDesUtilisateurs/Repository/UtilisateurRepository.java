@@ -75,4 +75,23 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
             @Param("institutId") Long institutId,
             @Param("recherche") String recherche,
             Pageable pageable);
+
+    // Dans UtilisateurRepository — méthode avec 3 paramètres
+    @Query("""
+    SELECT u FROM Utilisateur u
+    WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
+    AND (:type = 'TOUS' OR
+        (:type = 'ENS' AND TYPE(u) = Enseignant) OR
+        (:type = 'AST' AND TYPE(u) = AssistantPedagogique) OR
+        (:type = 'SUR' AND TYPE(u) = Surveillant))
+    AND (:recherche IS NULL OR :recherche = '' OR
+        LOWER(u.nom) LIKE LOWER(CONCAT('%', :recherche, '%')) OR
+        LOWER(u.prenom) LIKE LOWER(CONCAT('%', :recherche, '%')))
+""")
+    Page<Utilisateur> searchWithFilters(
+            @Param("recherche") String recherche,
+            @Param("type") String type,
+            Pageable pageable
+    );
+    List<Utilisateur> findByInstitutId(Long institutId);
 }

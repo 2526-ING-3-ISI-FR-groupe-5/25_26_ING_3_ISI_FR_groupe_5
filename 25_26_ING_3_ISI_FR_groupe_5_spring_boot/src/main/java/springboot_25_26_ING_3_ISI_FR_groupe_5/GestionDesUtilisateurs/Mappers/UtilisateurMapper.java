@@ -2,7 +2,9 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisateur.ActiveUtilisateurRequestDTO;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisateur.UtilisateurResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
@@ -10,8 +12,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Surv
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeContrat;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEnseignant;
 
 @Mapper(
         componentModel = "spring",
@@ -21,7 +21,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Enum.TypeEn
 )
 public interface UtilisateurMapper {
 
-    // ✅ Champ type — discriminator lisible côté Thymeleaf
     @Mapping(target = "type", expression = """
             java(utilisateur instanceof Enseignant  ? "ENS" :
                  utilisateur instanceof AssistantPedagogique   ? "AST" :
@@ -43,4 +42,5 @@ public interface UtilisateurMapper {
         return utilisateurs.stream().map(this::toDTO).toList();
     }
 
+    void activateToEntity(ActiveUtilisateurRequestDTO dto, @MappingTarget Utilisateur utilisateur);
 }

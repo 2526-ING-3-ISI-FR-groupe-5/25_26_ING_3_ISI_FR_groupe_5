@@ -18,5 +18,6 @@ public class EnseignantResponse {
     private String telephone;
     private String grade;
     private String typeEnseignant;
-    private boolean active;
+    private boolean actif;
+    private String couleur;
 }

@@ -30,4 +30,5 @@ Optional<Semestre> findByAnneeAcademiqueIdAndActive(Long anneeAcademiqueId, Bool
     @Query("SELECT s FROM Semestre s WHERE s.anneeAcademique.id = :anneeId AND s.active = true")
     Optional<Semestre> findByAnneeAcademiqueIdAndActiveTrue(@Param("anneeId") Long anneeId);
 
+    Optional<Semestre> findByAnneeAcademique_Institut_IdAndActiveTrue(Long institutId);
 }

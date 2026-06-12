@@ -13,11 +13,14 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.InstitutContexteActif;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutContexteActifRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.PlageHoraire.PlageHoraireResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.PlageHoraireService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +32,7 @@ public class DashboardController {
     private final InstitutContexteActifRepository contexteRepo;
     private final InstitutSecurityService securityService;
     private final IJournalActionService journalActionService;
+    private final PlageHoraireService plageHoraireService;
 
     private static final List<String> ROLES_PRIORITE = List.of(
             "SUPER_ADMIN", "ADMIN_INSTITUT", "ASSISTANT", "ENSEIGNANT", "SURVEILLANT", "ETUDIANT"
@@ -40,7 +44,7 @@ public class DashboardController {
             @AuthenticationPrincipal Utilisateur utilisateur,
             Model model) {
 
-        // 1. Rôles & Priorité
+        // 1. Roles & Priorite
         boolean estSuperAdmin    = utilisateur.hasRole("SUPER_ADMIN");
         boolean estAdminInstitut = utilisateur.hasRole("ADMIN_INSTITUT");
         boolean estEnseignant    = utilisateur.hasRole("ENSEIGNANT");
@@ -54,7 +58,7 @@ public class DashboardController {
                 .findFirst()
                 .orElse("INCONNU");
 
-        // 2. ✅ Institut — forcer le chargement avant fermeture de session
+        // 2. Institut — forcer le chargement avant fermeture de session
         Institut institut = utilisateur.getInstitut();
         Long institutId = null;
         String institutNom = "Global";
@@ -79,7 +83,7 @@ public class DashboardController {
             }
         }
 
-        // 4. Sélecteur institut (Super Admin uniquement)
+        // 4. Selecteur institut (Super Admin uniquement)
         boolean showInstitutSelector = estSuperAdmin;
         String currentInstitutName = estSuperAdmin
                 ? securityService.getCurrentInstitutName()
@@ -90,7 +94,7 @@ public class DashboardController {
         boolean peutFaireAppel  = estEnseignant || estSurveillant;
         boolean peutGererEmploiDuTemps = estAssistant || estAdmin;
 
-        // 6. Exposition au modèle
+        // 6. Exposition au modele
         model.addAttribute("utilisateur", utilisateur);
         model.addAttribute("institut", institut);
         model.addAttribute("institutId", institutId);
@@ -112,13 +116,26 @@ public class DashboardController {
         model.addAttribute("peutFaireAppel", peutFaireAppel);
         model.addAttribute("peutGererEmploiDuTemps", peutGererEmploiDuTemps);
 
-        // 7. Dernières actions (Admin)
+        // 7. Dernieres actions (Admin)
         if (estAdmin) {
             try {
                 model.addAttribute("dernieresActions",
                         journalActionService.getByUtilisateur(utilisateur.getId(), PageRequest.of(0, 5)).getContent());
             } catch (Exception e) {
-                log.warn("Erreur chargement dernières actions: {}", e.getMessage());
+                log.warn("Erreur chargement dernieres actions: {}", e.getMessage());
+            }
+        }
+
+        // 8. ✅ Cours du jour pour l'enseignant
+        if (estEnseignant) {
+            try {
+                List<PlageHoraireResponse> coursDuJour = plageHoraireService
+                        .findByEnseignantAndJour(utilisateur.getId(), LocalDate.now());
+                model.addAttribute("coursDuJour", coursDuJour);
+                model.addAttribute("nbCoursDuJour", coursDuJour.size());
+            } catch (Exception e) {
+                log.warn("Erreur chargement cours du jour: {}", e.getMessage());
+                model.addAttribute("coursDuJour", List.of());
             }
         }
 

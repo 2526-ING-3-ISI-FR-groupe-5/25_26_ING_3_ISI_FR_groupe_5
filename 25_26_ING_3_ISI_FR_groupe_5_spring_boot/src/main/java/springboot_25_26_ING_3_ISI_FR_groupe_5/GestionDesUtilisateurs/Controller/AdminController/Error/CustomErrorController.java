@@ -31,6 +31,7 @@ public class CustomErrorController implements ErrorController {
                 case 404:
                     return "error/404";
                 case 500:
+
                     return "error/500";
                 default:
                     return "error/default";

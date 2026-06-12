@@ -2,7 +2,7 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilis
 
 import lombok.Getter;
 import lombok.Setter;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Response.RoleResponseDTO;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.role.RoleResponse;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -21,5 +21,5 @@ public class SurveillantResponseDTO {
     private boolean active;
     private String secteur;
     private String typeContrat;
-    private Set<RoleResponseDTO> roles;
+    private Set<RoleResponse> roles;
 }

@@ -1,16 +1,12 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers;
 
-
-import org.mapstruct.Mapper;
-
-import java.util.List;
-
-
 import org.mapstruct.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantResponseDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface EnseignantMapper {
@@ -19,8 +15,6 @@ public interface EnseignantMapper {
 
     List<EnseignantResponse> toResponseList(List<Enseignant> enseignants);
 
-    // ✅ Utiliser CONSTRUCTOR au lieu de BUILDER
-    // car Enseignant utilise @SuperBuilder (héritage)
     @BeanMapping(builder = @Builder(disableBuilder = true))
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "roles", ignore = true)
@@ -30,4 +24,7 @@ public interface EnseignantMapper {
     @Mapping(target = "programmations", ignore = true)
     @Mapping(target = "authorities", ignore = true)
     Enseignant toEntity(EnseignantRequest request);
+
+    // ✅ Ajouté
+    EnseignantResponseDetails toDtoDetails(Enseignant enseignant);
 }

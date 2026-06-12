@@ -1,4 +1,3 @@
-/*
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Init;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.Pro
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
 
 @Component
-@Order(3)
+@Order(4)
 @RequiredArgsConstructor
 public class ProgrammationUEInitializer implements ApplicationRunner {
 
@@ -244,4 +243,4 @@ private  final  ClassesRepository classeRepository;
                         .build()
         );
     }
-}*/
+}

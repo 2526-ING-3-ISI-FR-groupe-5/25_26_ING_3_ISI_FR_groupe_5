@@ -114,4 +114,14 @@ public class ClassesService implements IClassesService {
     public Long getAnneeAcademiqueActive() {
         return anneeService.getAnneeActive().getId();
     }
+    /**
+     * ✅ Classes où un enseignant a des plages horaires.
+     * Utilisé par ClassesController pour filtrer les classes visibles par l'enseignant.
+     */
+    public List<Classe> getByEnseignant(Long enseignantId) {
+        return classesRepo.findByEnseignantId(enseignantId);
+    }
+
+
+
 }

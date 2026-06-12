@@ -17,7 +17,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
 
     Optional<Etudiant> findByEmail(String email);
-
     boolean existsByEmailContainingIgnoreCase(String email);
 
     @Query("""

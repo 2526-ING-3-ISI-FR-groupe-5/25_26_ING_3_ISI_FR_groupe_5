@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>CarnetRouge — Créer un utilisateur</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"/>
+    <link rel="stylesheet" th:href="@{/css/output.css}"/>
+    <link rel="stylesheet" th:href="@{/css/createUser.css}"/>
+</head>
+<body class="min-h-screen bg-[#0c0c0e] text-[#f0f0f2] font-sans antialiased">
+
+<!-- Fond décoratif -->
+<div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[400px]
+              bg-[radial-gradient(ellipse,rgba(220,38,38,0.08)_0%,transparent_70%)]"></div>
+</div>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="sticky top-0 z-50 h-16 flex items-center justify-between px-8
+            bg-[rgba(12,12,14,0.85)] backdrop-blur-xl border-b border-white/5">
+    <a th:href="@{/dashboard}" class="flex items-center gap-3 no-underline">
+        <div class="w-9 h-9 bg-[#dc2626] rounded-[10px] flex items-center justify-center
+                shadow-[0_0_20px_rgba(220,38,38,0.35)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                 fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+            </svg>
+        </div>
+        <span class="font-serif text-xl font-bold text-[#f0f0f2]">
+            Carnet<span class="text-[#ef4444]">Rouge</span>
+        </span>
+    </a>
+    <div class="flex items-center gap-3">
+        <a th:href="@{/admin/utilisateurs}"
+           class="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/8
+                  bg-[#1a1a1f] text-[rgba(240,240,242,0.45)] text-sm hover:text-[#f0f0f2]
+                  hover:border-[rgba(220,38,38,0.4)] transition-all no-underline">
+            <i class="bi bi-arrow-left text-xs"></i> Retour
+        </a>
+    </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="relative z-10 max-w-3xl mx-auto px-6 py-12">
+
+    <!-- En-tête -->
+    <div class="mb-10">
+        <p class="text-xs font-bold uppercase tracking-widest text-[rgba(240,240,242,0.35)] mb-2">
+            Gestion des utilisateurs
+        </p>
+        <h1 class="font-serif text-4xl font-black tracking-tight leading-tight">
+            Créer un <span class="text-[#ef4444]">utilisateur</span>
+        </h1>
+        <p class="mt-2 text-sm text-[rgba(240,240,242,0.45)] font-light">
+            Renseignez les informations en suivant les étapes ci-dessous.
+        </p>
+    </div>
+
+    <!-- ══ STEPPER ══ -->
+    <div class="flex items-center gap-0 mb-10" id="stepper">
+
+        <!-- Étape 1 -->
+        <div class="step-item flex items-center gap-2" data-step="1">
+            <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center
+                        text-xs font-black border-2 transition-all duration-300
+                        border-[#dc2626] bg-[rgba(220,38,38,0.12)] text-[#dc2626]">1</div>
+            <span class="step-label text-xs font-bold uppercase tracking-wider text-[#dc2626] hidden sm:block">Infos</span>
+        </div>
+        <div class="step-line flex-1 h-px bg-white/8 mx-3 transition-all duration-500" id="line-1-2"></div>
+
+        <!-- Étape 2 -->
+        <div class="step-item flex items-center gap-2" data-step="2">
+            <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center
+                        text-xs font-black border-2 transition-all duration-300
+                        border-white/10 bg-white/5 text-[rgba(240,240,242,0.4)]">2</div>
+            <span class="step-label text-xs font-bold uppercase tracking-wider text-[rgba(240,240,242,0.4)] hidden sm:block">Rôle</span>
+        </div>
+        <div class="step-line flex-1 h-px bg-white/8 mx-3 transition-all duration-500" id="line-2-3"></div>
+
+        <!-- Étape 3 -->
+        <div class="step-item flex items-center gap-2" data-step="3">
+            <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center
+                        text-xs font-black border-2 transition-all duration-300
+                        border-white/10 bg-white/5 text-[rgba(240,240,242,0.4)]">3</div>
+            <span class="step-label text-xs font-bold uppercase tracking-wider text-[rgba(240,240,242,0.4)] hidden sm:block">Assigner</span>
+        </div>
+        <div class="step-line flex-1 h-px bg-white/8 mx-3 transition-all duration-500" id="line-3-4"></div>
+
+        <!-- Étape 4 -->
+        <div class="step-item flex items-center gap-2" data-step="4">
+            <div class="step-circle w-8 h-8 rounded-full flex items-center justify-center
+                        text-xs font-black border-2 transition-all duration-300
+                        border-white/10 bg-white/5 text-[rgba(240,240,242,0.4)]">4</div>
+            <span class="step-label text-xs font-bold uppercase tracking-wider text-[rgba(240,240,242,0.4)] hidden sm:block">Confirmer</span>
+        </div>
+
+    </div>
+
+    <!-- ══ CARTE PRINCIPALE ══ -->
+    <div class="bg-[#131316] border border-white/6 rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+
+        <!-- En-tête de la carte -->
+        <div class="px-8 pt-8 pb-6 border-b border-white/5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-serif text-lg font-bold text-[#f0f0f2]" id="step-title">Informations personnelles</h2>
+                    <p class="text-xs text-[rgba(240,240,242,0.4)] mt-1" id="step-subtitle">Renseignez les informations de base de l'utilisateur</p>
+                </div>
+                <span class="text-xs font-bold text-[rgba(240,240,242,0.3)] bg-white/4 px-3 py-1 rounded-full border border-white/6" id="step-counter">Étape 1 sur 4</span>
+            </div>
+        </div>
+
+        <!-- Corps des étapes -->
+        <div class="px-8 py-8">
+
+            <!-- ══ ÉTAPE 1 — Informations personnelles ══ -->
+            <div class="step-panel" id="panel-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="field-group">
+                        <label class="field-label">Nom <span class="text-[#dc2626]">*</span></label>
+                        <input type="text" id="f-nom" placeholder="ex. KAMGA" class="field-input" autocomplete="off"/>
+                        <p class="field-error hidden" id="err-nom">Nom requis (2 caractères min.)</p>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Prénom <span class="text-[#dc2626]">*</span></label>
+                        <input type="text" id="f-prenom" placeholder="ex. Paul" class="field-input" autocomplete="off"/>
+                        <p class="field-error hidden" id="err-prenom">Prénom requis (2 caractères min.)</p>
+                    </div>
+                    <div class="field-group sm:col-span-2">
+                        <label class="field-label">Email <span class="text-[#dc2626]">*</span></label>
+                        <div class="relative">
+                            <i class="bi bi-envelope absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(240,240,242,0.3)] text-sm pointer-events-none"></i>
+                            <input type="email" id="f-email" placeholder="ex. paul.kamga@carnetrouge.com" class="field-input pl-10" autocomplete="off"/>
+                        </div>
+                        <p class="field-error hidden" id="err-email">Email invalide</p>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Téléphone <span class="text-[#dc2626]">*</span></label>
+                        <div class="relative">
+                            <i class="bi bi-telephone absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(240,240,242,0.3)] text-sm pointer-events-none"></i>
+                            <input type="tel" id="f-telephone" placeholder="ex. 699000000" class="field-input pl-10" autocomplete="off"/>
+                        </div>
+                        <p class="field-error hidden" id="err-telephone">Téléphone requis</p>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Date de naissance <span class="text-[#dc2626]">*</span></label>
+                        <input type="date" id="f-dob" class="field-input" style="color-scheme:dark;"/>
+                        <p class="field-error hidden" id="err-dob">Date invalide</p>
+                    </div>
+                    <div class="field-group sm:col-span-2">
+                        <label class="field-label">Type d'utilisateur <span class="text-[#dc2626]">*</span></label>
+                        <div class="grid grid-cols-3 gap-3 mt-1">
+                            <label class="type-card cursor-pointer" id="type-card-ENS">
+                                <input type="radio" name="typeUtilisateur" value="ENS" class="sr-only" id="type-ENS"/>
+                                <div class="p-4 rounded-xl border-2 border-white/8 bg-white/3 hover:border-[rgba(245,158,11,0.4)] hover:bg-[rgba(245,158,11,0.05)] transition-all text-center type-card-inner">
+                                    <i class="bi bi-mortarboard-fill text-xl text-[#fbbf24] block mb-2"></i>
+                                    <p class="text-xs font-bold text-[#f0f0f2]">Enseignant</p>
+                                    <p class="text-[10px] text-[rgba(240,240,242,0.4)] mt-1">Cours & EDT</p>
+                                </div>
+                            </label>
+                            <label class="type-card cursor-pointer" id="type-card-AST">
+                                <input type="radio" name="typeUtilisateur" value="AST" class="sr-only" id="type-AST"/>
+                                <div class="p-4 rounded-xl border-2 border-white/8 bg-white/3 hover:border-[rgba(56,189,248,0.4)] hover:bg-[rgba(56,189,248,0.05)] transition-all text-center type-card-inner">
+                                    <i class="bi bi-person-workspace text-xl text-[#38bdf8] block mb-2"></i>
+                                    <p class="text-xs font-bold text-[#f0f0f2]">Assistant péda.</p>
+                                    <p class="text-[10px] text-[rgba(240,240,242,0.4)] mt-1">Gestion classes</p>
+                                </div>
+                            </label>
+                            <label class="type-card cursor-pointer" id="type-card-SUR">
+                                <input type="radio" name="typeUtilisateur" value="SUR" class="sr-only" id="type-SUR"/>
+                                <div class="p-4 rounded-xl border-2 border-white/8 bg-white/3 hover:border-[rgba(74,222,128,0.4)] hover:bg-[rgba(74,222,128,0.05)] transition-all text-center type-card-inner">
+                                    <i class="bi bi-shield-check text-xl text-[#4ade80] block mb-2"></i>
+                                    <p class="text-xs font-bold text-[#f0f0f2]">Surveillant</p>
+                                    <p class="text-[10px] text-[rgba(240,240,242,0.4)] mt-1">Surveillance</p>
+                                </div>
+                            </label>
+                        </div>
+                        <p class="field-error hidden mt-2" id="err-type">Sélectionnez un type</p>
+                    </div>
+
+                    <!-- Champs conditionnels Enseignant -->
+                    <div id="fields-ENS" class="hidden sm:col-span-2 grid grid-cols-2 gap-5">
+                        <div class="field-group">
+                            <label class="field-label">Grade</label>
+                            <input type="text" id="f-grade" placeholder="ex. Docteur, Professeur" class="field-input"/>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Catégorie</label>
+                            <select id="f-typeEnseignant" class="field-input">
+                                <option value="">— Choisir —</option>
+                                <option value="Permanent">Permanent</option>
+                                <option value="Vacataire">Vacataire</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Champs conditionnels Assistant -->
+                    <div id="fields-AST" class="hidden sm:col-span-2">
+                        <div class="field-group">
+                            <label class="field-label">Fonction</label>
+                            <input type="text" id="f-fonction" placeholder="ex. Assistant pédagogique" class="field-input"/>
+                        </div>
+                    </div>
+
+                    <!-- Champs conditionnels Surveillant -->
+                    <div id="fields-SUR" class="hidden sm:col-span-2 grid grid-cols-2 gap-5">
+                        <div class="field-group">
+                            <label class="field-label">Secteur</label>
+                            <input type="text" id="f-secteur" placeholder="ex. Bloc A, Amphi Nord" class="field-input"/>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Type de contrat</label>
+                            <select id="f-typeContrat" class="field-input">
+                                <option value="">— Choisir —</option>
+                                <option value="CDI">CDI</option>
+                                <option value="CDD">CDD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 2 — Rôle & Permissions ══ -->
+            <div class="step-panel hidden" id="panel-2">
+                <p class="text-xs text-[rgba(240,240,242,0.4)] mb-5">
+                    Sélectionnez un ou plusieurs rôles. Les permissions sont activées par défaut — décochez celles que vous souhaitez désactiver.
+                </p>
+                <div class="space-y-2 mb-6" id="roles-list">
+                    <!-- Ajout de 'event' dans l'appel JS -->
+                    <div th:each="role : ${roles}"
+                         class="role-card flex items-center gap-4 p-4 rounded-xl border-2 border-white/8 bg-white/3 cursor-pointer hover:border-[rgba(220,38,38,0.35)] hover:bg-[rgba(220,38,38,0.04)] transition-all"
+                         th:data-role-id="${role.id}"
+                         th:data-role-name="${role.nom}"
+                         th:onclick="toggleRole(this, event)">
+                        <input type="checkbox" th:value="${role.id}" class="role-checkbox accent-[#dc2626] w-4 h-4 flex-shrink-0"/>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-[#f0f0f2]" th:text="${role.nom}">ENSEIGNANT</p>
+                            <p class="text-xs text-[rgba(240,240,242,0.4)] mt-0.5" th:text="${role.description}">Description du rôle</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 rounded-md bg-[rgba(220,38,38,0.08)] text-[rgba(239,68,68,0.8)] border border-[rgba(220,38,38,0.15)] font-mono" th:text="${#lists.size(role.permissions) + ' permissions'}">0 permissions</span>
+                    </div>
+                    <div th:if="${#lists.isEmpty(roles)}" class="text-center py-8 text-[rgba(240,240,242,0.35)] text-sm italic">
+                        Aucun rôle actif disponible.
+                    </div>
+                </div>
+                <p class="field-error hidden mb-4" id="err-role">Sélectionnez au moins un rôle</p>
+
+                <!-- Permissions -->
+                <div id="perms-container" class="hidden space-y-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="bi bi-key-fill text-[#f59e0b] text-sm"></i>
+                        <p class="text-xs font-bold uppercase tracking-wider text-[rgba(240,240,242,0.4)]">Permissions — décochez pour désactiver</p>
+                    </div>
+                    <div th:each="role : ${roles}" th:id="'perms-group-' + ${role.id}" class="hidden">
+                        <p class="text-xs font-bold text-[rgba(240,240,242,0.55)] mb-2 pb-1 border-b border-white/5" th:text="${role.nom}">ROLE</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <!-- Ajout de 'event' dans l'appel JS -->
+                            <label th:each="perm : ${role.permissions}"
+                                   class="perm-card flex items-start gap-3 p-3 rounded-lg border border-white/6 bg-white/2 cursor-pointer hover:border-[rgba(245,158,11,0.25)] transition-all"
+                                   th:onclick="togglePermCard(this, event)">
+                                <input type="checkbox" th:value="${perm.id}" th:data-perm-desc="${perm.description}" th:checked="${perm.active}"
+                                       class="wiz-perm-check accent-[#d97706] w-4 h-4 flex-shrink-0 mt-0.5"/>
+                                <div>
+                                    <p class="text-xs font-bold text-[#f0f0f2]" th:text="${perm.nom}">perm:read</p>
+                                    <p class="text-[11px] text-[rgba(240,240,242,0.4)] mt-0.5" th:text="${perm.description}">Description</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 3 — UE (ENS) / Classes (AST) / Skip (SUR) ══ -->
+            <div class="step-panel hidden" id="panel-3">
+
+                <!-- Surveillant -->
+                <div id="step3-sur-msg" class="hidden flex-col items-center justify-center py-12 text-center gap-3">
+                    <i class="bi bi-shield-check text-4xl text-[#4ade80]"></i>
+                    <p class="text-sm font-bold text-[#f0f0f2]">Aucune assignation requise</p>
+                    <p class="text-xs text-[rgba(240,240,242,0.4)]">Le surveillant n'est pas associé à des UE ou classes.</p>
+                </div>
+
+                <!-- Enseignant — UE -->
+                <div id="step3-ens-area" class="hidden">
+                    <p class="text-xs text-[rgba(240,240,242,0.4)] mb-5">
+                        Sélectionnez les UE que cet enseignant va dispenser.
+                        <span class="text-[rgba(240,240,242,0.25)]">(Optionnel)</span>
+                    </p>
+                    <div class="relative mb-4">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(240,240,242,0.3)] text-sm pointer-events-none"></i>
+                        <input type="text" id="ue-search" placeholder="Rechercher une UE…" class="field-input pl-10" oninput="filterUE(this.value)"/>
+                    </div>
+                    <div id="ue-empty-msg" class="hidden text-center py-6 text-[rgba(240,240,242,0.3)] text-xs italic">
+                        Aucune UE trouvée.
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="ue-grid">
+                        <label th:each="ue : ${programmations}"
+                               th:data-nom="${ue.ue.nom}"
+                               th:data-code="${ue.ue.code}"
+                               th:data-specialite-id="${ue.ue.specialite?.id}"
+                               th:data-filiere-id="${ue.ue.specialite?.filiere?.id}"
+                               class="ue-card flex items-start gap-3 p-3 rounded-lg border-2 border-white/8 bg-white/3 cursor-pointer hover:border-[rgba(251,191,36,0.4)] transition-all">
+                            <input type="checkbox" class="ue-checkbox accent-[#fbbf24] w-4 h-4 flex-shrink-0 mt-0.5" th:value="${ue.ue.id}"/>
+                            <div>
+                                <p class="text-xs font-bold text-[#f0f0f2]" th:text="${ue.ue.nom}">Algorithmique</p>
+                                <p class="text-[10px] text-[rgba(240,240,242,0.35)]">
+                                    <span th:text="${ue.ue.code}">INF301</span>
+                                    <span th:if="${ue.classe != null}"> · <span th:text="${ue.classe.nom}">Classe</span></span>
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button type="button" id="btn-select-all-ue" class="text-xs px-3 py-1.5 rounded-lg border border-white/8 bg-white/3 text-[rgba(240,240,242,0.5)] hover:text-[#f0f0f2] hover:border-white/15 transition-all">Tout sélectionner</button>
+                        <button type="button" id="btn-deselect-all-ue" class="text-xs px-3 py-1.5 rounded-lg border border-white/8 bg-white/3 text-[rgba(240,240,242,0.5)] hover:text-[#f0f0f2] hover:border-white/15 transition-all">Tout désélectionner</button>
+                    </div>
+                    <div id="ue-counter" class="mt-3 text-xs text-[rgba(240,240,242,0.4)]">
+                        <span id="ue-count">0</span> UE sélectionnée(s)
+                    </div>
+                </div>
+
+                <!-- Assistant — Classes -->
+                <div id="step3-ast-area" class="hidden">
+                    <p class="text-xs text-[rgba(240,240,242,0.4)] mb-5">
+                        Sélectionnez les classes dont cet assistant est responsable.
+                        <span class="text-[rgba(240,240,242,0.25)]">(Optionnel)</span>
+                    </p>
+                    <div class="relative mb-4">
+                        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-[rgba(240,240,242,0.3)] text-sm pointer-events-none"></i>
+                        <input type="text" id="classes-search" placeholder="Rechercher une classe…" class="field-input pl-10" oninput="filterClasses(this.value)"/>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="classes-grid">
+                        <label th:each="classe : ${classes}"
+                               th:data-nom="${classe.nom}"
+                               class="classe-card flex items-center gap-3 p-3 rounded-lg border-2 border-white/8 bg-white/3 cursor-pointer hover:border-[rgba(56,189,248,0.35)] transition-all">
+                            <input type="checkbox" class="classe-checkbox accent-[#38bdf8] w-4 h-4 flex-shrink-0" th:value="${classe.id}"/>
+                            <div>
+                                <p class="text-xs font-bold text-[#f0f0f2]" th:text="${classe.nom}">L3 GI</p>
+                                <p class="text-[10px] text-[rgba(240,240,242,0.35)]" th:text="${classe.niveau?.nom}">Niveau</p>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button type="button" id="btn-select-all-classes" class="text-xs px-3 py-1.5 rounded-lg border border-white/8 bg-white/3 text-[rgba(240,240,242,0.5)] hover:text-[#f0f0f2] hover:border-white/15 transition-all">Tout sélectionner</button>
+                        <button type="button" id="btn-deselect-all-classes" class="text-xs px-3 py-1.5 rounded-lg border border-white/8 bg-white/3 text-[rgba(240,240,242,0.5)] hover:text-[#f0f0f2] hover:border-white/15 transition-all">Tout désélectionner</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 4 — Confirmation ══ -->
+            <div class="step-panel hidden" id="panel-4">
+                <div class="bg-white/2 border border-white/6 rounded-xl p-5 mb-5" id="confirm-summary"></div>
+                <div class="bg-[rgba(56,189,248,0.04)] border border-[rgba(56,189,248,0.15)] rounded-xl p-5">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="bi bi-envelope-fill text-[#38bdf8] text-sm"></i>
+                        <p class="text-xs font-bold uppercase tracking-wider text-[rgba(56,189,248,0.7)]">Aperçu de l'email envoyé</p>
+                    </div>
+                    <p class="text-sm text-[rgba(240,240,242,0.6)] leading-relaxed">
+                        Bonjour <strong class="text-[#f0f0f2]" id="prev-prenom">—</strong>,<br/>
+                        Votre compte CarnetRouge a été créé. Vous recevrez vos identifiants
+                        de connexion à l'adresse <strong class="text-[#38bdf8]" id="prev-email">—</strong>.
+                        Un mot de passe temporaire vous sera communiqué — changez-le à la première connexion.
+                    </p>
+                </div>
+
+                <!-- Formulaire hidden -->
+                <form th:action="@{/admin/utilisateurs/creer}" method="post" id="wiz-form" class="hidden">
+                    <input type="hidden" id="h-nom" name="nom"/>
+                    <input type="hidden" id="h-prenom" name="prenom"/>
+                    <input type="hidden" id="h-email" name="email"/>
+                    <input type="hidden" id="h-telephone" name="telephone"/>
+                    <input type="hidden" id="h-dob" name="dateNaissance"/>
+                    <input type="hidden" id="h-type" name="typeUtilisateur"/>
+                    <input type="hidden" id="h-grade" name="grade"/>
+                    <input type="hidden" id="h-typeEns" name="typeEnseignant"/>
+                    <input type="hidden" id="h-fonction" name="fonction"/>
+                    <input type="hidden" id="h-secteur" name="secteur"/>
+                    <input type="hidden" id="h-typeContrat" name="typeContrat"/>
+                    <div id="h-roles-container"></div>
+                    <div id="h-perms-container"></div>
+                    <div id="h-ue-container"></div>
+                    <div id="h-classes-container"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ══ PIED DE CARTE — Navigation ══ -->
+        <div class="px-8 py-5 border-t border-white/5 flex items-center justify-between">
+            <button type="button" id="btn-back" class="hidden items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-transparent text-[rgba(240,240,242,0.5)] text-sm font-semibold hover:text-[#f0f0f2] hover:border-white/20 transition-all cursor-pointer">
+                <i class="bi bi-arrow-left text-xs"></i> Retour
+            </button>
+            <div class="flex items-center gap-3 ml-auto">
+                <button type="button" id="btn-next" class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#dc2626] text-white text-sm font-bold hover:bg-[#b91c1c] hover:shadow-[0_0_24px_rgba(220,38,38,0.35)] transition-all cursor-pointer">
+                    Suivant <i class="bi bi-arrow-right text-xs"></i>
+                </button>
+                <button type="button" id="btn-submit" class="hidden items-center gap-2 px-6 py-2.5 rounded-xl bg-[#16a34a] text-white text-sm font-bold hover:bg-[#15803d] transition-all cursor-pointer">
+                    <i class="bi bi-check-lg"></i> Créer et envoyer l'email
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Toast -->
+<div id="toast-el" class="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3 rounded-xl bg-[#1c1f28] border border-white/8 shadow-[0_8px_30px_rgba(0,0,0,0.55)] text-sm text-[#f0f0f2] translate-y-20 opacity-0 pointer-events-none transition-all duration-300">
+    <i class="bi text-base" id="toast-i"></i>
+    <span id="toast-msg"></span>
+</div>
+
+<script th:src="@{/js/createUser.js}"></script>
+</body>
+</html>

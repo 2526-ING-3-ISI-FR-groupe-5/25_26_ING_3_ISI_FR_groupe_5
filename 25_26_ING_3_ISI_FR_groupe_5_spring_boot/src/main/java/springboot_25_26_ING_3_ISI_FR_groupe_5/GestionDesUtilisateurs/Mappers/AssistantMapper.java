@@ -6,6 +6,7 @@ import org.mapstruct.Named;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantResponseDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
 
 import java.util.List;
@@ -24,6 +25,9 @@ public interface AssistantMapper {
     AssistantResponse toResponse(AssistantPedagogique assistant);
 
     List<AssistantResponse> toResponseList(List<AssistantPedagogique> assistants);
+
+    // ✅ Ajouté
+    AssistantResponseDetails toDtoDetails(AssistantPedagogique assistant);
 
     @Named("mapClassesNoms")
     default List<String> mapClassesNoms(java.util.Collection<Classe> classes) {

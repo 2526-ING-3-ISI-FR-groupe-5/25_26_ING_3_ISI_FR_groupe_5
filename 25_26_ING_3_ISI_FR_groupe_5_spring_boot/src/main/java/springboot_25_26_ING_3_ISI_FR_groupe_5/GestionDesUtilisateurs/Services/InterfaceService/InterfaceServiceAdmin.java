@@ -1,11 +1,10 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService;
 
 import org.springframework.data.domain.Page;
-import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActivePermissionRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActiveRoleDTORequest;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Response.AssistantResponseDetails;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.Response.EnseignantResponseDetails;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantResponseDetails;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantResponseDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisateur.SurveillantResponseDetails;
@@ -13,38 +12,39 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisa
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisateur.UtilisateurResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
 
 public interface InterfaceServiceAdmin {
 
-  void activerDesactiverUtilisateur(Long id, boolean activer);
-
+  // LISTER
   Page<UtilisateurResponse> listeTous(String recherche, String type, int page, int size);
 
+  // TROUVER PAR ID
   UtilisateurResponse findById(Long id);
 
+  // SUPPRIMER
   void deleteUtilisateur(Long id);
 
+  // ACTIVER / DÉSACTIVER
+  void activerDesactiverUtilisateur(Long id, boolean activer);
+
+  // ENSEIGNANT
   Enseignant getById(Long id);
-
-  Enseignant save(EnseignantRequest enseignantRequestDTO);
-
-  AssistantPedagogique saveAssistant(AssistantRequest assistantRequestDTO);
-
+  Enseignant save(EnseignantRequest request);
   EnseignantResponseDetails EnsDetails(Long id);
 
-  @Transactional
+  // ASSISTANT
+  AssistantPedagogique saveAssistant(AssistantRequest request);
   AssistantResponseDetails AssDetails(Long id);
 
-  @Transactional
-  SurveillantResponseDetails SurDetails(Long id); // ✅ Nouveau
+  // SURVEILLANT
+  SurveillantResponseDetails SurDetails(Long id);
 
-  @Transactional
-  ActiveRoleDTORequest activeRole(Long id, ActiveRoleDTORequest activeRoleDTORequest);
+  // RÔLES
+  ActiveRoleDTORequest activeRole(Long id, ActiveRoleDTORequest request);
 
-  @Transactional
-  ActivePermissionRequest activePermissionRequest(Long id, ActivePermissionRequest activePermissionRequest);
+  // PERMISSIONS
+  ActivePermissionRequest activePermissionRequest(Long id, ActivePermissionRequest request);
 
-  @Transactional
+  // CRÉER UTILISATEUR
   void creerUtilisateur(UtilisateurRequest request);
 }
