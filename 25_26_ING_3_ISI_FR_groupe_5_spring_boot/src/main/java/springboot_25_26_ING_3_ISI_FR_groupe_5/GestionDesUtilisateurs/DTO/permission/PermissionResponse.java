@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PermissionResponse {
     private  Long id;
-    private String name;
+    private String nom;
     private String description;
     private Boolean active;
     private LocalDateTime creatAt;

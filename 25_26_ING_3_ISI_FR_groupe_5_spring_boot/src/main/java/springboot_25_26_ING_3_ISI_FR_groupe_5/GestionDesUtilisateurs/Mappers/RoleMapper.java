@@ -1,7 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Mappers;
 
 import org.mapstruct.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActiveRoleDTORequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.role.ActiveRoleRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.role.RoleResponse;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Role;
 
@@ -16,7 +16,7 @@ public interface RoleMapper {
 
     RoleResponse toDTO(Role role);
 
-    ActiveRoleDTORequest toActiveRoleDTORequest(Role role);
+    ActiveRoleRequest toActiveRoleDTORequest(Role role);
 
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "nom",        ignore = true)
@@ -24,7 +24,7 @@ public interface RoleMapper {
     @Mapping(target = "createdAt",     ignore = true)
     @Mapping(target = "updateAt",    ignore = true)
     @Mapping(target = "permissions", ignore = true)
-    void updateRoleFromDTO(ActiveRoleDTORequest activeRoleDTORequest, @MappingTarget Role role);
+    void updateRoleFromDTO(ActiveRoleRequest activeRoleDTORequest, @MappingTarget Role role);
 
     // ✅ Liste
     default List<RoleResponse> toDTORole(List<Role> roles) {

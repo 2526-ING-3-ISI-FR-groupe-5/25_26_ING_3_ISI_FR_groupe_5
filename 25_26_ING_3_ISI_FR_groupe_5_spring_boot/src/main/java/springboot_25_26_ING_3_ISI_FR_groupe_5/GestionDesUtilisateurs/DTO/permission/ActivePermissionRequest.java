@@ -1,4 +1,4 @@
-package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO;
+package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.permission;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
