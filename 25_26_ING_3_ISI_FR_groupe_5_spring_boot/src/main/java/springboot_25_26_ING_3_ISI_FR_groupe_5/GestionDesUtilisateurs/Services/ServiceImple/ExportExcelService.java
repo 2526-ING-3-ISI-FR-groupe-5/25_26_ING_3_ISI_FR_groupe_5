@@ -35,7 +35,7 @@ public class ExportExcelService implements IExportExcelService {
         addAppHeader(sheet, annee, semestre, "Liste des Utilisateurs", utilisateurs.size());
 
         String[] headers = {"ID", "Nom", "Prénom", "Email", "Téléphone", "Type",
-                "Grade/Fonction", "Date naissance", "Actif", "Institut"};
+                "Grade/Fonction", "Date naissance", "Actif"};
         int headerRowNum = 4;
         Row headerRow = sheet.createRow(headerRowNum);
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -53,11 +53,10 @@ public class ExportExcelService implements IExportExcelService {
             row.createCell(2).setCellValue(u.getPrenom() != null ? u.getPrenom() : "");
             row.createCell(3).setCellValue(u.getEmail() != null ? u.getEmail() : "");
             row.createCell(4).setCellValue(u.getTelephone() != null ? u.getTelephone() : "");
-            row.createCell(5).setCellValue(u.getType() != null ? u.getType() : "");
+            row.createCell(5).setCellValue(typeLabel(u.getType()));
             row.createCell(6).setCellValue(getSpecificField(u));
             row.createCell(7).setCellValue(u.getDateNaissance() != null ? u.getDateNaissance().toString() : "");
             row.createCell(8).setCellValue(u.isActive() ? "Oui" : "Non");
-            row.createCell(9).setCellValue(u.getInstitutNom() != null ? u.getInstitutNom() : "");
         }
 
         for (int i = 0; i < headers.length; i++) {
@@ -220,16 +219,28 @@ public class ExportExcelService implements IExportExcelService {
         cell0.setCellValue(APP_NAME);
         cell0.setCellStyle(createTitleStyle(sheet.getWorkbook()));
 
+        // Institut dans l'en-tête (ligne 1)
         Row row1 = sheet.createRow(1);
-        Cell cell1 = row1.createCell(0);
-        cell1.setCellValue(titre);
-        cell1.setCellStyle(createSubtitleStyle(sheet.getWorkbook()));
+        Cell cellInstitut = row1.createCell(0);
+        String institutNom = "—";
+        if (annee != null && annee.getInstitut() != null) {
+            institutNom = annee.getInstitut().getNom();
+        }
+        cellInstitut.setCellValue("Institut : " + institutNom);
+        cellInstitut.setCellStyle(createSubtitleStyle(sheet.getWorkbook()));
 
+        // Titre (ligne 2)
         Row row2 = sheet.createRow(2);
-        String anneeStr = annee != null ? annee.getNom() : "N/A";
-        String semestreStr = semestre != null ? semestre.getTypeSemestre().getLibelle() : "N/A";
         Cell cell2 = row2.createCell(0);
-        cell2.setCellValue("Annee : " + anneeStr + "  |  Semestre : " + semestreStr +
+        cell2.setCellValue(titre);
+        cell2.setCellStyle(createSubtitleStyle(sheet.getWorkbook()));
+
+        // Méta (ligne 3)
+        Row row3 = sheet.createRow(3);
+        String anneeStr    = annee    != null ? annee.getNom()                          : "Toutes";
+        String semestreStr = semestre != null ? semestre.getTypeSemestre().getLibelle() : "Tous";
+        Cell cell3 = row3.createCell(0);
+        cell3.setCellValue("Annee : " + anneeStr + "  |  Semestre : " + semestreStr +
                 (nbElements > 0 ? "  |  Elements : " + nbElements : "") +
                 "  |  Exporte le : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
     }
@@ -264,6 +275,16 @@ public class ExportExcelService implements IExportExcelService {
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setBorderBottom(BorderStyle.THIN);
         return style;
+    }
+
+    private String typeLabel(String type) {
+        if (type == null) return "";
+        return switch (type.toUpperCase()) {
+            case "ENS" -> "Enseignant";
+            case "AST" -> "Assistant pédagogique";
+            case "SUR" -> "Surveillant";
+            default    -> type;
+        };
     }
 
     @Override

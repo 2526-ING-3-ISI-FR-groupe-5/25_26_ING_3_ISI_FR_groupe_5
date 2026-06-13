@@ -29,6 +29,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.In
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IImportExcelService;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -102,13 +104,11 @@ public class ExportImportController {
                 ? anneeService.getSemestreActif(securityService.getInstitutIdCourant()) : null;
 
         Long institutId = securityService.getInstitutIdCourant();
-        List<Utilisateur> utilisateurs = (institutId != null)
-                ? utilisateurRepository.findByInstitutId(institutId)
-                : utilisateurRepository.findAll();
+        List<Utilisateur> utilisateurs = utilisateurRepository.findPersonnelByInstitutId(institutId);
 
         List<UtilisateurExportDTO> data = exportMapper.toExportDTOList(utilisateurs);
         byte[] excel = exportExcelService.exportUtilisateurs(data, annee, semestre);
-        return buildExcelResponse(excel, "utilisateurs.xlsx");
+        return buildExcelResponse(excel, "utilisateurs_" + dateSuffix() + ".xlsx");
     }
 
     @GetMapping("/excel/etudiants")
@@ -125,7 +125,7 @@ public class ExportImportController {
 
         List<EtudiantExportDTO> data = exportMapper.toEtudiantExportDTOList(etudiants);
         byte[] excel = exportExcelService.exportEtudiants(data, annee, semestre);
-        return buildExcelResponse(excel, "etudiants.xlsx");
+        return buildExcelResponse(excel, "etudiants_" + dateSuffix() + ".xlsx");
     }
 
     // ══════════════════════════════════════════
@@ -140,13 +140,11 @@ public class ExportImportController {
                 ? anneeService.getSemestreActif(securityService.getInstitutIdCourant()) : null;
 
         Long institutId = securityService.getInstitutIdCourant();
-        List<Utilisateur> utilisateurs = (institutId != null)
-                ? utilisateurRepository.findByInstitutId(institutId)
-                : utilisateurRepository.findAll();
+        List<Utilisateur> utilisateurs = utilisateurRepository.findPersonnelByInstitutId(institutId);
 
         List<UtilisateurExportDTO> data = exportMapper.toExportDTOList(utilisateurs);
         byte[] pdf = exportPdfService.exportUtilisateurs(data, annee, semestre);
-        return buildPdfResponse(pdf, "utilisateurs.pdf");
+        return buildPdfResponse(pdf, "utilisateurs_" + dateSuffix() + ".pdf");
     }
 
     @GetMapping("/pdf/etudiants")
@@ -163,7 +161,7 @@ public class ExportImportController {
 
         List<EtudiantExportDTO> data = exportMapper.toEtudiantExportDTOList(etudiants);
         byte[] pdf = exportPdfService.exportEtudiants(data, annee, semestre);
-        return buildPdfResponse(pdf, "etudiants.pdf");
+        return buildPdfResponse(pdf, "etudiants_" + dateSuffix() + ".pdf");
     }
 
     // ══════════════════════════════════════════
@@ -190,7 +188,7 @@ public class ExportImportController {
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Erreur import : " + e.getMessage());
         }
-        return "redirect:/admin/export-import";
+        return "redirect:/admin/utilisateurs";
     }
 
     @PostMapping("/import/etudiants")
@@ -219,6 +217,10 @@ public class ExportImportController {
     // ══════════════════════════════════════════
     // PRIVÉ
     // ══════════════════════════════════════════
+
+    private String dateSuffix() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+    }
 
     private ResponseEntity<byte[]> buildExcelResponse(byte[] data, String filename) {
         return ResponseEntity.ok()

@@ -71,7 +71,7 @@ public class ImportExcelService implements IImportExcelService {
             Sheet sheet = workbook.getSheetAt(0);
             resultat.setTotalLignes(sheet.getLastRowNum()); // -1 pour l'en-tête
 
-            for (int i = 5; i <= sheet.getLastRowNum(); i++) { // Ligne 0-4 = en-têtes, ligne 5 = exemple
+            for (int i = 6; i <= sheet.getLastRowNum(); i++) { // Ligne 0-3 = en-tête app, 4 = colonnes, 5 = exemple, 6+ = données
                 Row row = sheet.getRow(i);
                 if (row == null || isRowEmpty(row)) {
                     resultat.setLignesIgnorees(resultat.getLignesIgnorees() + 1);
@@ -170,7 +170,7 @@ public class ImportExcelService implements IImportExcelService {
             Sheet sheet = workbook.getSheetAt(0);
             resultat.setTotalLignes(sheet.getLastRowNum());
 
-            for (int i = 5; i <= sheet.getLastRowNum(); i++) {
+            for (int i = 6; i <= sheet.getLastRowNum(); i++) { // Ligne 4 = colonnes, 5 = exemple, 6+ = données
                 Row row = sheet.getRow(i);
                 if (row == null || isRowEmpty(row)) {
                     resultat.setLignesIgnorees(resultat.getLignesIgnorees() + 1);

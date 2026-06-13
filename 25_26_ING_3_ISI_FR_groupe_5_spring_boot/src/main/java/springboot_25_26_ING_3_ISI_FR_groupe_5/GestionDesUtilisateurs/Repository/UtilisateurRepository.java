@@ -122,6 +122,14 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     List<Utilisateur> findByInstitutId(Long institutId);
 
     @Query("""
+        SELECT u FROM Utilisateur u
+        WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
+        AND (:institutId IS NULL OR u.institut.id = :institutId)
+        ORDER BY u.nom ASC
+    """)
+    List<Utilisateur> findPersonnelByInstitutId(@Param("institutId") Long institutId);
+
+    @Query("""
         SELECT COUNT(u) FROM Utilisateur u
         WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
         AND (:institutId IS NULL OR u.institut.id = :institutId)

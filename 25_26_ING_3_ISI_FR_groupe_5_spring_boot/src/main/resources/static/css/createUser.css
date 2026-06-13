@@ -1,15 +1,6 @@
 /* ══════════════════════════════════════════
    createUser.css — Styles complémentaires
-   (ce que Tailwind v4 ne peut pas faire inline)
    ══════════════════════════════════════════ */
-
-/* Fonts */
-:root {
-    --text-dim: rgba(240, 240, 242, 0.45);
-}
-body { font-family: 'DM Sans', sans-serif; }
-.font-serif { font-family: 'Playfair Display', serif; }
-.font-mono  { font-family: 'DM Mono', monospace; }
 
 /* ── Champs de formulaire ── */
 .field-group { display: flex; flex-direction: column; gap: 6px; }
@@ -19,31 +10,31 @@ body { font-family: 'DM Sans', sans-serif; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(240, 240, 242, 0.4);
+    color: var(--color-textmuted);
 }
 
 .field-input {
     width: 100%;
     padding: 10px 14px;
-    background: #1a1a1f;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--color-bgsurface);
+    border: 1px solid var(--color-border);
     border-radius: 10px;
-    color: #f0f0f2;
+    color: var(--color-textmain);
     font-size: 0.875rem;
     font-family: 'DM Sans', sans-serif;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-.field-input::placeholder { color: rgba(240, 240, 242, 0.2); }
+.field-input::placeholder { color: color-mix(in srgb, var(--color-textmuted) 50%, transparent); }
 .field-input:focus {
-    border-color: rgba(220, 38, 38, 0.5);
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 .field-input.error {
     border-color: rgba(248, 113, 113, 0.6);
     box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.08);
 }
-.field-input option { background: #1a1a1f; }
+.field-input option { background: var(--color-bgcard); }
 
 .field-error {
     font-size: 0.71rem;
@@ -53,11 +44,11 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* ── Stepper ── */
 .step-item.active .step-circle {
-    border-color: #dc2626 !important;
-    background: rgba(220, 38, 38, 0.12) !important;
-    color: #dc2626 !important;
+    border-color: var(--color-primary) !important;
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
+    color: var(--color-primary) !important;
 }
-.step-item.active .step-label { color: #dc2626 !important; }
+.step-item.active .step-label { color: var(--color-primary) !important; }
 
 .step-item.done .step-circle {
     border-color: rgba(74, 222, 128, 0.5) !important;
@@ -68,7 +59,7 @@ body { font-family: 'DM Sans', sans-serif; }
 
 .step-line.done { background: rgba(74, 222, 128, 0.3) !important; }
 
-/* ── Panels d'étape ── */
+/* ── Panels ── */
 .step-panel { animation: panelIn 0.2s ease; }
 @keyframes panelIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -77,15 +68,15 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* ── Cards type utilisateur ── */
 .type-card input:checked ~ .type-card-inner {
-    border-color: rgba(220, 38, 38, 0.5) !important;
-    background: rgba(220, 38, 38, 0.07) !important;
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.1);
+    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+    background: color-mix(in srgb, var(--color-primary) 7%, transparent) !important;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 /* ── Cards rôle ── */
 .role-card.selected {
-    border-color: rgba(220, 38, 38, 0.5) !important;
-    background: rgba(220, 38, 38, 0.06) !important;
+    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
 }
 
 /* ── Cards permission ── */
@@ -96,8 +87,8 @@ body { font-family: 'DM Sans', sans-serif; }
 
 /* ── Cards classe ── */
 .classe-card:has(input:checked) {
-    border-color: rgba(220, 38, 38, 0.5) !important;
-    background: rgba(220, 38, 38, 0.06) !important;
+    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
 }
 
 /* ── Confirmation résumé ── */
@@ -106,7 +97,7 @@ body { font-family: 'DM Sans', sans-serif; }
     align-items: center;
     gap: 12px;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--color-border);
     font-size: 0.82rem;
 }
 .confirm-row:last-child { border-bottom: none; }
@@ -116,13 +107,13 @@ body { font-family: 'DM Sans', sans-serif; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: rgba(240, 240, 242, 0.35);
+    color: var(--color-textmuted);
     width: 130px;
     flex-shrink: 0;
 }
 
 .confirm-val {
-    color: #f0f0f2;
+    color: var(--color-textmain);
     font-weight: 500;
     flex: 1;
     word-break: break-all;
@@ -136,9 +127,9 @@ body { font-family: 'DM Sans', sans-serif; }
     border-radius: 5px;
     font-size: 0.68rem;
     font-weight: 700;
-    background: rgba(220, 38, 38, 0.08);
-    color: #ef4444;
-    border: 1px solid rgba(220, 38, 38, 0.18);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    color: var(--color-primary);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
     text-transform: uppercase;
 }
 
@@ -156,13 +147,32 @@ body { font-family: 'DM Sans', sans-serif; }
 }
 
 /* ── Toast ── */
+#toast-el {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: var(--color-bgcard);
+    border: 1px solid var(--color-border);
+    color: var(--color-textmain);
+    font-size: 0.875rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    transform: translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 #toast-el.show {
-    transform: translateY(0) !important;
-    opacity: 1 !important;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
     .confirm-key { width: 90px; }
 }
-s

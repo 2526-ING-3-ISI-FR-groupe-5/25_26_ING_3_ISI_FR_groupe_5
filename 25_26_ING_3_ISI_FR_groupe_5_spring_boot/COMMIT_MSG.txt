@@ -1,0 +1,9 @@
+fix(export-import): corrections critiques import/export personnel
+
+- Import : boucle démarrait à i=5 (ligne exemple) → corrigé à i=6
+- Export : filtre personnel uniquement (ENS/AST/SUR), les étudiants exclus via findPersonnelByInstitutId
+- Export PDF/Excel : type ENS/AST/SUR remplacé par libellé lisible (Enseignant, Assistant pédagogique, Surveillant)
+- Export PDF/Excel : nom de l'institut retiré des colonnes, ajouté en en-tête du document
+- Export PDF : bug multi-page corrigé (PDPageContentStream fermé proprement), logo chargé depuis /static/favicon/
+- Noms de fichiers exportés horodatés (ex: utilisateurs_20260613_1430.pdf)
+- Après import utilisateurs : redirection vers /admin/utilisateurs au lieu de /admin/export-import
