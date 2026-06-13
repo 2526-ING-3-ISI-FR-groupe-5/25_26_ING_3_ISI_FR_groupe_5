@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Enseignant;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.PlageHoraire;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
@@ -14,16 +13,6 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Util
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Enum.TypeSeance;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Exception.ResourceNotFoundException;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Mappers.PlageHoraireMapper;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.*;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IPlageHoraireService;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.SemestreRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
@@ -34,7 +23,15 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.PlageHorai
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.PlageHoraireRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Repository.ProgrammationUERepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.EnseignantRepository;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.JournalActionService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.InterfaceService.IPlageHoraireService;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -80,7 +77,6 @@ public class PlageHoraireService implements IPlageHoraireService {
                 .toList();
     }
 
-
     @Transactional(readOnly = true)
     public List<PlageHoraireResponse> findByEnseignantId(Long enseignantId) {
         return plageHoraireRepository.findByEnseignantId(enseignantId)
@@ -89,11 +85,9 @@ public class PlageHoraireService implements IPlageHoraireService {
                 .toList();
     }
 
-
-
     @Transactional(readOnly = true)
     public List<PlageHoraireResponse> findByEnseignantAndJour(Long enseignantId, LocalDate jour) {
-        return plageHoraireRepository.findCoursEnseignantAujourdhui(enseignantId, jour)
+        return findCoursEnseignantAujourdhui(enseignantId, jour)
                 .stream()
                 .map(plageHoraireMapper::toResponse)
                 .toList();
@@ -161,23 +155,22 @@ public class PlageHoraireService implements IPlageHoraireService {
             PlageHoraireRequest request,
             Utilisateur auteur) {
 
-        // 1. Valider les données
-        validerRequest(request.getClasseId(), request.getJour(),
-                request.getHeureDebut(), request.getHeureFin(), null);
-
-        // 2. Récupérer les entités liées
         Classe classe = findClasse(request.getClasseId());
-        Semestre semestre = findSemestreActif(classe);
+        Semestre semestre = findSemestreActif();
         ProgrammationUE programmationUE = request.getProgrammationUEId() != null
                 ? findProgrammationUE(request.getProgrammationUEId())
                 : null;
 
-        // 3. Récupérer les enseignants
+        // Récupérer et valider les enseignants
         Set<Enseignant> enseignants = findEnseignants(
                 request.getEnseignantIds(), programmationUE
         );
 
-        // 4. Construire la plage
+        // 1. Valider de façon exhaustive l'absence de conflits (Classe, Enseignants, Salles) [3]
+        validerCreationConflits(classe.getId(), request.getSalle(), request.getJour(),
+                request.getHeureDebut(), request.getHeureFin(), enseignants, null);
+
+        // 2. Construire la plage
         PlageHoraire plage = PlageHoraire.builder()
                 .jour(request.getJour())
                 .heureDebut(request.getHeureDebut())
@@ -218,9 +211,8 @@ public class PlageHoraireService implements IPlageHoraireService {
             PlageHoraireRecurrenceRequest request,
             Utilisateur auteur) {
 
-        // 1. Récupérer les entités liées
         Classe classe = findClasse(request.getClasseId());
-        Semestre semestre = findSemestreActif(classe);
+        Semestre semestre = findSemestreActif();
         ProgrammationUE programmationUE = findProgrammationUE(
                 request.getProgrammationUEId()
         );
@@ -234,18 +226,18 @@ public class PlageHoraireService implements IPlageHoraireService {
         List<PlageHoraire> plagesCrees = new ArrayList<>();
         LocalDate dateActuelle = request.getDateDebut();
 
-        // 2. Parcourir chaque jour entre dateDebut et dateFin
+        // 1. Parcourir chaque jour entre dateDebut et dateFin
         while (!dateActuelle.isAfter(request.getDateFin())) {
 
             final LocalDate jourActuel = dateActuelle;
 
-            // ✅ Vérifier si ce jour est dans les jours sélectionnés
+            // ✅ Vérifier si ce jour est dans les jours de la semaine sélectionnés
             if (request.getJours().contains(jourActuel.getDayOfWeek())) {
 
-                // ✅ Vérifier les conflits avant de créer
+                // ✅ Vérifier les conflits de classe, d'enseignants ET de salle (Corrigé) [2]
                 boolean conflit = verifierConflits(
                         classe.getId(),
-                        null,
+                        request.getSalle(), // <--- CORRIGÉ (Saisie de la salle prise en compte)
                         jourActuel,
                         request.getHeureDebut(),
                         request.getHeureFin(),
@@ -269,7 +261,7 @@ public class PlageHoraireService implements IPlageHoraireService {
 
                     plagesCrees.add(plage);
                 } else {
-                    log.warn("⚠️ Conflit détecté le {} — séance ignorée",
+                    log.warn("⚠️ Conflit détecté le {} — séance récurrente ignorée",
                             jourActuel);
                 }
             }
@@ -277,7 +269,7 @@ public class PlageHoraireService implements IPlageHoraireService {
             dateActuelle = dateActuelle.plusDays(1);
         }
 
-        // 3. Sauvegarder toutes les plages en une fois
+        // 2. Sauvegarder toutes les plages en une fois
         plageHoraireRepository.saveAll(plagesCrees);
 
         // ✅ Journaliser
@@ -304,13 +296,8 @@ public class PlageHoraireService implements IPlageHoraireService {
             PlageHoraireDragDropRequest request,
             Utilisateur auteur) {
 
-        // 1. Valider
-        validerRequest(request.getClasseId(), request.getJour(),
-                request.getHeureDebut(), request.getHeureFin(), null);
-
-        // 2. Récupérer les entités
         Classe classe = findClasse(request.getClasseId());
-        Semestre semestre = findSemestreActif(classe);
+        Semestre semestre = findSemestreActif();
         ProgrammationUE programmationUE = request.getProgrammationUEId() != null
                 ? findProgrammationUE(request.getProgrammationUEId())
                 : null;
@@ -321,9 +308,19 @@ public class PlageHoraireService implements IPlageHoraireService {
                 programmationUE
         );
 
-        // 3. Construire
-        TypeSeance typeSeance = request.getTypeSeance() != null
-                ? TypeSeance.valueOf(request.getTypeSeance()) : TypeSeance.CM;
+        // 1. Valider de façon exhaustive (Classe, Enseignants, Salles) [3]
+        validerCreationConflits(classe.getId(), request.getSalle(), request.getJour(),
+                request.getHeureDebut(), request.getHeureFin(), enseignants, null);
+
+        // 2. Construire la plage
+        TypeSeance typeSeance = TypeSeance.CM;
+        if (request.getTypeSeance() != null) {
+            try {
+                typeSeance = TypeSeance.valueOf(request.getTypeSeance());
+            } catch (IllegalArgumentException e) {
+                log.warn("⚠️ Type de séance invalide : {} — Utilisation du type CM par défaut", request.getTypeSeance());
+            }
+        }
 
         PlageHoraire plage = PlageHoraire.builder()
                 .jour(request.getJour())
@@ -368,30 +365,30 @@ public class PlageHoraireService implements IPlageHoraireService {
             Utilisateur auteur) {
 
         PlageHoraire plage = findEntityById(id);
+        Classe classe = findClasse(request.getClasseId());
 
-        // 1. Valider — exclure la séance en cours
-        validerRequest(request.getClasseId(), request.getJour(),
-                request.getHeureDebut(), request.getHeureFin(), id);
+        // 1. Récupérer et évaluer les enseignants à mettre à jour
+        Set<Enseignant> enseignants = plage.getEnseignants();
+        if (request.getEnseignantIds() != null && !request.getEnseignantIds().isEmpty()) {
+            enseignants = findEnseignants(request.getEnseignantIds(), plage.getProgrammationUE());
+        }
 
-        // 2. Mettre à jour
+        // 2. Valider de façon exhaustive (Classe, Enseignants, Salles) en excluant le créneau en cours [3]
+        validerCreationConflits(classe.getId(), request.getSalle(), request.getJour(),
+                request.getHeureDebut(), request.getHeureFin(), enseignants, id);
+
+        // 3. Mettre à jour l'entité
+        plage.setClasse(classe);
         plage.setJour(request.getJour());
         plage.setHeureDebut(request.getHeureDebut());
         plage.setHeureFin(request.getHeureFin());
         plage.setSalle(request.getSalle());
         plage.setCouleur(request.getCouleur());
         plage.setTitre(request.getTitre());
+        plage.setEnseignants(enseignants);
 
         if (request.getTypeSeance() != null) {
             plage.setTypeSeance(request.getTypeSeance());
-        }
-
-        // 3. Mettre à jour les enseignants si fournis
-        if (request.getEnseignantIds() != null
-                && !request.getEnseignantIds().isEmpty()) {
-            Set<Enseignant> enseignants = findEnseignants(
-                    request.getEnseignantIds(), plage.getProgrammationUE()
-            );
-            plage.setEnseignants(enseignants);
         }
 
         plageHoraireRepository.save(plage);
@@ -471,12 +468,14 @@ public class PlageHoraireService implements IPlageHoraireService {
             Utilisateur auteur) {
 
         PlageHoraire plage = findEntityById(id);
+        Classe classe = findClasse(request.getClasseId());
 
-        // 1. Valider — exclure la séance en cours
-        validerRequest(request.getClasseId(), request.getJour(),
-                request.getHeureDebut(), request.getHeureFin(), id);
+        // 1. Valider de façon exhaustive en excluant l'ID actuel pour le Drag & Drop [3]
+        validerCreationConflits(classe.getId(), request.getSalle(), request.getJour(),
+                request.getHeureDebut(), request.getHeureFin(), plage.getEnseignants(), id);
 
-        // 2. Mettre à jour uniquement le créneau
+        // 2. Mettre à jour uniquement le créneau déplacé
+        plage.setClasse(classe);
         plage.setJour(request.getJour());
         plage.setJourFin(request.getJourFin());
         plage.setHeureDebut(request.getHeureDebut());
@@ -572,33 +571,35 @@ public class PlageHoraireService implements IPlageHoraireService {
     }
 
     // ============================================
-    // Méthodes utilitaires privées
+    // Méthodes utilitaires privées de validation [3]
     // ============================================
 
-    private void validerRequest(
+    /**
+     * Valide de façon stricte la cohérence horaire et l'absence de chevauchements
+     * de créneaux (pour la classe, l'enseignant ou la salle).
+     */
+    private void validerCreationConflits(
             Long classeId,
+            String salle,
             LocalDate jour,
             LocalTime heureDebut,
             LocalTime heureFin,
+            Set<Enseignant> enseignants,
             Long idExclu) {
 
-        // 1. Cohérence des heures
+        // 1. Cohérence temporelle
         if (!heureDebut.isBefore(heureFin)) {
             throw new IllegalArgumentException(
-                    "L'heure de début doit être avant l'heure de fin"
+                    "L'heure de début doit être antérieure à l'heure de fin."
             );
         }
 
-        // 2. Conflit classe
-        boolean conflitClasse = idExclu == null
-                ? plageHoraireRepository.existsConflitClasse(
-                classeId, jour, heureDebut, heureFin)
-                : plageHoraireRepository.existsConflitClasseSaufId(
-                classeId, jour, heureDebut, heureFin, idExclu);
+        // 2. Vérification de l'ensemble des conflits potentiels
+        boolean conflitDetecte = verifierConflits(classeId, salle, jour, heureDebut, heureFin, enseignants, idExclu);
 
-        if (conflitClasse) {
+        if (conflitDetecte) {
             throw new IllegalStateException(
-                    "Conflit horaire : la classe a déjà un cours à ce créneau"
+                    "Conflit de planification détecté : ce créneau chevauche un cours existant pour cette classe, cet enseignant ou cette salle."
             );
         }
     }
@@ -632,13 +633,15 @@ public class PlageHoraireService implements IPlageHoraireService {
         }
 
         // Conflit enseignants
-        for (Enseignant enseignant : enseignants) {
-            boolean conflitEns = idExclu == null
-                    ? plageHoraireRepository.existsConflitEnseignant(
-                    enseignant.getId(), jour, heureDebut, heureFin)
-                    : plageHoraireRepository.existsConflitEnseignantSaufId(
-                    enseignant.getId(), jour, heureDebut, heureFin, idExclu);
-            if (conflitEns) return true;
+        if (enseignants != null) {
+            for (Enseignant enseignant : enseignants) {
+                boolean conflitEns = idExclu == null
+                        ? plageHoraireRepository.existsConflitEnseignant(
+                        enseignant.getId(), jour, heureDebut, heureFin)
+                        : plageHoraireRepository.existsConflitEnseignantSaufId(
+                        enseignant.getId(), jour, heureDebut, heureFin, idExclu);
+                if (conflitEns) return true;
+            }
         }
 
         return false;
@@ -651,7 +654,7 @@ public class PlageHoraireService implements IPlageHoraireService {
                 ));
     }
 
-    private Semestre findSemestreActif(Classe classe) {
+    private Semestre findSemestreActif() { // <--- Nettoyé (Paramètre inutilisé Classe retiré) [4]
         return semestreRepository
                 .findByAnneeAcademiqueIdAndActiveTrue(anneeAcademiqueService.getAnneeActive().getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -670,14 +673,14 @@ public class PlageHoraireService implements IPlageHoraireService {
             List<Long> enseignantIds,
             ProgrammationUE programmationUE) {
 
-        // ✅ Si des enseignants sont fournis → les utiliser
+        // Si des enseignants spécifiques sont fournis -> les utiliser
         if (enseignantIds != null && !enseignantIds.isEmpty()) {
             return new HashSet<>(
                     enseignantRepository.findAllById(enseignantIds)
             );
         }
 
-        // ✅ Sinon → utiliser les enseignants de la ProgrammationUE
+        // Sinon -> utiliser les enseignants de la ProgrammationUE
         if (programmationUE != null
                 && !programmationUE.getEnseignants().isEmpty()) {
             return new HashSet<>(programmationUE.getEnseignants());
@@ -696,7 +699,6 @@ public class PlageHoraireService implements IPlageHoraireService {
                 .map(plageHoraireMapper::toResponse)
                 .toList();
     }
-
 
     /**
      * Récupère la liste des cours (hors pauses/évènements)

@@ -2,12 +2,13 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Servic
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Utilisateur;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique; // <--- AJOUT
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
 
 import java.util.Optional;
@@ -319,5 +320,38 @@ public class InstitutSecurityService {
      */
     public boolean shouldShowInstitutSelector() {
         return isCurrentUserSuperAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ✅ AJOUTÉ — VÉRIFICATION DES ACCÈS AUX CLASSES (PERMISSIONS ASSISTANT)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Vérifie si l'utilisateur courant a le droit d'administrer l'Emploi du Temps
+     * pour une classe donnée (selon ses affectations de classe si c'est un Assistant).
+     * @param classeId L'identifiant de la classe à vérifier
+     */
+    public boolean peutGererClasse(Long classeId) {
+        if (classeId == null) {
+            return false;
+        }
+
+        Utilisateur user = getCurrentUser().orElse(null);
+        if (user == null) {
+            return false;
+        }
+
+        // 1. Super Admin et Admin d'Institut ont accès par défaut [1]
+        if (isSuperAdmin(user) || isAdminInstitut(user)) {
+            return true;
+        }
+
+        // 2. Un Assistant Pédagogique ne peut agir que sur ses classes assignées [1]
+        if (user instanceof AssistantPedagogique assistant) {
+            return assistant.getClasses() != null && assistant.getClasses().stream()
+                    .anyMatch(classe -> classe.getId().equals(classeId));
+        }
+
+        return false;
     }
 }

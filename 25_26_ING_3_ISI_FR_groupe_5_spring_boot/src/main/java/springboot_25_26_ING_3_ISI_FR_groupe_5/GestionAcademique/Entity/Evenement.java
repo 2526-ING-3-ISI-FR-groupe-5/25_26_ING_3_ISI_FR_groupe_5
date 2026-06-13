@@ -32,10 +32,10 @@ public class Evenement extends Auditable {
     @Enumerated(EnumType.STRING)
     private TypeEvenement type;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "annee_academique_id")
     private Annee_academique anneeAcademique;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plage_horaire_id")
     private PlageHoraire plageHoraire;
 

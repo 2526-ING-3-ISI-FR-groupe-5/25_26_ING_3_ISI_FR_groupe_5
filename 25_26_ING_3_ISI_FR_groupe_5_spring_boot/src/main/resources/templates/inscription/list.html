@@ -56,6 +56,28 @@
             </div>
         </div>
 
+        <!-- Avertissement si aucune année active -->
+        <div th:if="${anneeActive == null}"
+             class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border"
+             style="background-color: rgba(245,158,11,.08); border-color: rgba(245,158,11,.3);">
+            <i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;"></i>
+            <div>
+                <p class="text-sm font-medium" style="color:#f59e0b;">Aucune année académique active</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Configurez une année active dans
+                    <a th:href="@{/admin/annees}" class="underline hover:text-primary">la gestion des années</a>
+                    pour afficher les inscriptions.
+                </p>
+            </div>
+        </div>
+        <!-- Message d'erreur technique -->
+        <div th:if="${error}"
+             class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border"
+             style="background-color: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3);">
+            <i class="bi bi-x-circle-fill" style="color:#f87171;"></i>
+            <p class="text-sm" style="color:#f87171;" th:text="${error}"></p>
+        </div>
+
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- FILTRES DE RECHERCHE -->
         <!-- ═══════════════════════════════════════════════════════════ -->

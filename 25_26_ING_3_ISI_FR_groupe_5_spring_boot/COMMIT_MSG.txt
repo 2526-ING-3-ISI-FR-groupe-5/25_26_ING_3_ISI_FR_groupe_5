@@ -1,9 +1,22 @@
-fix(export-import): corrections critiques import/export personnel
+git -C "C:/Users/mirre/Desktop/JDBC/25_26_ING_3_ISI_FR_groupe_5" add \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/java/springboot_25_26_ING_3_ISI_FR_groupe_5/GestionAcademique/Entity/Evenement.java" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/java/springboot_25_26_ING_3_ISI_FR_groupe_5/GestionAcademique/Services/ServiceImple/InstitutSecurityService.java" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/java/springboot_25_26_ING_3_ISI_FR_groupe_5/GestionDesPresences/Controller/PlageHoraireController.java" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/java/springboot_25_26_ING_3_ISI_FR_groupe_5/GestionDesPresences/Services/ServiceImple/PlageHoraireService.java" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/java/springboot_25_26_ING_3_ISI_FR_groupe_5/GestionDesUtilisateurs/Controller/InscriptionController.java" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/resources/templates/inscription/list.html" \
+  "25_26_ING_3_ISI_FR_groupe_5_spring_boot/src/main/resources/templates/layout/app.html"
 
-- Import : boucle démarrait à i=5 (ligne exemple) → corrigé à i=6
-- Export : filtre personnel uniquement (ENS/AST/SUR), les étudiants exclus via findPersonnelByInstitutId
-- Export PDF/Excel : type ENS/AST/SUR remplacé par libellé lisible (Enseignant, Assistant pédagogique, Surveillant)
-- Export PDF/Excel : nom de l'institut retiré des colonnes, ajouté en en-tête du document
-- Export PDF : bug multi-page corrigé (PDPageContentStream fermé proprement), logo chargé depuis /static/favicon/
-- Noms de fichiers exportés horodatés (ex: utilisateurs_20260613_1430.pdf)
-- Après import utilisateurs : redirection vers /admin/utilisateurs au lieu de /admin/export-import
+git -C "C:/Users/mirre/Desktop/JDBC/25_26_ING_3_ISI_FR_groupe_5" commit -m "fix(inscriptions+layout+plagehoraire): corrections affichage et JS
+
+- InscriptionController : fallback anneeService.getAnneeActive() si InstitutContexteActif absent
+- InscriptionController : page vide au lieu de crash 500 si aucune annee active
+- InscriptionController : injection liste instituts dans le modele (dropdown SUPER_ADMIN)
+- inscription/list.html : avertissement si aucune annee active avec lien vers /admin/annees
+- layout/app.html : ajout fragment scripts pour activer le JS des templates (migration selectif)
+- PlageHoraireController + PlageHoraireService : modifications fonctionnelles
+- InstitutSecurityService + Evenement : corrections
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+
+git -C "C:/Users/mirre/Desktop/JDBC/25_26_ING_3_ISI_FR_groupe_5" push origin main

@@ -13,9 +13,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Institut;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.InstitutContexteActif;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Enum.DecisionFinAnnee;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutContexteActifRepository;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.InstitutRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.ClassesService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
@@ -37,7 +39,8 @@ public class InscriptionController {
     private final AnneeAcademiqueService anneeService;
     private final ClassesService classesService;
     private final InstitutSecurityService securityService;
-    private final InstitutContexteActifRepository contexteRepo; // ✅ Nouveau pivot
+    private final InstitutContexteActifRepository contexteRepo;
+    private final InstitutRepository institutRepository;
 
     @GetMapping
     public String listInscriptions(
@@ -50,36 +53,52 @@ public class InscriptionController {
             Model model,
             @AuthenticationPrincipal Utilisateur utilisateur) {
 
-        // 1. Résolution contexte multi-institut
+        // 1. Institut courant
         Long institutCible = securityService.resolveInstitutId(utilisateur, null);
 
-        // 2. ✅ Année active via InstitutContexteActif (plus de findByActiveTrue)
+        // 2. Résolution de l'année active : InstitutContexteActif > fallback anneeService.getAnneeActive()
         Annee_academique anneeActive = null;
         Long anneeActiveId = null;
         if (institutCible != null) {
             anneeActive = contexteRepo.findByInstitutId(institutCible)
                     .map(InstitutContexteActif::getAnneeAcademique)
                     .orElse(null);
+            // Fallback : si InstitutContexteActif pas encore configuré
+            if (anneeActive == null) {
+                try { anneeActive = anneeService.getAnneeActive(); }
+                catch (Exception e) { log.warn("Aucune année active trouvée pour l'institut {}: {}", institutCible, e.getMessage()); }
+            }
             anneeActiveId = anneeActive != null ? anneeActive.getId() : null;
         }
 
-        // 3. Année par défaut pour les filtres
+        // 3. Année à utiliser pour le filtre : param URL > année active
         Long anneeIdParam = (anneeId != null) ? anneeId : anneeActiveId;
 
         // 4. Pagination & Tri
         Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Inscription> inscriptionsPage = inscriptionService.getByClasseAndAnneePaginated(classeId, anneeIdParam, pageable);
 
-        // 5. Données pour les filtres
+        // 5. Chargement des inscriptions — page vide si aucune année disponible
+        Page<Inscription> inscriptionsPage = Page.empty(pageable);
+        if (anneeIdParam != null) {
+            try {
+                inscriptionsPage = inscriptionService.getByClasseAndAnneePaginated(classeId, anneeIdParam, pageable);
+            } catch (Exception e) {
+                log.error("Erreur chargement inscriptions: {}", e.getMessage());
+                model.addAttribute("error", "Erreur lors du chargement des inscriptions : " + e.getMessage());
+            }
+        }
+
+        // 6. Données pour les filtres
         List<Annee_academique> annees = (institutCible != null)
                 ? anneeService.getByInstitut(institutCible)
                 : anneeService.getAll();
         List<Classe> classes = (institutCible != null)
                 ? classesService.getByInstitut(institutCible)
                 : classesService.getAll();
+        List<Institut> instituts = institutRepository.findAll(); // Bug 3 — manquait
 
-        // 6. Exposition au modèle
+        // 7. Modèle
         model.addAttribute("inscriptionsPage", inscriptionsPage);
         model.addAttribute("inscriptions", inscriptionsPage.getContent());
         model.addAttribute("currentPage", page);
@@ -89,8 +108,10 @@ public class InscriptionController {
         model.addAttribute("filters", new InscriptionFilters(classeId, anneeIdParam));
         model.addAttribute("annees", annees);
         model.addAttribute("classes", classes);
+        model.addAttribute("instituts", instituts);
         model.addAttribute("selectedInstitutId", institutCible);
-        model.addAttribute("anneeActiveId", anneeActiveId); // ✅ Pour les th:if
+        model.addAttribute("anneeActiveId", anneeActiveId);
+        model.addAttribute("anneeActive", anneeActive);
         model.addAttribute("PAGE_SIZE_OPTIONS", new int[]{10, 20, 50, 100});
 
         return "inscription/list";

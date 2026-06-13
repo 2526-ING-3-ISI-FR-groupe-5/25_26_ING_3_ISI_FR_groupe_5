@@ -17,9 +17,9 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.Se
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.ProgrammationUEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SemestreService;
 
-import java.sql.Time;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.PlageHorai
 
 @Slf4j
 @Controller
-@RequestMapping("/emplois-du-temps")
+@RequestMapping("/emplois-du-temps") // <--- Alignement avec le menu et les redirections
 @RequiredArgsConstructor
 public class PlageHoraireController {
 
@@ -46,7 +46,7 @@ public class PlageHoraireController {
     // ============================================
 
     @GetMapping("/classe/{classeId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT', 'ETUDIANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT', 'ETUDIANT')")
     public String emploiDuTempsClasse(
             @PathVariable Long classeId,
             @RequestParam(required = false) Long semestreId,
@@ -91,7 +91,7 @@ public class PlageHoraireController {
     // ============================================
 
     @GetMapping("/enseignant/{enseignantId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT', 'ENSEIGNANT')")
     public String emploiDuTempsEnseignant(
             @PathVariable Long enseignantId,
             @RequestParam(required = false) LocalDate semaine,
@@ -125,7 +125,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/creer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#request.classeId))")
     public String creer(
             @Valid @ModelAttribute("form") PlageHoraireRequest request,
             BindingResult result,
@@ -155,7 +155,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/creer-recurrence")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#request.classeId))")
     public String creerRecurrence(
             @Valid @ModelAttribute("formRecurrence") PlageHoraireRecurrenceRequest request,
             BindingResult result,
@@ -183,7 +183,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/drag-drop")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#request.classeId))")
     @ResponseBody
     public Map<String, Object> dragDrop(
             @RequestBody PlageHoraireDragDropRequest request,
@@ -210,7 +210,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/deplacer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#request.classeId))")
     @ResponseBody
     public Map<String, Object> deplacer(
             @PathVariable Long id,
@@ -238,7 +238,7 @@ public class PlageHoraireController {
     // ============================================
 
     @PostMapping("/{id}/enseignants")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#classeId))")
     public String affecterEnseignants(
             @PathVariable Long id,
             @RequestParam List<Long> enseignantIds,
@@ -260,11 +260,11 @@ public class PlageHoraireController {
     }
 
     // ============================================
-    // MODIFIER UNE PLAGE (JSON) ✅ CORRIGÉ
+    // MODIFIER UNE PLAGE (JSON) — Sécurisé & Corrigé
     // ============================================
 
     @PostMapping("/{id}/modifier")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#classeId))")
     @ResponseBody
     public Map<String, Object> modifier(
             @PathVariable Long id,
@@ -281,9 +281,18 @@ public class PlageHoraireController {
         try {
             PlageHoraireRequest request = new PlageHoraireRequest();
             request.setClasseId(classeId);
-            request.setJour(LocalDate.parse(jour));
-            request.setHeureDebut(Time.valueOf(heureDebut).toLocalTime());
-            request.setHeureFin(Time.valueOf(heureFin).toLocalTime());
+
+            // Validation et parsing sécurisés (Évite les plantages sur nullité ou format court)
+            if (jour != null) {
+                request.setJour(LocalDate.parse(jour));
+            }
+            if (heureDebut != null) {
+                request.setHeureDebut(LocalTime.parse(heureDebut)); // <--- CORRIGÉ (Modernisé)
+            }
+            if (heureFin != null) {
+                request.setHeureFin(LocalTime.parse(heureFin));     // <--- CORRIGÉ (Modernisé)
+            }
+
             request.setCouleur(couleur);
             request.setSalle(salle);
             request.setEnseignantIds(enseignantIds);
@@ -303,11 +312,11 @@ public class PlageHoraireController {
     }
 
     // ============================================
-    // SUPPRIMER UNE PLAGE (JSON) ✅ CORRIGÉ
+    // SUPPRIMER UNE PLAGE (JSON)
     // ============================================
 
     @PostMapping("/{id}/supprimer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'ADMIN_INSTITUT', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN_INSTITUT') or (hasRole('ASSISTANT') and @institutSecurityService.peutGererClasse(#classeId))")
     @ResponseBody
     public Map<String, Object> supprimer(
             @PathVariable Long id,
