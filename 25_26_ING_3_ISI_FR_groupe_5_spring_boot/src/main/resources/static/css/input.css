@@ -8,14 +8,15 @@
     --font-sans: "DM Sans", sans-serif;
     --font-serif: "Playfair Display", serif;
 
-    /* Valeurs par défaut (dark) */
-
     --color-bgdeep: #0a0b0f;
     --color-bgcard: #111318;
     --color-bgsurface: #181b22;
     --color-bgsubtle: #1e2230;
     --color-primary: #4f7ef8;
     --color-primaryhover: #6b94ff;
+    --color-textmain: #f0f0f2;
+    --color-textmuted: #9aa3b2;
+    --color-border: #1e2230;
 
     --animate-fade-in-up: fadeInUp 0.3s ease-out forwards;
 
@@ -33,9 +34,12 @@
     --color-bgsubtle:  #e8eaf0;
     --color-primary:   #4f7ef8;
     --color-primaryhover: #3a6ae8;
+    --color-textmain:  #1c2230;
+    --color-textmuted: #6b7280;
+    --color-border:    #e2e5ec;
 }
 
-/* ── Thème DARK (explicite, au cas où) ── */
+/* ── Thème DARK (explicite) ── */
 :root[data-theme="dark"] {
     --color-bgdeep:    #0a0b0f;
     --color-bgcard:    #111318;
@@ -43,4 +47,7 @@
     --color-bgsubtle:  #1e2230;
     --color-primary:   #4f7ef8;
     --color-primaryhover: #6b94ff;
+    --color-textmain:  #f0f0f2;
+    --color-textmuted: #9aa3b2;
+    --color-border:    #1e2230;
 }

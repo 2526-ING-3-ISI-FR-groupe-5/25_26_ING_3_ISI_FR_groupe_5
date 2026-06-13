@@ -76,10 +76,10 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
             @Param("recherche") String recherche,
             Pageable pageable);
 
-    // Dans UtilisateurRepository — méthode avec 3 paramètres
-    @Query("""
+    @Query(value = """
     SELECT u FROM Utilisateur u
     WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
+    AND (:institutId IS NULL OR u.institut.id = :institutId)
     AND (:type = 'TOUS' OR
         (:type = 'ENS' AND TYPE(u) = Enseignant) OR
         (:type = 'AST' AND TYPE(u) = AssistantPedagogique) OR
@@ -87,11 +87,44 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     AND (:recherche IS NULL OR :recherche = '' OR
         LOWER(u.nom) LIKE LOWER(CONCAT('%', :recherche, '%')) OR
         LOWER(u.prenom) LIKE LOWER(CONCAT('%', :recherche, '%')))
-""")
+    AND (:anneeId IS NULL
+        OR TYPE(u) = AssistantPedagogique
+        OR TYPE(u) = Surveillant
+        OR (TYPE(u) = Enseignant AND EXISTS (
+            SELECT p FROM ProgrammationUE p JOIN p.enseignants ens
+            WHERE ens = u AND p.semestre.anneeAcademique.id = :anneeId)))
+    """,
+    countQuery = """
+    SELECT COUNT(u) FROM Utilisateur u
+    WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
+    AND (:institutId IS NULL OR u.institut.id = :institutId)
+    AND (:type = 'TOUS' OR
+        (:type = 'ENS' AND TYPE(u) = Enseignant) OR
+        (:type = 'AST' AND TYPE(u) = AssistantPedagogique) OR
+        (:type = 'SUR' AND TYPE(u) = Surveillant))
+    AND (:recherche IS NULL OR :recherche = '' OR
+        LOWER(u.nom) LIKE LOWER(CONCAT('%', :recherche, '%')) OR
+        LOWER(u.prenom) LIKE LOWER(CONCAT('%', :recherche, '%')))
+    AND (:anneeId IS NULL
+        OR TYPE(u) = AssistantPedagogique
+        OR TYPE(u) = Surveillant
+        OR (TYPE(u) = Enseignant AND EXISTS (
+            SELECT p FROM ProgrammationUE p JOIN p.enseignants ens
+            WHERE ens = u AND p.semestre.anneeAcademique.id = :anneeId)))
+    """)
     Page<Utilisateur> searchWithFilters(
             @Param("recherche") String recherche,
             @Param("type") String type,
+            @Param("institutId") Long institutId,
+            @Param("anneeId") Long anneeId,
             Pageable pageable
     );
     List<Utilisateur> findByInstitutId(Long institutId);
+
+    @Query("""
+        SELECT COUNT(u) FROM Utilisateur u
+        WHERE TYPE(u) IN (Enseignant, AssistantPedagogique, Surveillant)
+        AND (:institutId IS NULL OR u.institut.id = :institutId)
+    """)
+    long countPersonnelByInstitut(@Param("institutId") Long institutId);
 }

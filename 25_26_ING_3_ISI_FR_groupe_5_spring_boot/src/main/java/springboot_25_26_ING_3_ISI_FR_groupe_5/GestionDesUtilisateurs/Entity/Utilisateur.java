@@ -114,7 +114,7 @@ public abstract class Utilisateur implements UserDetails {
     @Builder.Default
     protected Set<Role> roles = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "institut_id")
     private Institut institut;  // 🆕 Un seul institut par utilisateur
 

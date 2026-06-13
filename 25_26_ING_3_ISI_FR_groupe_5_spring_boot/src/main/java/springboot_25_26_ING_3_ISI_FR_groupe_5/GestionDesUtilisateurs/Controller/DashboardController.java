@@ -19,6 +19,8 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Util
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService.IJournalActionService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
+// ⚠️ Pensez à vérifier/ajuster l'import de votre UtilisateurRepository ci-dessous :
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Repository.UtilisateurRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +36,9 @@ public class DashboardController {
     private final IJournalActionService journalActionService;
     private final PlageHoraireService plageHoraireService;
 
+    // ✅ 1. Injection du Repository pour recharger l'utilisateur
+    private final UtilisateurRepository utilisateurRepository;
+
     private static final List<String> ROLES_PRIORITE = List.of(
             "SUPER_ADMIN", "ADMIN_INSTITUT", "ASSISTANT", "ENSEIGNANT", "SURVEILLANT", "ETUDIANT"
     );
@@ -41,8 +46,12 @@ public class DashboardController {
     @GetMapping("/dashboard")
     @PreAuthorize("isAuthenticated()")
     public String dashboard(
-            @AuthenticationPrincipal Utilisateur utilisateur,
+            @AuthenticationPrincipal Utilisateur principal, // <-- Renommé en "principal"
             Model model) {
+
+        // ✅ 2. Recharger l'utilisateur depuis la DB pour éviter la LazyInitializationException sur l'institut
+        Utilisateur utilisateur = utilisateurRepository.findById(principal.getId())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé en base de données."));
 
         // 1. Roles & Priorite
         boolean estSuperAdmin    = utilisateur.hasRole("SUPER_ADMIN");
@@ -58,7 +67,7 @@ public class DashboardController {
                 .findFirst()
                 .orElse("INCONNU");
 
-        // 2. Institut — forcer le chargement avant fermeture de session
+        // 2. Institut — Forcer le chargement de la relation LAZY
         Institut institut = utilisateur.getInstitut();
         Long institutId = null;
         String institutNom = "Global";
@@ -126,7 +135,7 @@ public class DashboardController {
             }
         }
 
-        // 8. ✅ Cours du jour pour l'enseignant
+        // 8. Cours du jour pour l'enseignant
         if (estEnseignant) {
             try {
                 List<PlageHoraireResponse> coursDuJour = plageHoraireService

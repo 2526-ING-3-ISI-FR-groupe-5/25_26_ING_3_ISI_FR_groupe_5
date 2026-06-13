@@ -9,8 +9,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.AnneeAcademiqueRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.ProgrammationUE;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.ProgrammationUEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.utilisateur.UtilisateurRequest;
@@ -37,6 +39,8 @@ public class AdminUtilisateurController {
     private final ClassesRepository classesRepository;
     private final AnneeAcademiqueService anneeService;
     private final ProgrammationUEService programmationService;
+    private final AnneeAcademiqueRepository anneeRepository;
+    private final InstitutSecurityService securityService;
 
     // ══════════════════════════════════════════
     // LISTE
@@ -47,13 +51,47 @@ public class AdminUtilisateurController {
             Model model,
             @RequestParam(defaultValue = "") String recherche,
             @RequestParam(defaultValue = "TOUS") String type,
+            @RequestParam(required = false) Long anneeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<UtilisateurResponse> pageResult = utilisateurService.listeTous(recherche, type, page, size);
+        // 1. Charger toutes les années disponibles pour le sélecteur
+        List<Annee_academique> toutesLesAnnees = anneeService.getAll();
+
+        // 2. Résoudre l'année sélectionnée : param URL > année active > null
+        Annee_academique anneeSelectionnee = null;
+        Long anneeIdEffectif = anneeId;
+        if (anneeIdEffectif != null) {
+            final Long anneeIdFinal = anneeIdEffectif;
+            anneeSelectionnee = toutesLesAnnees.stream()
+                    .filter(a -> a.getId().equals(anneeIdFinal))
+                    .findFirst().orElse(null);
+        }
+        if (anneeSelectionnee == null) {
+            try {
+                anneeSelectionnee = anneeService.getAnneeActive();
+                // Ne pas forcer anneeIdEffectif : l'année active sert uniquement à l'affichage du badge.
+                // Forcer l'id filtrerait les enseignants sans programmation et masquerait des utilisateurs.
+            } catch (Exception e) {
+                log.warn("Aucune année active disponible: {}", e.getMessage());
+            }
+        }
+
+        // 3. Charger la liste filtrée + total réel du personnel de l'institut
+        Page<UtilisateurResponse> pageResult = utilisateurService.listeTous(recherche, type, anneeIdEffectif, page, size);
+        Long institutId = securityService.getInstitutIdCourant();
+        long totalPersonnel = utilisateurRepository.countPersonnelByInstitut(institutId);
+
+        // 4. Modèle
         model.addAttribute("utilisateurs", pageResult);
+        model.addAttribute("totalPersonnel", totalPersonnel);
         model.addAttribute("recherche", recherche);
         model.addAttribute("typeSelectionne", type);
+        model.addAttribute("anneeId", anneeIdEffectif);
+        model.addAttribute("anneeSelectionnee", anneeSelectionnee);
+        model.addAttribute("toutesLesAnnees", toutesLesAnnees);
+        model.addAttribute("anneeActive", anneeSelectionnee);
+
         return "Utilisateurs/liste";
     }
 

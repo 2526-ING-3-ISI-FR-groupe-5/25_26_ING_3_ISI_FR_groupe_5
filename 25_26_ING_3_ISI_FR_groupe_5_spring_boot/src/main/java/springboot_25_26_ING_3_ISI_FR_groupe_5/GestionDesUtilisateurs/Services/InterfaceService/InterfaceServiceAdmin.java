@@ -1,8 +1,8 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.InterfaceService;
 
 import org.springframework.data.domain.Page;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActivePermissionRequest;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActiveRoleDTORequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.permission.ActivePermissionRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.role.ActiveRoleRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantResponseDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantResponseDetails;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantRequest;
@@ -16,7 +16,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Ense
 public interface InterfaceServiceAdmin {
 
   // LISTER
-  Page<UtilisateurResponse> listeTous(String recherche, String type, int page, int size);
+  Page<UtilisateurResponse> listeTous(String recherche, String type, Long anneeId, int page, int size);
 
   // TROUVER PAR ID
   UtilisateurResponse findById(Long id);
@@ -40,7 +40,7 @@ public interface InterfaceServiceAdmin {
   SurveillantResponseDetails SurDetails(Long id);
 
   // RÔLES
-  ActiveRoleDTORequest activeRole(Long id, ActiveRoleDTORequest request);
+  ActiveRoleRequest activeRole(Long id, ActiveRoleRequest request);
 
   // PERMISSIONS
   ActivePermissionRequest activePermissionRequest(Long id, ActivePermissionRequest request);

@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Classe;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Repository.ClassesRepository;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.InstitutSecurityService;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActivePermissionRequest;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.ActiveRoleDTORequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.permission.ActivePermissionRequest;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.role.ActiveRoleRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.assistant.AssistantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantRequest;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.DTO.enseignant.EnseignantResponseDetails;
@@ -61,10 +61,10 @@ public class UtilisateurService implements InterfaceServiceAdmin {
     // ══════════════════════════════════════════════
 
     @Override
-    public Page<UtilisateurResponse> listeTous(String recherche, String type, int page, int size) {
+    public Page<UtilisateurResponse> listeTous(String recherche, String type, Long anneeId, int page, int size) {
         Long institutId = securityService.getInstitutIdCourant();
         PageRequest pageable = PageRequest.of(page, size, Sort.by("nom").ascending());
-        return utilisateurRepository.searchWithFilters(recherche, type,  pageable)
+        return utilisateurRepository.searchWithFilters(recherche, type, institutId, anneeId, pageable)
                 .map(utilisateurMapper::toDTO);
     }
 
@@ -175,7 +175,7 @@ public class UtilisateurService implements InterfaceServiceAdmin {
 
     @Transactional
     @Override
-    public ActiveRoleDTORequest activeRole(Long id, ActiveRoleDTORequest request) {
+    public ActiveRoleRequest activeRole(Long id, ActiveRoleRequest request) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RoleIsNotExisteException("Le rôle n'existe pas"));
         roleMapper.updateRoleFromDTO(request, role);
