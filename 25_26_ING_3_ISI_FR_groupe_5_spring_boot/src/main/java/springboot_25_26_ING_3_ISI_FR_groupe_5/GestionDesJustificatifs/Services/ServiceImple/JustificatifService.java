@@ -74,22 +74,48 @@ public class JustificatifService implements IJustificatifService {
             JustificatifRequest req,
             Utilisateur auteur) {
 
-        // 1. Vérifier cohérence des dates
-        if (req.getDateDebutAbsence() != null
-                && req.getDateFinAbsence() != null
-                && req.getDateFinAbsence()
-                .isBefore(req.getDateDebutAbsence())) {
+        // 1. Récupérer les séances d'absences réelles sélectionnées par l'étudiant
+        List<Appels> appelsAssocies = req.getAppelIds() != null && !req.getAppelIds().isEmpty()
+                ? appelsRepository.findAllById(req.getAppelIds())
+                : List.of();
+
+        LocalDateTime dateDebut = req.getDateDebutAbsence();
+        LocalDateTime dateFin = req.getDateFinAbsence();
+        Long totalHeures = req.getNombreHeures();
+
+        // 2. ✅ CALCUL AUTOMATIQUE (si des absences réelles ont été cochées)
+        if (!appelsAssocies.isEmpty()) {
+            // Date de début de la séance d'absence la plus ancienne
+            dateDebut = appelsAssocies.stream()
+                    .map(a -> LocalDateTime.of(a.getPlageHoraire().getJour(), a.getPlageHoraire().getHeureDebut()))
+                    .min(LocalDateTime::compareTo)
+                    .orElse(null);
+
+            // Date de fin de la séance d'absence la plus récente
+            dateFin = appelsAssocies.stream()
+                    .map(a -> LocalDateTime.of(a.getPlageHoraire().getJour(), a.getPlageHoraire().getHeureFin()))
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
+
+            // Volume d'heures réelles d'absence cumulé
+            totalHeures = appelsAssocies.stream()
+                    .mapToLong(a -> a.getPlageHoraire().getDureeHeures())
+                    .sum();
+        }
+
+        // 3. Vérifier cohérence des dates
+        if (dateDebut != null && dateFin != null && dateFin.isBefore(dateDebut)) {
             throw new IllegalArgumentException(
                     "La date de fin ne peut pas être avant la date de début"
             );
         }
 
-        // 2. ✅ Vérifier doublon — même étudiant, mêmes dates
-        if (req.getDateDebutAbsence() != null) {
+        // 4. ✅ Vérifier doublon — même étudiant, mêmes dates
+        if (dateDebut != null) {
             boolean doublon = justificatifRepository
                     .existsByEtudiantIdAndDateDebutAbsence(
                             req.getEtudiantId(),
-                            req.getDateDebutAbsence()
+                            dateDebut
                     );
             if (doublon) {
                 throw new IllegalStateException(
@@ -98,19 +124,30 @@ public class JustificatifService implements IJustificatifService {
             }
         }
 
+        // 5. Instanciation du justificatif
         Justificatif j = Justificatif.builder()
                 .etudiant(etudiantService.findById(req.getEtudiantId()))
                 .contenu(req.getContenu())
                 .fichierUrl(req.getFichierUrl())
-                .dateDebutAbsence(req.getDateDebutAbsence())
-                .dateFinAbsence(req.getDateFinAbsence())
-                .nombreHeures(req.getNombreHeures())
+                .dateDebutAbsence(dateDebut)
+                .dateFinAbsence(dateFin)
+                .nombreHeures(totalHeures)
                 .type(req.getType())
                 .statut(StatutJustificatif.EN_ATTENTE)
                 .dateSoumission(LocalDateTime.now())
                 .build();
 
+        // 6. ✅ Établir la liaison bidirectionnelle avec les fiches de présences (Appels) [1]
+        for (Appels appel : appelsAssocies) {
+            j.addAppel(appel);
+        }
+
         justificatifRepository.save(j);
+
+        // Sauvegarder explicitement les appels associés pour persister la FK du justificatif [1]
+        if (!appelsAssocies.isEmpty()) {
+            appelsRepository.saveAll(appelsAssocies);
+        }
 
         // ✅ Journaliser
         journalActionService.journaliserSoumissionJustificatif(
@@ -119,8 +156,8 @@ public class JustificatifService implements IJustificatifService {
                 j.getEtudiant().getNom() + " " + j.getEtudiant().getPrenom()
         );
 
-        log.info("✅ Justificatif soumis par : {}",
-                j.getEtudiant().getEmail());
+        log.info("✅ Justificatif soumis par : {} pour un volume de {} heures d'absence.",
+                j.getEtudiant().getEmail(), totalHeures);
 
         return j;
     }
@@ -281,6 +318,4 @@ public class JustificatifService implements IJustificatifService {
         log.info("🗑️ Justificatif {} supprimé par : {}",
                 id, auteur.getEmail());
     }
-
-
 }

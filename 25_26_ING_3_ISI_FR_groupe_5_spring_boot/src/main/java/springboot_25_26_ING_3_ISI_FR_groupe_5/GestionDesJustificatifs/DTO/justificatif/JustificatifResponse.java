@@ -5,7 +5,7 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Enum.Statu
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Enum.TypeJustificatif;
 
 import java.time.LocalDateTime;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Entity.Justificatif;
+import java.util.List;
 
 @Getter
 @Setter
@@ -43,4 +43,6 @@ public class JustificatifResponse {
     private String validateurNom;
     private String validateurPrenom;
     private String validateurEmail;
+
+    private List<String> seancesJustifiees;
 }

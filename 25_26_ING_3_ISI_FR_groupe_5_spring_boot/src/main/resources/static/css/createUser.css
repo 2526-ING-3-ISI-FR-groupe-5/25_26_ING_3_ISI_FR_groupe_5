@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════
-   createUser.css — Styles complémentaires
+   createUser.css — Styles complémentaires épurés
    ══════════════════════════════════════════ */
 
 /* ── Champs de formulaire ── */
@@ -17,32 +17,37 @@
     width: 100%;
     padding: 10px 14px;
     background: var(--color-bgsurface);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-bgsubtle); /* Remplacement de --color-border par un fond subtil */
     border-radius: 10px;
     color: var(--color-textmain);
     font-size: 0.875rem;
     font-family: 'DM Sans', sans-serif;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.field-input::placeholder { color: color-mix(in srgb, var(--color-textmuted) 50%, transparent); }
+.field-input::placeholder { color: color-mix(in srgb, var(--color-textmuted) 40%, transparent); }
 .field-input:focus {
-    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 8%, transparent);
+    border-color: var(--color-primary) !important;
+    background: var(--color-bgsubtle);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 .field-input.error {
-    border-color: rgba(248, 113, 113, 0.6);
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.08);
+    border-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.06);
 }
 .field-input option { background: var(--color-bgcard); }
 
 .field-error {
     font-size: 0.71rem;
     color: #f87171;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
-/* ── Stepper ── */
+/* ── Stepper (Pastel & Fluide) ── */
+.step-circle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-width: 1px !important; /* Tracé plus fin et élégant */
+}
 .step-item.active .step-circle {
     border-color: var(--color-primary) !important;
     background: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
@@ -51,44 +56,81 @@
 .step-item.active .step-label { color: var(--color-primary) !important; }
 
 .step-item.done .step-circle {
-    border-color: rgba(74, 222, 128, 0.5) !important;
-    background: rgba(74, 222, 128, 0.1) !important;
-    color: #4ade80 !important;
+    border-color: #10b981 !important; /* Vert émeraude plus doux */
+    background: rgba(16, 185, 129, 0.08) !important;
+    color: #10b981 !important;
 }
-.step-item.done .step-label { color: #4ade80 !important; }
+.step-item.done .step-label { color: #10b981 !important; }
 
-.step-line.done { background: rgba(74, 222, 128, 0.3) !important; }
+.step-line.done { background: rgba(16, 185, 129, 0.25) !important; }
 
 /* ── Panels ── */
-.step-panel { animation: panelIn 0.2s ease; }
+.step-panel { animation: panelIn 0.2s ease-out; }
 @keyframes panelIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Cards type utilisateur ── */
-.type-card input:checked ~ .type-card-inner {
-    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
-    background: color-mix(in srgb, var(--color-primary) 7%, transparent) !important;
-    box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 10%, transparent);
+/* ── Cards type utilisateur (Coloration unique au clic) ── */
+.type-card-inner {
+    border-width: 1px !important;
+    border-color: var(--color-bgsubtle) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Enseignant (Amber) */
+#type-card-ENS input:checked ~ .type-card-inner {
+    border-color: #fbbf24 !important;
+    background: rgba(251, 191, 36, 0.03) !important;
+    box-shadow: 0 4px 20px rgba(251, 191, 36, 0.04);
+}
+/* Assistant (Sky) */
+#type-card-AST input:checked ~ .type-card-inner {
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.03) !important;
+    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.04);
+}
+/* Surveillant (Emerald) */
+#type-card-SUR input:checked ~ .type-card-inner {
+    border-color: #34d399 !important;
+    background: rgba(52, 211, 153, 0.03) !important;
+    box-shadow: 0 4px 20px rgba(52, 211, 153, 0.04);
 }
 
 /* ── Cards rôle ── */
-.role-card.selected {
-    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
-    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
+.role-card {
+    border-width: 1px !important;
+    border-color: var(--color-bgsubtle) !important;
+    transition: all 0.2s ease-in-out;
+}
+.role-card.selected, .role-card:has(.role-checkbox:checked) {
+    border-color: var(--color-primary) !important;
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bgcard)) !important;
 }
 
 /* ── Cards permission ── */
-.perm-card.checked {
-    border-color: rgba(245, 158, 11, 0.4) !important;
-    background: rgba(245, 158, 11, 0.06) !important;
+.perm-card {
+    border-width: 1px !important;
+    border-color: var(--color-bgsubtle) !important;
+    transition: all 0.15s ease-in-out;
+}
+.perm-card.checked, .perm-card:has(.wiz-perm-check:checked) {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    background: rgba(245, 158, 11, 0.04) !important;
 }
 
-/* ── Cards classe ── */
+/* ── Cards classe & UE ── */
+.classe-card, .ue-card {
+    border-width: 1px !important;
+    border-color: var(--color-bgsubtle) !important;
+    transition: all 0.15s ease-in-out;
+}
 .classe-card:has(input:checked) {
-    border-color: color-mix(in srgb, var(--color-primary) 50%, transparent) !important;
-    background: color-mix(in srgb, var(--color-primary) 6%, transparent) !important;
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.03) !important;
+}
+.ue-card:has(input:checked) {
+    border-color: #fbbf24 !important;
+    background: rgba(251, 191, 36, 0.03) !important;
 }
 
 /* ── Confirmation résumé ── */
@@ -96,7 +138,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--color-border);
     font-size: 0.82rem;
 }
@@ -129,7 +171,7 @@
     font-weight: 700;
     background: color-mix(in srgb, var(--color-primary) 8%, transparent);
     color: var(--color-primary);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 15%, transparent);
     text-transform: uppercase;
 }
 
@@ -141,9 +183,9 @@
     border-radius: 5px;
     font-size: 0.67rem;
     font-weight: 600;
-    background: rgba(245, 158, 11, 0.08);
+    background: rgba(245, 158, 11, 0.05);
     color: rgba(234, 179, 8, 0.85);
-    border: 1px solid rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.12);
 }
 
 /* ── Toast ── */
@@ -157,10 +199,10 @@
     padding: 12px 20px;
     border-radius: 12px;
     background: var(--color-bgcard);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-bgsubtle);
     color: var(--color-textmain);
     font-size: 0.875rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     transform: translateY(20px);
     opacity: 0;
     pointer-events: none;

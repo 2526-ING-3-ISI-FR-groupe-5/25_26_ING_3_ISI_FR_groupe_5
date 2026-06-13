@@ -47,37 +47,24 @@ document.addEventListener('DOMContentLoaded', () => {
             p.classList.toggle('hidden', i + 1 !== wizStep);
         });
 
-        // Indicateurs stepper
+        // Indicateurs stepper (Gestion sémantique par classes)
         document.querySelectorAll('.step-item').forEach((item, i) => {
             const step = i + 1;
-            const circle = item.querySelector('.step-circle');
-            const label  = item.querySelector('.step-label');
             item.classList.remove('active', 'done');
             if (step === wizStep) {
                 item.classList.add('active');
-                circle.style.borderColor = '#dc2626';
-                circle.style.background = 'rgba(220,38,38,0.12)';
-                circle.style.color = '#dc2626';
-                if (label) label.style.color = '#dc2626';
             } else if (step < wizStep) {
                 item.classList.add('done');
-                circle.style.borderColor = '#16a34a';
-                circle.style.background = 'rgba(22,163,74,0.12)';
-                circle.style.color = '#16a34a';
-                if (label) label.style.color = '#16a34a';
-            } else {
-                circle.style.borderColor = '';
-                circle.style.background = '';
-                circle.style.color = '';
-                if (label) label.style.color = '';
             }
         });
 
-        // Lignes
+        // Lignes de progression (Utilisation de Tailwind)
         for (let i = 1; i <= wizTotal - 1; i++) {
             const line = document.getElementById(`line-${i}-${i + 1}`);
             if (line) {
-                line.style.background = wizStep > i ? '#16a34a' : '';
+                const isCompleted = wizStep > i;
+                line.classList.toggle('bg-emerald-500', isCompleted);
+                line.style.background = isCompleted ? '' : 'var(--color-bgsubtle)';
             }
         }
 
@@ -180,33 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.getElementById(`fields-${selectedType}`)?.classList.remove('hidden');
 
-            document.querySelectorAll('.type-card .type-card-inner').forEach(inner => {
-                inner.style.borderColor = '';
-                inner.style.background  = '';
-                inner.style.boxShadow   = '';
-            });
-
-            const colors = { ENS: '#fbbf24', AST: '#38bdf8', SUR: '#4ade80' };
-            const col = colors[selectedType];
-            const selectedInner = document.querySelector(`#type-card-${selectedType} .type-card-inner`);
-            if (selectedInner && col) {
-                selectedInner.style.borderColor = col + '80';
-                selectedInner.style.background  = col + '12';
-                selectedInner.style.boxShadow   = `0 0 20px ${col}20`;
-            }
-
             document.getElementById('err-type').classList.add('hidden');
         });
     });
 
     // ══════════════════════════════════════════════
-    // SÉLECTION RÔLE (Correction du bug de double-clic)
+    // SÉLECTION RÔLE
     // ══════════════════════════════════════════════
     window.toggleRole = function(card, event) {
         const cb = card.querySelector('.role-checkbox');
         if (!cb) return;
 
-        // Si le clic provient directement du checkbox, on évite d'inverser sa valeur
         if (event && event.target === cb) {
             card.classList.toggle('selected', cb.checked);
             updatePermsVisibility();
@@ -249,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ══════════════════════════════════════════════
-    // TOGGLE PERMISSION (Correction du bug de double-clic)
+    // TOGGLE PERMISSION
     // ══════════════════════════════════════════════
     window.togglePermCard = function(label, event) {
         const cb = label.querySelector('input[type="checkbox"]');
@@ -285,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ══════════════════════════════════════════════
-    // FILTRE UE (Nettoyage du code orphelin des filtres)
+    // FILTRE UE
     // ══════════════════════════════════════════════
     window.filterUE = function(query) {
         filterUEGrid(query);
@@ -350,7 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.role-checkbox:checked').forEach(cb => {
             const card = cb.closest('.role-card');
             if (card) {
-                // Utilisation de la nouvelle nomenclature (role.nom)
                 rolesChoisis.push(card.getAttribute('data-role-name') || '');
             }
         });

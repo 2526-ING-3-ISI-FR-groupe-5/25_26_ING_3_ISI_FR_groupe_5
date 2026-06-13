@@ -3,10 +3,11 @@ package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Mappers;
 import org.mapstruct.*;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.Entity.Justificatif;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesJustificatifs.DTO.justificatif.JustificatifResponse;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Entity.Appels;
 
 import java.util.List;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.AssistantPedagogique;
-import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Entity.Etudiant;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(
         componentModel = "spring",
@@ -33,10 +34,23 @@ public interface JustificatifMapper {
     @Mapping(target = "validateurPrenom", source = "validateur.prenom")
     @Mapping(target = "validateurEmail",  source = "validateur.email")
 
-    // ── statut → status (noms différents) ──
+    // ── statut -> status ──
     @Mapping(target = "status", source = "statut")
 
+    // ── Mapping personnalisé pour lister les matières justifiées ──
+    @Mapping(target = "seancesJustifiees", source = "appels", qualifiedByName = "mapAppelsToSeances")
     JustificatifResponse toResponse(Justificatif j);
 
     List<JustificatifResponse> toResponseList(List<Justificatif> list);
+
+    // Méthode utilitaire de mapping pour extraire les noms des cours impactés
+    @Named("mapAppelsToSeances")
+    default List<String> mapAppelsToSeances(Set<Appels> appels) {
+        if (appels == null) return List.of();
+        return appels.stream()
+                .filter(a -> a.getPlageHoraire() != null)
+                .map(a -> a.getPlageHoraire().getTitreAffiche() + " (" + a.getPlageHoraire().getJour().toString() + ")")
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }

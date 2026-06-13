@@ -1,168 +1,232 @@
 <!DOCTYPE html>
-<html lang="fr"
+<html lang="fr" data-theme="dark"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/app}">
 <head>
-    <title>Soumettre un justificatif — CarnetRouge</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Soumettre un Justificatif — CarnetRouge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
+    <style>
+        :root[data-theme="light"] { --color-border: rgba(0, 0, 0, 0.04); }
+        :root[data-theme="dark"] { --color-border: rgba(255, 255, 255, 0.04); }
+
+        .field-input {
+            width: 100%;
+            background-color: var(--color-bgsurface);
+            border: 1px solid var(--color-bgsubtle) !important;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: var(--color-textmain);
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .field-input:focus {
+            border-color: var(--color-primary) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+            background-color: var(--color-bgsubtle);
+        }
+        .field-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-textmuted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .role-card {
+            border: 1px solid var(--color-bgsubtle);
+            transition: all 0.2s ease-in-out;
+        }
+        .role-card:has(.role-checkbox:checked) {
+            border-color: var(--color-primary) !important;
+            background-color: color-mix(in srgb, var(--color-primary) 6%, var(--color-bgcard)) !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-bgsubtle); border-radius: 99px; }
+    </style>
 </head>
 <body>
+
 <div layout:fragment="content">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+    <div class="min-h-screen bg-bgdeep">
+        <main class="max-w-2xl mx-auto px-5 sm:px-8 py-8">
 
-        <!-- Retour -->
-        <div class="mb-6">
-            <a th:href="@{/justificatifs/mes-justificatifs}"
-               class="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group">
-                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Retour à mes justificatifs
-            </a>
-        </div>
-
-        <!-- En-tête -->
-        <div class="mb-8">
-            <h1 class="font-serif text-2xl md:text-3xl text-gray-900 dark:text-white mb-2">
-                Soumettre un <span class="text-primary italic">justificatif</span>
-            </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                Renseignez les informations relatives à votre absence
-            </p>
-        </div>
-
-        <!-- Messages -->
-        <div th:if="${errorMessage}" class="mb-6 alert alert-error shadow-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            <span th:text="${errorMessage}"></span>
-        </div>
-
-        <!-- Formulaire -->
-        <div class="bg-white dark:bg-bgcard rounded-2xl border border-gray-200 dark:border-white/5 p-6 md:p-8">
-            <form th:action="@{/justificatifs/soumettre}"
-                  th:object="${justificatifRequest}"
-                  method="post"
-                  enctype="multipart/form-data"
-                  class="space-y-6">
-                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-                <!-- Type de justificatif -->
-                <div class="form-control w-full">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                            Type de justificatif <span class="text-red-500">*</span>
-                        </span>
-                    </label>
-                    <select th:field="*{type}"
-                            class="select w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
-                            required>
-                        <option value="">— Choisir un type —</option>
-                        <option th:each="type : ${typesJustificatif}"
-                                th:value="${type}"
-                                th:text="${type.libelle}"></option>
-                    </select>
-                    <label class="label" th:if="${#fields.hasErrors('type')}">
-                        <span class="label-text-alt text-red-400" th:errors="*{type}"></span>
-                    </label>
-                </div>
-
-                <!-- Période d'absence -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                                Début de l'absence <span class="text-red-500">*</span>
-                            </span>
-                        </label>
-                        <input type="datetime-local"
-                               th:field="*{dateDebutAbsence}"
-                               class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
-                               required/>
-                        <label class="label" th:if="${#fields.hasErrors('dateDebutAbsence')}">
-                            <span class="label-text-alt text-red-400" th:errors="*{dateDebutAbsence}"></span>
-                        </label>
-                    </div>
-                    <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                                Fin de l'absence <span class="text-red-500">*</span>
-                            </span>
-                        </label>
-                        <input type="datetime-local"
-                               th:field="*{dateFinAbsence}"
-                               class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"
-                               required/>
-                        <label class="label" th:if="${#fields.hasErrors('dateFinAbsence')}">
-                            <span class="label-text-alt text-red-400" th:errors="*{dateFinAbsence}"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Nombre d'heures -->
-                <div class="form-control w-full">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                            Nombre d'heures d'absence
-                        </span>
-                        <span class="label-text-alt text-gray-400">Optionnel</span>
-                    </label>
-                    <input type="number"
-                           th:field="*{nombreHeures}"
-                           min="1"
-                           placeholder="ex. 2"
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
-                </div>
-
-                <!-- Contenu / motif -->
-                <div class="form-control w-full">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                            Motif détaillé <span class="text-red-500">*</span>
-                        </span>
-                    </label>
-                    <textarea th:field="*{contenu}"
-                              rows="4"
-                              placeholder="Décrivez les raisons de votre absence..."
-                              class="textarea w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200 resize-none"
-                              required></textarea>
-                    <label class="label" th:if="${#fields.hasErrors('contenu')}">
-                        <span class="label-text-alt text-red-400" th:errors="*{contenu}"></span>
-                    </label>
-                </div>
-
-                <!-- Fichier justificatif -->
-                <div class="form-control w-full">
-                    <label class="label">
-                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">
-                            Document justificatif
-                        </span>
-                        <span class="label-text-alt text-gray-400">PDF, image — Optionnel</span>
-                    </label>
-                    <input type="text"
-                           th:field="*{fichierUrl}"
-                           placeholder="URL du document ou lien Drive..."
-                           class="input w-full bg-gray-50 dark:bg-bgsurface border-gray-300 dark:border-white/10 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all duration-200"/>
-                </div>
-
-                <!-- Boutons -->
-                <div class="flex gap-3 pt-4">
+            <!-- EN-TÊTE -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-3">
                     <a th:href="@{/justificatifs/mes-justificatifs}"
-                       class="btn btn-ghost flex-1">Annuler</a>
-                    <button type="submit"
-                            class="btn bg-primary hover:bg-primary/90 text-white border-none flex-1">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                        </svg>
-                        Soumettre
+                       class="w-8 h-8 rounded-lg flex items-center justify-center border border-bordercolor hover:border-primary text-textmuted hover:text-primary transition-colors no-underline bg-transparent">
+                        <i class="bi bi-arrow-left text-sm"></i>
+                    </a>
+                    <p class="text-xs uppercase tracking-[0.2em] font-mono text-primary">Scolarité — Soumission</p>
+                </div>
+                <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-textmain">
+                    Justifier une <span class="text-primary">absence</span>
+                </h1>
+                <p class="mt-2 text-sm text-textmuted">Cochez simplement les séances d'absences enregistrées pour soumettre votre dossier.</p>
+            </div>
+
+            <div th:if="${errorMessage}" class="mb-5 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
+                 style="background-color: rgba(239,68,68,0.08); color: #f87171;">
+                <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- FORMULAIRE -->
+            <form th:action="@{/justificatifs/soumettre}" th:object="${justificatifRequest}" method="post" class="rounded-2xl bg-bgcard p-6 sm:p-8 shadow-sm border border-bordercolor space-y-6">
+
+                <input type="hidden" th:field="*{etudiantId}"/>
+
+                <!-- 1. SÉLECTION DES ABSENCES CONSTATÉES -->
+                <div th:if="${not #lists.isEmpty(absencesNonJustifiees)}" class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill text-amber-500 text-sm"></i>
+                        <p class="text-xs font-bold uppercase tracking-wider text-textmuted">Cochez les absences à justifier</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                        <label th:each="a : ${absencesNonJustifiees}"
+                               class="flex items-start gap-3 p-4 rounded-xl border bg-bgsurface cursor-pointer hover:bg-primary/[0.01] transition-all role-card">
+                            <!-- Liaison au DTO th:field="*{appelIds}" -->
+                            <input type="checkbox" th:field="*{appelIds}" th:value="${a.id}" th:data-duree="${a.plageHoraire?.getDureeHeures()}" th:data-jour="${a.plageHoraire?.jour}" th:data-debut="${a.plageHoraire?.heureDebut}" th:data-fin="${a.plageHoraire?.heureFin}" class="role-checkbox w-4 h-4 flex-shrink-0 mt-0.5 accent-primary" onchange="recalculerAbsences()"/>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-textmain truncate" th:text="${a.plageHoraire?.getTitreAffiche()}">Matière</p>
+                                <p class="text-[11px] text-textmuted mt-0.5">
+                                    Le <span th:text="${#temporals.format(a.plageHoraire?.jour, 'dd/MM/yyyy')}">Date</span>
+                                    de <span th:text="${a.plageHoraire?.heureDebut}">08:00</span>
+                                    à <span th:text="${a.plageHoraire?.heureFin}">10:00</span>
+                                </p>
+                                <p class="text-[10px] text-textmuted italic mt-0.5 truncate" th:text="${a.plageHoraire?.getSousTitreAffiche()}">Enseignant · Salle</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 2. APERÇU DE LA PÉRIODE CALCULÉE AUTOMATIQUEMENT -->
+                <div th:if="${not #lists.isEmpty(absencesNonJustifiees)}" class="rounded-xl p-4 bg-bgsurface space-y-2 border border-bordercolor" id="calc-period-preview">
+                    <p class="text-xs text-textmuted font-mono uppercase tracking-wider">Calcul automatique de l'absence</p>
+                    <div class="flex items-center justify-between text-xs pt-1">
+                        <span class="text-textmuted">Période :</span>
+                        <span class="font-semibold text-textmain" id="calc-range">—</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs pt-1 border-t border-dashed border-bordercolor">
+                        <span class="text-textmuted">Volume horaire total :</span>
+                        <span class="font-bold text-primary" id="calc-hours">0 h</span>
+                    </div>
+                </div>
+
+                <!-- Bouton d'affichage manuel si besoin -->
+                <div th:if="${not #lists.isEmpty(absencesNonJustifiees)}" class="text-left">
+                    <button type="button" onclick="toggleSaisieManuelle()" class="text-xs font-semibold text-primary hover:text-primaryhover bg-transparent border-none cursor-pointer">
+                        <i class="bi bi-plus-circle"></i> Saisir une période manuellement (Absence future...)
                     </button>
                 </div>
 
-            </form>
-        </div>
+                <!-- Saisie manuelle optionnelle -->
+                <div id="manuel-dates-container" th:class="${not #lists.isEmpty(absencesNonJustifiees)} ? 'hidden space-y-5' : 'space-y-5'">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="field-label">Date et heure de début</label>
+                            <input type="datetime-local" th:field="*{dateDebutAbsence}" class="field-input"/>
+                        </div>
+                        <div>
+                            <label class="field-label">Date et heure de fin</label>
+                            <input type="datetime-local" th:field="*{dateFinAbsence}" class="field-input"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="field-label">Nombre d'heures estimées</label>
+                        <input type="number" th:field="*{nombreHeures}" min="1" placeholder="ex. 4" class="field-input"/>
+                    </div>
+                </div>
 
+                <div class="border-t border-bordercolor pt-5 space-y-5">
+                    <div>
+                        <label class="field-label">Motif de l'absence *</label>
+                        <select th:field="*{type}" class="field-input cursor-pointer" required>
+                            <option value="">— Sélectionner un motif —</option>
+                            <option th:each="t : ${typesJustificatif}" th:value="${t}" th:text="${t.getLibelle()}">Motif</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="field-label">Explications complémentaires *</label>
+                        <textarea th:field="*{contenu}" rows="4" placeholder="Veuillez détailler brièvement le motif..." class="field-input resize-none" required></textarea>
+                    </div>
+                    <div>
+                        <label class="field-label">URL de la pièce jointe (Certificat, ordonnance...)</label>
+                        <input type="url" th:field="*{fichierUrl}" placeholder="https://example.com/mon-justificatif.pdf" class="field-input"/>
+                    </div>
+                </div>
+
+                <div class="pt-5 border-t border-bordercolor flex justify-end gap-3">
+                    <a th:href="@{/justificatifs/mes-justificatifs}" class="px-5 py-2.5 rounded-xl border border-bordercolor bg-transparent text-textmuted text-sm font-semibold hover:text-textmain hover:bg-bgsubtle transition-all no-underline cursor-pointer">
+                        Annuler
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl text-white text-sm font-bold transition-all cursor-pointer hover:opacity-90" style="background-color: var(--color-primary);">
+                        Envoyer le dossier
+                    </button>
+                </div>
+            </form>
+        </main>
     </div>
 </div>
+
+<script th:inline="javascript">
+    function toggleSaisieManuelle() {
+        const container = document.getElementById('manuel-dates-container');
+        container.classList.toggle('hidden');
+    }
+
+    function recalculerAbsences() {
+        const checkboxes = document.querySelectorAll('input[name="appelIds"]:checked');
+        const rangeSpan = document.getElementById('calc-range');
+        const hoursSpan = document.getElementById('calc-hours');
+
+        if (!rangeSpan || !hoursSpan) return;
+
+        if (checkboxes.length === 0) {
+            rangeSpan.textContent = "—";
+            hoursSpan.textContent = "0 h";
+            return;
+        }
+
+        let totalHeures = 0;
+        let dates = [];
+
+        checkboxes.forEach(cb => {
+            const duree = parseInt(cb.getAttribute('data-duree')) || 0;
+            const jour = cb.getAttribute('data-jour'); // yyyy-MM-dd
+            const debut = cb.getAttribute('data-debut'); // HH:mm
+            const fin = cb.getAttribute('data-fin'); // HH:mm
+
+            totalHeures += duree;
+
+            const dateDebut = new Date(`${jour}T${debut}`);
+            const dateFin = new Date(`${jour}T${fin}`);
+            dates.push({ debut: dateDebut, fin: dateFin });
+        });
+
+        // Trier pour extraire les extrêmes temporels
+        dates.sort((x, y) => x.debut - y.debut);
+        const minDate = dates[0].debut;
+        const maxDate = dates[dates.length - 1].fin;
+
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const formatStr = `Du ${minDate.toLocaleDateString('fr-FR', options)} au ${maxDate.toLocaleDateString('fr-FR', options)}`;
+
+        rangeSpan.textContent = formatStr;
+        hoursSpan.textContent = `${totalHeures} h`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        recalculerAbsences();
+    });
+</script>
+
 </body>
 </html>

@@ -188,4 +188,23 @@ public interface AppelsRepository extends JpaRepository<Appels, Long> {
     void updateStatutByJustificatifId(
             @Param("justificatifId") Long justificatifId,
             @Param("statut") StatutPresence statut);
+
+// Dans AppelsRepository.java (au bas de vos méthodes de recherche de base)
+
+    /**
+     * ✅  Récupère la liste des absences ou retards non régularisés
+     * pour un étudiant donné, afin de les afficher dans le formulaire de soumission.
+     */
+    @Query("""
+        SELECT a FROM Appels a
+        JOIN FETCH a.plageHoraire p
+        WHERE a.etudiant.id = :etudiantId
+        AND a.statut IN :statuts
+        AND a.justificatif IS NULL
+        ORDER BY p.jour DESC, p.heureDebut DESC
+    """)
+    List<Appels> findAbsencesNonJustifieesByEtudiant(
+            @Param("etudiantId") Long etudiantId,
+            @Param("statuts") List<StatutPresence> statuts);
+
 }
