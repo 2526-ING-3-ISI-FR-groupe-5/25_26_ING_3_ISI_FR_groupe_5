@@ -1,0 +1,56 @@
+:root[data-theme="light"] {
+    --color-bgdeep:    #f0f2f5;
+    --color-bgcard:    #ffffff;
+    --color-bgsurface: #f7f8fa;
+    --color-bgsubtle:  #e8eaf0;
+    --color-primary:   #4f7ef8;
+    --color-primaryhover: #3a6ae8;
+}
+:root[data-theme="dark"] {
+    --color-bgdeep:    #0a0b0f;
+    --color-bgcard:    #111318;
+    --color-bgsurface: #181b22;
+    --color-bgsubtle:  #1e2230;
+    --color-primary:   #4f7ef8;
+    --color-primaryhover: #6b94ff;
+}
+
+body { background-color: var(--color-bgdeep); transition: background-color .25s ease, color .25s ease; }
+.perm-chip {
+    transition: all .15s ease;
+}
+.perm-chip[data-active="false"] {
+    opacity: .45;
+}
+.role-card {
+    transition: border-color .2s ease, transform .2s ease;
+}
+.role-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+.drawer {
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-bgsubtle); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* toggle switch */
+.switch input { display:none; }
+.switch .track {
+    width: 38px; height: 22px; border-radius: 999px;
+    background: var(--color-bgsubtle);
+    position: relative; transition: background .2s ease; cursor: pointer;
+}
+.switch .thumb {
+    width: 16px; height: 16px; border-radius: 999px;
+    background: #9aa3b2; position: absolute; top: 3px; left: 3px;
+    transition: all .2s ease;
+}
+.switch input:checked + .track { background: color-mix(in srgb, var(--color-primary) 35%, var(--color-bgsubtle)); }
+.switch input:checked + .track .thumb { left: 19px; background: var(--color-primary); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, .stagger, .role-card, .drawer { animation: none !important; transition: none !important; }
+}

@@ -1,10 +1,283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" data-theme="dark"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Rôles & Permissions — CarnetRouge</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"/>
+    <style>
+        /* Redéfinition des variables pour supprimer les bordures contrastées */
+        :root[data-theme="light"] {
+            --color-border: rgba(0, 0, 0, 0.04); /* Bordure ultra-douce */
+        }
+        :root[data-theme="dark"] {
+            --color-border: rgba(255, 255, 255, 0.04); /* Bordure ultra-douce */
+        }
+
+        @keyframes fadeInUp {
+            0%   { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .stagger { animation: fadeInUp .35s ease-out forwards; opacity: 0; }
+
+        /* Style épuré des commutateurs */
+        .switch input { display:none; }
+        .switch .track {
+            width: 36px; height: 20px; border-radius: 999px;
+            background: var(--color-bgsubtle);
+            position: relative; transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+        }
+        .switch .thumb {
+            width: 14px; height: 14px; border-radius: 999px;
+            background: #9aa3b2; position: absolute; top: 3px; left: 3px;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease-in-out;
+        }
+        .switch input:checked + .track { background: color-mix(in srgb, var(--color-primary) 35%, var(--color-bgsubtle)); }
+        .switch input:checked + .track .thumb { transform: translateX(16px); background: var(--color-primary); }
+
+        /* Puces de permissions épurées sans bordure */
+        .perm-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 11px; border-radius: 6px;
+            font-size: 0.72rem; font-weight: 500; font-family: 'JetBrains Mono', monospace;
+            transition: all .15s ease-out; cursor: pointer;
+            border: none !important; /* Retrait de la bordure */
+        }
+        .perm-chip.active {
+            background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+            color: var(--color-primary);
+        }
+        .perm-chip.active:hover {
+            background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+            transform: scale(1.02);
+        }
+        .perm-chip.inactive {
+            background: var(--color-bgsurface);
+            color: var(--color-textmuted);
+        }
+        .perm-chip.inactive:hover {
+            background: var(--color-bgsubtle);
+            color: var(--color-textmain);
+            transform: scale(1.02);
+        }
+        .perm-chip i { font-size: 0.65rem; }
+
+        /* Scrollbar épurée pour le panneau de droite */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-bgsubtle); border-radius: 99px; }
+    </style>
 </head>
 <body>
-$END$
+
+<div layout:fragment="content">
+    <div class="min-h-screen bg-bgdeep">
+
+        <main class="max-w-[1400px] mx-auto px-5 sm:px-8 py-8">
+
+            <!-- Messages Flash -->
+            <div th:if="${success}" class="mb-5 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
+                 style="background-color: rgba(34,197,94,0.08); color: #4ade80;">
+                <i class="bi bi-check-circle-fill"></i> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="mb-5 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
+                 style="background-color: rgba(239,68,68,0.08); color: #f87171;">
+                <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+            </div>
+
+            <!-- EN-TÊTE / STATS ÉPURÉES -->
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] font-mono mb-2 text-primary">Contrôle d'accès — RBAC</p>
+                    <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-textmain">Rôles & permissions</h1>
+                    <p class="text-textmuted text-sm mt-2 max-w-xl">Activez ou désactivez les rôles. Associez ou détachez des permissions en un seul clic.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
+                    <!-- Stats Rôles -->
+                    <div class="rounded-xl bg-bgcard p-4 flex items-center gap-4 min-w-[170px] shadow-sm">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-lg shrink-0">
+                            <i class="bi bi-shield-shaded"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] uppercase font-mono tracking-wider text-textmuted">Rôles</p>
+                            <p class="text-xl font-serif font-bold text-textmain" th:text="${#lists.size(roles)}">0</p>
+                        </div>
+                    </div>
+                    <!-- Stats Permissions -->
+                    <div class="rounded-xl bg-bgcard p-4 flex items-center gap-4 min-w-[170px] shadow-sm">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-lg shrink-0">
+                            <i class="bi bi-key-fill"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] uppercase font-mono tracking-wider text-textmuted">Permissions</p>
+                            <p class="text-xl font-serif font-bold text-textmain" th:text="${#lists.size(permissions)}">0</p>
+                        </div>
+                    </div>
+                    <!-- Stats Rôles Actifs -->
+                    <div class="rounded-xl bg-bgcard p-4 flex items-center gap-4 min-w-[170px] shadow-sm">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg shrink-0">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] uppercase font-mono tracking-wider text-textmuted">Rôles actifs</p>
+                            <p class="text-xl font-serif font-bold text-emerald-500" th:text="${roles != null ? roles.?[active].size() : 0}">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRILLE DE CONTENU -->
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+
+                <!-- LISTE DES RÔLES -->
+                <section>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                        <div class="flex items-baseline gap-2">
+                            <h2 class="font-serif text-xl font-semibold text-textmain">Liste des rôles</h2>
+                            <span class="text-xs font-mono text-textmuted" th:text="${#lists.size(roles) + ' résultats'}">0 résultats</span>
+                        </div>
+                        <!-- Barre de recherche locale -->
+                        <div class="relative max-w-xs w-full">
+                            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textmuted text-sm"></i>
+                            <input type="text" id="roleSearchInput" onkeyup="filtrerRoles()" placeholder="Filtrer les rôles..."
+                                   class="w-full text-xs rounded-lg pl-9 pr-3 py-2 border outline-none bg-bgsurface border-bordercolor focus:ring-1 focus:ring-primary text-textmain placeholder-textmuted/50">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4" id="rolesListContainer">
+                        <article th:each="r, iter : ${roles}" class="role-card stagger rounded-xl bg-bgcard p-5 shadow-sm"
+                                 th:style="'animation-delay:' + ${iter.index * 0.05} + 's'">
+
+                            <!-- En-tête rôle -->
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 font-mono text-sm font-semibold bg-bgsubtle text-primary"
+                                         th:text="${r.nom != null && #strings.length(r.nom) >= 2 ? #strings.substring(r.nom,0,2).toUpperCase() : 'RO'}">RO</div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-serif text-lg font-semibold text-textmain" th:text="${r.nom}">Role</h3>
+                                            <span th:if="${r.active}" class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">Actif</span>
+                                            <span th:unless="${r.active}" class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-bgsubtle text-textmuted">Inactif</span>
+                                        </div>
+                                        <p class="text-sm text-textmuted mt-1 max-w-md" th:text="${r.description}">Description</p>
+                                    </div>
+                                </div>
+                                <!-- Switch de Rôle corrigé avec balise <label> -->
+                                <form th:action="@{/admin/roles/{id}/toggle(id=${r.id})}" method="post" class="inline shrink-0">
+                                    <input type="hidden" name="active" th:value="${!r.active}"/>
+                                    <label class="switch flex items-center cursor-pointer">
+                                        <input type="checkbox" th:checked="${r.active}" onchange="this.form.submit()">
+                                        <span class="track"><span class="thumb"></span></span>
+                                    </label>
+                                </form>
+                            </div>
+
+                            <!-- Permissions du rôle -->
+                            <div class="mt-4 pt-4 border-t" style="border-color: var(--color-bgsubtle);">
+                                <p class="text-[10px] font-mono uppercase tracking-wider text-textmuted mb-3">Permissions du rôle</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <th:block th:each="gp : ${permissions}">
+                                        <th:block th:with="hasPerm=${r.permissions != null && #lists.contains(r.permissions.![id], gp.id)}">
+
+                                            <!-- Option A : Permission associée -> Clic pour RETIRER -->
+                                            <form th:if="${hasPerm}"
+                                                  th:action="@{/admin/roles/{roleId}/permissions/{permissionId}/retirer(roleId=${r.id}, permissionId=${gp.id})}"
+                                                  method="post" class="inline">
+                                                <button type="submit" class="perm-chip active"
+                                                        th:classappend="${!gp.active} ? 'opacity-40'"
+                                                        th:title="${!gp.active} ? 'Désactivée globalement — Retirer ' + ${gp.nom} : 'Retirer ' + ${gp.nom}">
+                                                    <!-- Icône de cadenas si désactivée globalement, sinon icône de validation -->
+                                                    <i th:class="${gp.active} ? 'bi bi-check-circle-fill' : 'bi bi-lock-fill text-amber-500'"></i>
+                                                    <span th:text="${gp.nom}">perm</span>
+                                                </button>
+                                            </form>
+
+                                            <!-- Option B : Permission NON rattachée -> Clic pour AJOUTER -->
+                                            <form th:unless="${hasPerm}"
+                                                  th:action="@{/admin/roles/{roleId}/permissions/{permissionId}/ajouter(roleId=${r.id}, permissionId=${gp.id})}"
+                                                  method="post" class="inline">
+                                                <button type="submit" class="perm-chip inactive"
+                                                        th:classappend="${!gp.active} ? 'opacity-40'"
+                                                        th:title="${!gp.active} ? 'Désactivée globalement — Ajouter ' + ${gp.nom} : 'Ajouter ' + ${gp.nom}">
+                                                    <!-- Icône de cadenas si désactivée globalement, sinon icône d'ajout -->
+                                                    <i th:class="${gp.active} ? 'bi bi-plus-circle' : 'bi bi-lock-fill text-amber-500'"></i>
+                                                    <span th:text="${gp.nom}">perm</span>
+                                                </button>
+                                            </form>
+
+                                        </th:block>
+                                    </th:block>
+                                </div>
+                                <p th:if="${#lists.isEmpty(permissions)}" class="text-xs text-textmuted italic mt-2">Aucune permission disponible.</p>
+                            </div>
+                        </article>
+
+                        <div th:if="${#lists.isEmpty(roles)}" class="text-sm text-textmuted italic p-8 text-center rounded-xl bg-bgcard">
+                            Aucun rôle trouvé.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANNEAU DES PERMISSIONS GLOBALES (DROITE) -->
+                <aside>
+                    <div class="rounded-xl bg-bgcard p-5 sticky top-24 shadow-sm">
+                        <h2 class="font-serif text-xl font-semibold text-textmain mb-1">Permissions globales</h2>
+                        <p class="text-xs text-textmuted mb-4">Activez ou désactivez une permission pour tout le système.</p>
+
+                        <div class="space-y-2 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar">
+                            <div th:each="p : ${permissions}" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 bg-bgsurface hover:bg-bgsubtle/40 transition-colors">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-sm font-medium font-mono truncate text-textmain" th:text="${p.nom}">perm</p>
+                                        <i th:if="${!p.active}" class="bi bi-lock-fill text-amber-500 text-xs" title="Cette permission est inactive globalement"></i>
+                                    </div>
+                                    <p class="text-xs text-textmuted truncate" th:text="${p.description}">Description</p>
+                                </div>
+                                <!-- Switch de Permission corrigé avec balise <label> -->
+                                <form th:action="@{/admin/roles/permissions/{id}/toggle(id=${p.id})}" method="post" class="inline shrink-0">
+                                    <input type="hidden" name="active" th:value="${!p.active}"/>
+                                    <label class="switch flex items-center cursor-pointer">
+                                        <input type="checkbox" th:checked="${p.active}" onchange="this.form.submit()">
+                                        <span class="track"><span class="thumb"></span></span>
+                                    </label>
+                                </form>
+                            </div>
+                            <div th:if="${#lists.isEmpty(permissions)}" class="text-sm text-textmuted italic p-4 text-center">
+                                Aucune permission disponible.
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Script de filtrage des rôles -->
+<script layout:fragment="script" th:inline="javascript">
+    function filtrerRoles() {
+        const input = document.getElementById('roleSearchInput');
+        const filter = input.value.toLowerCase();
+        const cards = document.querySelectorAll('.role-card');
+
+        cards.forEach(card => {
+            const h3 = card.querySelector('h3');
+            const p = card.querySelector('p');
+            const txtValueH3 = h3 ? h3.textContent || h3.innerText : "";
+            const txtValueP = p ? p.textContent || p.innerText : "";
+
+            if (txtValueH3.toLowerCase().indexOf(filter) > -1 || txtValueP.toLowerCase().indexOf(filter) > -1) {
+                card.style.display = "";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
