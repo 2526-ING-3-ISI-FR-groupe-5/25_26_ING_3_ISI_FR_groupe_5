@@ -16,6 +16,9 @@ import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.Service
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesUtilisateurs.Services.ServiceImple.EnseignantService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.Services.ServiceImple.ProgrammationUEService;
 import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.SemestreService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Services.ServiceImple.AnneeAcademiqueService;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Annee_academique;
+import springboot_25_26_ING_3_ISI_FR_groupe_5.GestionAcademique.Entity.Semestre;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -40,6 +43,7 @@ public class PlageHoraireController {
     private final EnseignantService enseignantService;
     private final ProgrammationUEService programmationUEService;
     private final SemestreService semestreService;
+    private final AnneeAcademiqueService anneeAcademiqueService;
 
     // ============================================
     // PAGE PRINCIPALE — Emploi du temps d'une classe
@@ -82,6 +86,18 @@ public class PlageHoraireController {
         model.addAttribute("enseignants", enseignantService.getAll());
         model.addAttribute("form", new PlageHoraireRequest());
         model.addAttribute("formRecurrence", new PlageHoraireRecurrenceRequest());
+
+        // ✅ Correction : attributs manquants requis par le template Thymeleaf
+        Annee_academique anneeActive = anneeAcademiqueService.getAnneeActive();
+        model.addAttribute("anneeAcademique", anneeActive != null ? anneeActive.getNom() : "—");
+
+        if (semestreId != null) {
+            Semestre semestre = semestreService.findById(semestreId);
+            model.addAttribute("semestre", semestre != null ? semestre.getTypeSemestre().toString() : "—");
+        } else {
+            Semestre semestreActif = semestreService.getSemestreActif(classesService.getAnneeAcademiqueActive());
+            model.addAttribute("semestre", semestreActif != null ? semestreActif.getTypeSemestre().toString() : "—");
+        }
 
         return "emploi-du-temps/classe";
     }

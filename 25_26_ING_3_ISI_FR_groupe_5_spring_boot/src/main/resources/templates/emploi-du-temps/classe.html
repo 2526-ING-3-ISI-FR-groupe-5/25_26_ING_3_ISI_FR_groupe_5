@@ -205,7 +205,7 @@
 <!-- Liste des programmations (UEs) -->
 <div id="th-programmations" style="display:none">
     <span th:each="prog : ${programmations}"
-          th:attr="data-id=${prog.id}, data-code=${prog.ue.code}, data-nom=${prog.ue.nom}, data-couleur=${prog.couleur}">
+          th:attr="data-id=${prog.id}, data-code=${prog.ue.code}, data-nom=${prog.ue.nom}">
     </span>
 </div>
 <!-- ════════════════════════════════════════════════ -->
@@ -597,7 +597,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Payload commun
         const startFmt = formatLocalTime(currentEvent.start);
-        const endFmt   = formatLocalTime(currentEvent.end);
+        const endDate  = currentEvent.end || new Date(currentEvent.start.getTime() + 60 * 60 * 1000);
+        const endFmt   = formatLocalTime(endDate);
         const payload = {
             classeId:         CLASSE_ID,
             programmationUEId: currentEvent.extendedProps.programmationUEId || null,
@@ -678,6 +679,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const ev = info.event;
             const isPause = ev.extendedProps.isPause;
             ev.setProp('id', nextLocalId--); // ID temporaire négatif
+
+            // ✅ FullCalendar ne fixe pas toujours une heure de fin lors d'un drop
+            // depuis la sidebar (event.end === null). On force une durée par défaut
+            // d'1h pour éviter "heureFin <= heureDebut" lors de la sauvegarde,
+            // de la duplication ou de l'affectation d'enseignants.
+            if (!ev.end) {
+                const defaultEnd = new Date(ev.start.getTime() + 60 * 60 * 1000);
+                ev.setEnd(defaultEnd);
+            }
+
             if (isPause) {
                 // Crée directement la pause sans passer par la modale
                 const startFmt = formatLocalTime(ev.start);
@@ -812,7 +823,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (moved && targetColIndex !== startColIndex) {
                     const targetDate = allCols[targetColIndex].getAttribute('data-date');
                     const startTime  = event.start.toTimeString().slice(0, 8);
-                    const endTime    = (event.end || event.start).toTimeString().slice(0, 8);
+                    const endDate    = event.end || new Date(event.start.getTime() + 60 * 60 * 1000);
+                    const endTime    = endDate.toTimeString().slice(0, 8);
 
                     const payload = {
                         classeId:          CLASSE_ID,

@@ -1,6 +1,7 @@
 package springboot_25_26_ING_3_ISI_FR_groupe_5.GestionDesPresences.DTO.PlageHoraire;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,6 +40,8 @@ public class PlageHoraireRequest {
 
     private String salle;
     private String couleur;
+
+    @JsonAlias("titreAffiche")
     private String titre;
 
     // ✅ TypeSeance Enum
