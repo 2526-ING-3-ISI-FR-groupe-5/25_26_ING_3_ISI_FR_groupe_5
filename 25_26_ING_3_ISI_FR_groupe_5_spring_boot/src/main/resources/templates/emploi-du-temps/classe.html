@@ -4,16 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
-    <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
-
     <title th:text="'Emploi du Temps — ' + ${classe.nom}">Emploi du Temps</title>
 
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-    <script th:inline="javascript">
-        const BASE_URL = /*[[@{/emplois-du-temps}]]*/ '/emplois-du-temps';
-    </script>
+    <script th:src="@{/js/index.global.min.js}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -88,14 +85,14 @@
         .fc-theme-standard td, .fc-theme-standard .fc-scrollgrid { border-color: var(--border) !important; }
         .fc-col-header-cell { padding: 10px 0 !important; }
         .fc-col-header-cell-cushion { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--t2); text-decoration: none !important; }
-        .fc-timegrid-slot { height: 40px !important; }
+        .fc-timegrid-slot { height: 32px !important; }
         .fc-timegrid-slot-label-cushion, .fc-timegrid-axis-cushion { font-family: var(--mono); font-size: 10px; color: var(--t3); }
         .fc-toolbar { display: none !important; }
         .fc-day-today { background: rgba(0,0,0,.012) !important; }
 
         /* Event inner */
         .fc-v-event { border: none !important; border-radius: 5px !important; box-shadow: 0 1px 5px rgba(0,0,0,.13) !important; overflow: visible !important; }
-        .fc-event-main { padding: 0 !important; height: 100%; overflow: hidden; border-radius: 5px; cursor: pointer; }
+        .fc-event-main { padding: 0 !important; height: 100%; overflow: visible; border-radius: 5px; cursor: pointer; position: relative; }
         .ev { height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 5px 8px; overflow: hidden; position: relative; }
         .ev-t { font-size: 11px; font-weight: 600; color: #fff; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ev-s { font-size: 10px; color: rgba(255,255,255,.75); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -110,6 +107,37 @@
             height: 8px !important;
             background: rgba(255,255,255,0.3) !important;
             border-radius: 5px 5px 0 0 !important;
+        }
+
+        /* ── Poignée de duplication latérale (droite) ── */
+        .dup-handle {
+            position: absolute;
+            top: 0; right: -3px; bottom: 0;
+            width: 8px;
+            cursor: ew-resize;
+            z-index: 5;
+            border-radius: 0 5px 5px 0;
+        }
+        .dup-handle:hover { background: rgba(255,255,255,0.35); }
+
+        /* ── Poignée de duplication latérale (gauche) ── */
+        .dup-handle-left {
+            position: absolute;
+            top: 0; left: -3px; bottom: 0;
+            width: 8px;
+            cursor: ew-resize;
+            z-index: 5;
+            border-radius: 5px 0 0 5px;
+        }
+        .dup-handle-left:hover { background: rgba(255,255,255,0.35); }
+        .dup-ghost {
+            position: absolute;
+            pointer-events: none;
+            background: rgba(0,0,0,.18);
+            border: 2px dashed rgba(0,0,0,.35);
+            border-radius: 5px;
+            z-index: 999;
+            display: none;
         }
 
         /* ── MODAL ── */
@@ -132,17 +160,60 @@
         /* ── TOAST ── */
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(50px); opacity: 0; background: var(--text); color: #fff; padding: 9px 18px; border-radius: 100px; font-size: 12px; font-weight: 500; z-index: 300; transition: transform .25s, opacity .25s; pointer-events: none; white-space: nowrap; }
         #toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ── PRINT ── */
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            html, body { height: auto; overflow: visible; }
+            #sb { display: none !important; }
+            #topbar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #app { overflow: visible; }
+            #cal { overflow: visible; height: auto; }
+            #calendar { height: auto; }
+            .fc { height: auto !important; }
+            .fc-scroller { overflow: visible !important; height: auto !important; }
+            .fc-scroller-liquid-absolute { position: relative !important; }
+            .fc-timegrid-slot { height: 28px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .fc-v-event { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .fc-col-header-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #toast, #mbg { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
+<!-- ══════════════════════════════════════════════════
+     DONNÉES INJECTÉES PAR THYMELEAF
+     ══════════════════════════════════════════════════ -->
+<div id="th-data"
+     th:attr="
+        data-classe-id=${classe.id},
+        data-classe-nom=${classe.nom},
+        data-annee=${anneeAcademique},
+        data-semestre=${semestre},
+        data-debut-semaine=${debutSemaine}"
+     style="display:none">
+</div>
+
+<!-- Liste des enseignants -->
+<div id="th-enseignants" style="display:none">
+    <span th:each="ens : ${enseignants}"
+          th:attr="data-id=${ens.id}, data-nom=${ens.nom}, data-prenom=${ens.prenom}">
+    </span>
+</div>
+
+<!-- Liste des programmations (UEs) -->
+<div id="th-programmations" style="display:none">
+    <span th:each="prog : ${programmations}"
+          th:attr="data-id=${prog.id}, data-code=${prog.ue.code}, data-nom=${prog.ue.nom}, data-couleur=${prog.couleur}">
+    </span>
+</div>
+<!-- ════════════════════════════════════════════════ -->
+
 <div id="topbar">
     <div class="logo">
         <span th:text="${classe.nom}">Classe</span>
-        <span th:if="${classe.niveau != null and classe.niveau.specialite != null and classe.niveau.specialite.filiere != null}"
-              style="color: var(--t3); margin-left: 6px;"
-              th:text="'· ' + ${classe.niveau.specialite.filiere.nom}">
-        </span>
+        <span style="color: var(--t3); margin-left: 6px;" th:text="'· ' + ${classe.filiere}">· Filière</span>
     </div>
     <div class="nav">
         <button class="nb" id="btn-prev">‹</button>
@@ -150,7 +221,9 @@
         <button class="nb" id="btn-next">›</button>
         <input type="date" id="winput" />
     </div>
-    <div style="width:120px"></div>
+    <div class="nav">
+        <button class="nb" id="btn-pdf" title="Télécharger en PDF" style="width:auto; padding:0 10px; gap:4px;">⬇ PDF</button>
+    </div>
 </div>
 
 <div id="app">
@@ -167,15 +240,7 @@
                 <div class="dc-badge">Glisser-déposer</div>
             </div>
             <div class="cards-list" id="matieres-list">
-                <div th:each="prog : ${programmations}"
-                     class="dc fc-event"
-                     th:data-prog-id="${prog.id}"
-                     th:data-title="${prog.ue.code + ' - ' + prog.ue.nom}"
-                     data-color="#1e3a5f" data-pause="0"
-                     style="background:#1e3a5f">
-                    <div class="dc-t" th:text="${prog.ue.code + ' - ' + prog.ue.nom}"></div>
-                    <div class="dc-badge">Glisser pour configurer</div>
-                </div>
+                <!-- Rempli dynamiquement depuis th-programmations -->
             </div>
         </div>
     </div>
@@ -198,11 +263,7 @@
             <div class="fg">
                 <label class="lbl">Enseignants</label>
                 <div class="chip-grid" id="m-teacher-chips">
-                    <div th:each="ens : ${enseignants}"
-                         class="chip chip-modal"
-                         th:data-prof-id="${ens.id}"
-                         th:text="${ens.nom + ' ' + ens.prenom}">
-                    </div>
+                    <!-- Rempli dynamiquement depuis th-enseignants -->
                 </div>
             </div>
             <div class="lbl" style="margin-top: 15px;">Couleur de la plage</div>
@@ -225,414 +286,616 @@
     </div>
 </div>
 <div id="toast"></div>
+<div class="dup-ghost" id="dup-ghost"></div>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    document.addEventListener('DOMContentLoaded', () => {
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-        const CLASSE_ID = /*[[${classe.id}]]*/ 1;
-        const PLAGES_INITIALES = /*[[${plages}]]*/ [];
-        const DEBUT_SEMAINE = /*[[${debutSemaine}]]*/ '2024-01-01';
+    // ═══════════════════════════════════════════════════
+    // LECTURE DES DONNÉES INJECTÉES PAR THYMELEAF
+    // ═══════════════════════════════════════════════════
+    const thData      = document.getElementById('th-data');
+    const CLASSE_ID   = parseInt(thData.dataset.classeId);
+    const CLASSE_NOM  = thData.dataset.classeNom;
+    const ANNEE_ACADEMIQUE = thData.dataset.annee;
+    const SEMESTRE    = thData.dataset.semestre;
+    const DEBUT_SEMAINE = thData.dataset.debutSemaine;
 
-        // ═══════════════════════════════════════════════════
-        // JWT + CSRF
-        // ═══════════════════════════════════════════════════
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return null;
+    // Enseignants
+    const ENSEIGNANTS = Array.from(
+        document.querySelectorAll('#th-enseignants span')
+    ).map(el => ({
+        id:     parseInt(el.dataset.id),
+        nom:    el.dataset.nom,
+        prenom: el.dataset.prenom
+    }));
+
+    // Programmations (UEs disponibles dans la sidebar)
+    const PROGRAMMATIONS = Array.from(
+        document.querySelectorAll('#th-programmations span')
+    ).map(el => ({
+        id:      parseInt(el.dataset.id),
+        couleur: el.dataset.couleur || '#1e3a5f',
+        ue: {
+            code: el.dataset.code,
+            nom:  el.dataset.nom
         }
+    }));
 
-        // CSRF lu depuis les <meta> exposes par Spring Security
-        const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-XSRF-TOKEN';
+    // ═══════════════════════════════════════════════════
+    // CONSTRUCTION DYNAMIQUE DE LA SIDEBAR
+    // ═══════════════════════════════════════════════════
+    const matList = document.getElementById('matieres-list');
+    PROGRAMMATIONS.forEach(prog => {
+        const div = document.createElement('div');
+        div.className = 'dc fc-event';
+        div.setAttribute('data-prog-id', prog.id);
+        div.setAttribute('data-title', `${prog.ue.code} - ${prog.ue.nom}`);
+        div.setAttribute('data-color', prog.couleur);
+        div.setAttribute('data-pause', '0');
+        div.style.background = prog.couleur;
+        div.innerHTML = `<div class="dc-t">${prog.ue.code} - ${prog.ue.nom}</div><div class="dc-badge">Glisser pour configurer</div>`;
+        matList.appendChild(div);
+    });
 
-        function applyAuthHeaders(headers) {
-            const token = getCookie('JWT_TOKEN');
-            if (token) headers['Authorization'] = 'Bearer ' + token;
-            if (csrfToken) headers[csrfHeader] = csrfToken;
-            return headers;
-        }
+    // ═══════════════════════════════════════════════════
+    // CONSTRUCTION DYNAMIQUE DES CHIPS ENSEIGNANTS
+    // ═══════════════════════════════════════════════════
+    const chipsContainer = document.getElementById('m-teacher-chips');
+    ENSEIGNANTS.forEach(ens => {
+        const chip = document.createElement('div');
+        chip.className = 'chip chip-modal';
+        chip.setAttribute('data-prof-id', ens.id);
+        chip.textContent = `${ens.nom} ${ens.prenom}`;
+        chipsContainer.appendChild(chip);
+    });
 
-        const getHeaders     = () => applyAuthHeaders({ 'Content-Type': 'application/json' });
-        const getFormHeaders = () => applyAuthHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
+    // ═══════════════════════════════════════════════════
+    // STATE ET UTILS
+    // ═══════════════════════════════════════════════════
+    let calendar, fcDrag;
+    let currentEvent = null;
+    let isNewEvent = false;
+    let modalSelectedTeachers = new Set();
+    let modalColor = '#1e3a5f';
+    let nextLocalId = -1; // IDs négatifs pour les événements non encore sauvegardés
 
-        // ═══════════════════════════════════════════════════
-        // STATE ET UTILS
-        // ═══════════════════════════════════════════════════
-        let calendar, fcDrag;
-        let currentEvent = null;
-        let isNewEvent = false;
-        let modalSelectedTeachers = new Set();
-        let modalColor = '#1e3a5f';
+    const $ = id => document.getElementById(id);
+    let tt;
 
-        const $ = id => document.getElementById(id);
-        let tt;
+    function toast(msg, isError = false) {
+        clearTimeout(tt);
+        const toastEl = $('toast');
+        toastEl.textContent = msg;
+        toastEl.style.background = isError ? '#dc2626' : 'var(--text)';
+        toastEl.classList.add('on');
+        tt = setTimeout(() => toastEl.classList.remove('on'), 3000);
+    }
 
-        function toast(msg, isError = false) {
-            clearTimeout(tt);
-            const toastEl = $('toast');
-            toastEl.textContent = msg;
-            toastEl.style.background = isError ? '#dc2626' : 'var(--text)';
-            toastEl.classList.add('on');
-            tt = setTimeout(() => toastEl.classList.remove('on'), 3000);
-        }
-
-        function formatIso(dateObj) {
-            const d = new Date(dateObj);
-            const tzOffset = d.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(d - tzOffset)).toISOString().slice(0, -1);
-            return {
-                jour: localISOTime.slice(0, 10),
-                heure: localISOTime.slice(11, 19)
-            };
-        }
-
-        // ═══════════════════════════════════════════════════
-        // DRAG & DROP SIDEBAR
-        // ═══════════════════════════════════════════════════
-        if (FullCalendar.Draggable) {
-            fcDrag = new FullCalendar.Draggable($('sb-body'), {
-                itemSelector: '.fc-event',
-                eventData: el => {
-                    const isPause = el.getAttribute('data-pause') === '1';
-                    return {
-                        title: el.getAttribute('data-title'),
-                        backgroundColor: el.getAttribute('data-color'),
-                        borderColor: el.getAttribute('data-color'),
-                        create: true,
-                        extendedProps: {
-                            isPause: isPause,
-                            programmationUEId: isPause ? null : el.getAttribute('data-prog-id'),
-                            enseignantIds: [],
-                            salle: ''
-                        }
-                    };
-                }
-            });
-        }
-
-        // ═══════════════════════════════════════════════════
-        // MODALE
-        // ═══════════════════════════════════════════════════
-        const initModalSwatches = () => {
-            const cont = $('sw-modal'), pickBtn = $('cpick-modal-btn'), pick = $('cpick-modal');
-            cont.querySelectorAll('.sw').forEach(sw => {
-                sw.addEventListener('click', () => {
-                    cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
-                    sw.classList.add('on');
-                    modalColor = sw.dataset.c;
-                });
-            });
-            pickBtn.addEventListener('click', () => pick.click());
-            pick.addEventListener('input', e => {
-                cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
-                pickBtn.classList.add('on');
-                modalColor = e.target.value;
-            });
+    function formatLocalTime(dateObj) {
+        const d = new Date(dateObj);
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        const localISO = new Date(d - tzOffset).toISOString().slice(0, -1);
+        return {
+            jour:  localISO.slice(0, 10),
+            heure: localISO.slice(11, 19)
         };
-        initModalSwatches();
+    }
 
-        const setModalColor = (color) => {
-            const cont = $('sw-modal');
-            cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
-            const exact = cont.querySelector(`.sw[data-c="${color}"]`);
-            if (exact) exact.classList.add('on');
-            else { $('cpick-modal-btn').classList.add('on'); $('cpick-modal').value = color; }
-        };
+    // ═══════════════════════════════════════════════════
+    // API BACK-END
+    // ═══════════════════════════════════════════════════
 
-        document.querySelectorAll('.chip-modal').forEach(chip => {
-            chip.addEventListener('click', () => {
-                const profId = chip.dataset.profId;
-                if (modalSelectedTeachers.has(profId)) {
-                    modalSelectedTeachers.delete(profId);
-                    chip.classList.remove('on');
-                } else {
-                    modalSelectedTeachers.add(profId);
-                    chip.classList.add('on');
-                }
-            });
+    /** Charge les plages de la semaine depuis le serveur */
+    async function fetchPlages(dateDebut) {
+        const res = await fetch(`/api/plages?classeId=${CLASSE_ID}&dateDebut=${dateDebut}`);
+        if (!res.ok) throw new Error('Erreur chargement plages');
+        return res.json();
+    }
+
+    /** Crée une nouvelle plage côté serveur */
+    async function createPlage(payload) {
+        const res = await fetch('/api/plages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+        if (!res.ok) throw new Error('Erreur création plage');
+        return res.json(); // retourne la plage avec son vrai ID
+    }
 
-        function openModal(event, isNew) {
-            currentEvent = event;
-            isNewEvent = isNew;
-            const isPause = event.extendedProps && event.extendedProps.isPause;
-            const matiere = event.title.split('\n')[0] || event.title;
-            $('m-titre-matiere').textContent = isPause ? '⏸ PAUSE' : matiere;
-            if (isPause) {
-                $('m-config-cours').style.display = 'none';
-                $('m-desc-pause').style.display = 'block';
-                $('m-save').style.display = 'none';
-            } else {
-                $('m-config-cours').style.display = 'block';
-                $('m-desc-pause').style.display = 'none';
-                $('m-save').style.display = 'block';
-                $('m-salle').value = (event.extendedProps && event.extendedProps.salle) || '';
-                modalColor = event.backgroundColor || '#1e3a5f';
-                setModalColor(modalColor);
-                const existingIds = (event.extendedProps && event.extendedProps.enseignantIds) || [];
-                modalSelectedTeachers = new Set(existingIds.map(String));
-                document.querySelectorAll('.chip-modal').forEach(chip => {
-                    chip.classList.toggle('on', modalSelectedTeachers.has(chip.dataset.profId));
-                });
-            }
-            $('mbg').classList.add('on');
-        }
-
-        function closeModal(cancelNew = false) {
-            $('mbg').classList.remove('on');
-            if (cancelNew && isNewEvent && currentEvent && isNaN(parseInt(currentEvent.id))) {
-                currentEvent.remove();
-            }
-            currentEvent = null;
-        }
-
-        $('m-cancel').addEventListener('click', () => closeModal(true));
-        $('m-close').addEventListener('click', () => closeModal(true));
-        $('mbg').addEventListener('click', e => { if (e.target === $('mbg')) closeModal(true); });
-
-        // Fermeture modale au clavier (Escape)
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && $('mbg').classList.contains('on')) closeModal(true);
+    /** Met à jour une plage existante côté serveur */
+    async function updatePlage(id, payload) {
+        const res = await fetch(`/api/plages/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+        if (!res.ok) throw new Error('Erreur mise à jour plage');
+        return res.json();
+    }
 
-        // ── SUPPRIMER ──
-        $('m-delete').addEventListener('click', async () => {
-            if (!currentEvent) return;
-            const realId = currentEvent.id;
-            if (!isNaN(parseInt(realId))) {
-                try {
-                    const res = await fetch(`${BASE_URL}/${realId}/supprimer?classeId=${CLASSE_ID}`, {
-                        method: 'POST',
-                        headers: getHeaders()
-                    });
-                    const data = await res.json();
-                    if (data.succes !== false) {
-                        currentEvent.remove();
-                        toast('Plage supprimée');
-                    } else {
-                        toast(data.message || 'Erreur lors de la suppression', true);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    toast('Erreur serveur', true);
-                }
-            } else {
-                currentEvent.remove();
-            }
-            closeModal(false);
-        });
+    /** Supprime une plage côté serveur */
+    async function deletePlage(id) {
+        const res = await fetch(`/api/plages/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Erreur suppression plage');
+    }
 
-        // ── MODIFIER ──
-        $('m-save').addEventListener('click', async () => {
-            if (!currentEvent) return;
-            const realId = currentEvent.id;
-            const salle = $('m-salle').value.trim();
-            const profsArr = Array.from(modalSelectedTeachers).map(Number);
-            const matiere = currentEvent.title.split('\n')[0];
-            const profsNoms = Array.from(modalSelectedTeachers).map(id => {
-                const chip = document.querySelector(`.chip-modal[data-prof-id="${id}"]`);
-                return chip ? chip.textContent.trim() : '';
-            }).filter(n => n).join(' / ');
-            const sousTitre = [profsNoms, salle].filter(x => x).join(' · ');
-            const nouveauTitre = sousTitre ? `${matiere}\n${sousTitre}` : matiere;
-            const startObj = formatIso(currentEvent.start);
-            const endObj = formatIso(currentEvent.end || new Date(currentEvent.start.getTime() + 3600000));
-            const formData = new URLSearchParams();
-            formData.append('classeId', CLASSE_ID);
-            formData.append('jour', startObj.jour);
-            formData.append('heureDebut', startObj.heure);
-            formData.append('heureFin', endObj.heure);
-            formData.append('couleur', modalColor);
-            formData.append('salle', salle);
-            profsArr.forEach(p => formData.append('enseignantIds', p));
-            try {
-                const res = await fetch(`${BASE_URL}/${realId}/modifier`, {
-                    method: 'POST',
-                    headers: getFormHeaders(),
-                    body: formData.toString()
-                });
-                currentEvent.setProp('title', nouveauTitre);
-                currentEvent.setProp('backgroundColor', modalColor);
-                currentEvent.setProp('borderColor', modalColor);
-                currentEvent.setExtendedProp('enseignantIds', profsArr);
-                currentEvent.setExtendedProp('salle', salle);
-                toast('Plage enregistrée !');
-            } catch (err) {
-                console.error(err);
-                toast('Erreur de sauvegarde', true);
-            }
-            closeModal(false);
-        });
-
-        // ═══════════════════════════════════════════════════
-        // FULLCALENDAR INIT
-        // ═══════════════════════════════════════════════════
-        const eventsData = PLAGES_INITIALES.map(p => ({
+    /** Convertit une plage serveur en événement FullCalendar */
+    function plageToEvent(p) {
+        return {
             id: p.id,
             title: p.titreAffiche + (p.sousTitreAffiche ? '\n' + p.sousTitreAffiche : ''),
             start: p.jour + 'T' + p.heureDebut,
-            end: (p.jourFin ? p.jourFin : p.jour) + 'T' + p.heureFin,
+            end:   (p.jourFin || p.jour) + 'T' + p.heureFin,
             backgroundColor: p.couleur || '#1e3a5f',
-            borderColor: p.couleur || '#1e3a5f',
+            borderColor:     p.couleur || '#1e3a5f',
             extendedProps: {
-                isPause: p.typeSeance === 'PAUSE',
+                isPause:          p.typeSeance === 'PAUSE',
                 programmationUEId: p.programmationUEId,
-                salle: p.salle,
-                enseignantIds: p.enseignants ? p.enseignants.map(e => e.id) : []
+                salle:            p.salle || '',
+                enseignantIds:    (p.enseignants || []).map(e => e.id)
             }
-        }));
+        };
+    }
 
-        calendar = new FullCalendar.Calendar($('calendar'), {
-            locale: 'fr',
-            initialView: 'timeGridWeek',
-            initialDate: DEBUT_SEMAINE,
-            firstDay: 1,
-            hiddenDays: [0],
-            headerToolbar: false,
-            dayHeaderFormat: { weekday: 'long', day: 'numeric' },
-            slotMinTime: '07:00:00',
-            slotMaxTime: '20:00:00',
-            slotDuration: '00:30:00',
-            allDaySlot: false,
-            editable: true,
-            droppable: true,
-
-            // ✅ NOUVEAU — permet l'étirement depuis le haut
-            eventResizableFromStart: true,
-
-            events: eventsData,
-
-            eventContent(arg) {
-                const parts = arg.event.title.split('\n');
-                if (arg.event.extendedProps && arg.event.extendedProps.isPause) {
-                    return { html: '<div class="ev-pause"><span>⏸ PAUSE</span></div>' };
-                }
-                return {
-                    html: '<div class="ev"><div class="ev-t">' + (parts[0] || '') + '</div>' +
-                        (parts[1] ? '<div class="ev-s">' + parts[1] + '</div>' : '') +
-                        '</div>'
-                };
-            },
-
-            async eventReceive(info) {
-                const ev = info.event;
-                const isPause = ev.extendedProps.isPause;
-                const startObj = formatIso(ev.start);
-                const endObj = formatIso(ev.end || new Date(ev.start.getTime() + 3600000));
-                const payload = {
-                    classeId: CLASSE_ID,
-                    jour: startObj.jour,
-                    heureDebut: startObj.heure,
-                    heureFin: endObj.heure,
-                    programmationUEId: ev.extendedProps.programmationUEId,
-                    typeSeance: isPause ? 'PAUSE' : 'CM',
-                    couleur: ev.backgroundColor,
-                    titre: isPause ? "PAUSE" : ev.title
-                };
-                try {
-                    const res = await fetch(`${BASE_URL}/drag-drop`, {
-                        method: 'POST',
-                        headers: getHeaders(),
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await res.json();
-                    if (data.succes) {
-                        ev.setProp('id', data.id);
-                        if (!isPause) openModal(ev, true);
-                    } else {
-                        toast(data.message || 'Erreur lors du placement', true);
-                        ev.remove();
-                    }
-                } catch (err) {
-                    console.error(err);
-                    toast('Erreur de connexion', true);
-                    ev.remove();
-                }
-            },
-
-            eventDrop: handleEventMoveResize,
-            eventResize: handleEventMoveResize,  // ✅ gère haut ET bas
-
-            eventClick(info) {
-                openModal(info.event, false);
-            },
-
-            datesSet(info) {
-                const s = info.start;
-                const e = new Date(info.end); e.setDate(e.getDate() - 1);
-                const f = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-                $('wlabel').textContent = `${f(s)} — ${f(e)}`;
-            }
-        });
-
-        calendar.render();
-
-        // ═══════════════════════════════════════════════════
-        // HANDLER DÉPLACEMENT ET REDIMENSIONNEMENT
-        // ✅ Envoie heureDebut + heureFin + jour + jourFin
-        // ═══════════════════════════════════════════════════
-        async function handleEventMoveResize(info) {
-            const ev = info.event;
-            const startObj = formatIso(ev.start);
-            const endObj = formatIso(ev.end);
-
-            const payload = {
-                classeId: CLASSE_ID,
-                jour: startObj.jour,          // ✅ jour de début (peut changer si déplacé)
-                jourFin: endObj.jour,          // ✅ jour de fin (pour multi-jours éventuels)
-                heureDebut: startObj.heure,    // ✅ peut changer si étiré vers le haut
-                heureFin: endObj.heure,        // ✅ peut changer si étiré vers le bas
-                programmationUEId: ev.extendedProps.programmationUEId,
-                typeSeance: ev.extendedProps.isPause ? 'PAUSE' : 'CM',
-                enseignantIds: ev.extendedProps.enseignantIds
-            };
-
-            try {
-                const res = await fetch(`${BASE_URL}/${ev.id}/deplacer`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (!data.succes) {
-                    toast(data.message || 'Conflit horaire', true);
-                    info.revert();
-                } else {
-                    toast('✅ Plage mise à jour');
-                }
-            } catch (err) {
-                console.error(err);
-                toast('Erreur de connexion', true);
-                info.revert();
-            }
+    /** Charge et affiche les plages pour une semaine donnée */
+    async function loadWeek(dateDebut) {
+        try {
+            const plages = await fetchPlages(dateDebut);
+            calendar.removeAllEvents();
+            plages.forEach(p => calendar.addEvent(plageToEvent(p)));
+        } catch (e) {
+            toast('Impossible de charger les plages', true);
         }
+    }
 
-        // ═══════════════════════════════════════════════════
-        // NAV BAR
-        // ═══════════════════════════════════════════════════
-        $('btn-prev').addEventListener('click', () => {
-            const d = new Date(calendar.view.activeStart);
-            d.setDate(d.getDate() - 7);
-            window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
-        });
-
-        $('btn-next').addEventListener('click', () => {
-            const d = new Date(calendar.view.activeStart);
-            d.setDate(d.getDate() + 7);
-            window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${d.toISOString().slice(0, 10)}`;
-        });
-
-        $('winput').addEventListener('change', e => {
-            if (e.target.value) {
-                window.location.href = `/emplois-du-temps/classe/${CLASSE_ID}?semaine=${e.target.value}`;
+    // ═══════════════════════════════════════════════════
+    // DRAG & DROP SIDEBAR
+    // ═══════════════════════════════════════════════════
+    if (FullCalendar.Draggable) {
+        fcDrag = new FullCalendar.Draggable($('sb-body'), {
+            itemSelector: '.fc-event',
+            eventData: el => {
+                const isPause = el.getAttribute('data-pause') === '1';
+                return {
+                    title: el.getAttribute('data-title'),
+                    backgroundColor: el.getAttribute('data-color'),
+                    borderColor:     el.getAttribute('data-color'),
+                    create: true,
+                    extendedProps: {
+                        isPause:          isPause,
+                        programmationUEId: isPause ? null : el.getAttribute('data-prog-id'),
+                        enseignantIds:    [],
+                        salle:            ''
+                    }
+                };
             }
         });
-        $('winput').value = DEBUT_SEMAINE;
+    }
+
+    // ═══════════════════════════════════════════════════
+    // MODALE
+    // ═══════════════════════════════════════════════════
+    const initModalSwatches = () => {
+        const cont = $('sw-modal'), pickBtn = $('cpick-modal-btn'), pick = $('cpick-modal');
+        cont.querySelectorAll('.sw').forEach(sw => {
+            sw.addEventListener('click', () => {
+                cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
+                sw.classList.add('on');
+                modalColor = sw.dataset.c;
+            });
+        });
+        pickBtn.addEventListener('click', () => pick.click());
+        pick.addEventListener('input', e => {
+            cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
+            pickBtn.classList.add('on');
+            modalColor = e.target.value;
+        });
+    };
+    initModalSwatches();
+
+    const setModalColor = (color) => {
+        const cont = $('sw-modal');
+        cont.querySelectorAll('.sw, .sw-pick').forEach(s => s.classList.remove('on'));
+        const exact = cont.querySelector(`.sw[data-c="${color}"]`);
+        if (exact) exact.classList.add('on');
+        else { $('cpick-modal-btn').classList.add('on'); $('cpick-modal').value = color; }
+    };
+
+    document.getElementById('m-teacher-chips').addEventListener('click', e => {
+        const chip = e.target.closest('.chip-modal');
+        if (!chip) return;
+        const profId = chip.dataset.profId;
+        if (modalSelectedTeachers.has(profId)) {
+            modalSelectedTeachers.delete(profId);
+            chip.classList.remove('on');
+        } else {
+            modalSelectedTeachers.add(profId);
+            chip.classList.add('on');
+        }
     });
-    /*]]>*/
+
+    function openModal(event, isNew) {
+        currentEvent = event;
+        isNewEvent   = isNew;
+        const isPause = event.extendedProps && event.extendedProps.isPause;
+        const matiere = event.title.split('\n')[0] || event.title;
+        $('m-titre-matiere').textContent = isPause ? '⏸ PAUSE' : matiere;
+        if (isPause) {
+            $('m-config-cours').style.display = 'none';
+            $('m-desc-pause').style.display   = 'block';
+            $('m-save').style.display         = 'none';
+        } else {
+            $('m-config-cours').style.display = 'block';
+            $('m-desc-pause').style.display   = 'none';
+            $('m-save').style.display         = 'block';
+            $('m-salle').value = (event.extendedProps && event.extendedProps.salle) || '';
+            modalColor = event.backgroundColor || '#1e3a5f';
+            setModalColor(modalColor);
+            const existingIds = (event.extendedProps && event.extendedProps.enseignantIds) || [];
+            modalSelectedTeachers = new Set(existingIds.map(String));
+            document.querySelectorAll('.chip-modal').forEach(chip => {
+                chip.classList.toggle('on', modalSelectedTeachers.has(chip.dataset.profId));
+            });
+        }
+        $('mbg').classList.add('on');
+    }
+
+    function closeModal(cancelNew = false) {
+        $('mbg').classList.remove('on');
+        if (cancelNew && isNewEvent && currentEvent) {
+            currentEvent.remove();
+        }
+        currentEvent = null;
+    }
+
+    $('m-cancel').addEventListener('click', () => closeModal(true));
+    $('m-close').addEventListener('click',  () => closeModal(true));
+    $('mbg').addEventListener('click', e => { if (e.target === $('mbg')) closeModal(true); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && $('mbg').classList.contains('on')) closeModal(true);
+    });
+
+    // ── SUPPRIMER ──
+    $('m-delete').addEventListener('click', async () => {
+        if (!currentEvent) return;
+        const id = parseInt(currentEvent.id);
+        currentEvent.remove();
+        closeModal(false);
+        if (id > 0) {
+            try {
+                await deletePlage(id);
+                toast('Plage supprimée');
+            } catch (e) {
+                toast('Erreur lors de la suppression', true);
+            }
+        } else {
+            toast('Plage supprimée');
+        }
+    });
+
+    // ── ENREGISTRER (création ou modification) ──
+    $('m-save').addEventListener('click', async () => {
+        if (!currentEvent) return;
+        const salle     = $('m-salle').value.trim();
+        const profsArr  = Array.from(modalSelectedTeachers).map(Number);
+        const matiere   = currentEvent.title.split('\n')[0];
+        const profsNoms = profsArr.map(id => {
+            const chip = document.querySelector(`.chip-modal[data-prof-id="${id}"]`);
+            return chip ? chip.textContent.trim() : '';
+        }).filter(n => n).join(' / ');
+        const sousTitre   = [profsNoms, salle].filter(x => x).join(' · ');
+        const nouveauTitre = sousTitre ? `${matiere}\n${sousTitre}` : matiere;
+
+        // Mise à jour visuelle immédiate
+        currentEvent.setProp('title',           nouveauTitre);
+        currentEvent.setProp('backgroundColor', modalColor);
+        currentEvent.setProp('borderColor',     modalColor);
+        currentEvent.setExtendedProp('enseignantIds', profsArr);
+        currentEvent.setExtendedProp('salle',         salle);
+
+        // Payload commun
+        const startFmt = formatLocalTime(currentEvent.start);
+        const endFmt   = formatLocalTime(currentEvent.end);
+        const payload = {
+            classeId:         CLASSE_ID,
+            programmationUEId: currentEvent.extendedProps.programmationUEId || null,
+            jour:             startFmt.jour,
+            heureDebut:       startFmt.heure,
+            jourFin:          endFmt.jour,
+            heureFin:         endFmt.heure,
+            typeSeance:       'CM',
+            salle:            salle,
+            couleur:          modalColor,
+            titreAffiche:     matiere,
+            sousTitreAffiche: sousTitre,
+            enseignantIds:    profsArr
+        };
+
+        const id = parseInt(currentEvent.id);
+        closeModal(false);
+
+        try {
+            if (id > 0) {
+                // Mise à jour d'une plage existante
+                await updatePlage(id, payload);
+                toast('Plage enregistrée !');
+            } else {
+                // Création d'une nouvelle plage
+                const created = await createPlage(payload);
+                // Remplace l'ID temporaire par le vrai ID serveur
+                currentEvent && currentEvent.setProp('id', created.id);
+                toast('Plage créée !');
+            }
+        } catch (e) {
+            toast('Erreur lors de la sauvegarde', true);
+        }
+    });
+
+    // ═══════════════════════════════════════════════════
+    // FULLCALENDAR INIT
+    // ═══════════════════════════════════════════════════
+    calendar = new FullCalendar.Calendar($('calendar'), {
+        locale: 'fr',
+        initialView: 'timeGridWeek',
+        initialDate: DEBUT_SEMAINE,
+        firstDay: 1,
+        hiddenDays: [0],
+        duration: { days: 6 },
+        headerToolbar: false,
+        dayHeaderFormat: { weekday: 'long', day: 'numeric' },
+        slotMinTime: '08:00:00',
+        slotMaxTime: '17:00:00',
+        slotDuration: '00:30:00',
+        allDaySlot: false,
+        editable: true,
+        droppable: true,
+        eventResizableFromStart: true,
+        events: [],  // Chargées via fetchPlages au datesSet
+
+        eventContent(arg) {
+            const parts = arg.event.title.split('\n');
+            if (arg.event.extendedProps && arg.event.extendedProps.isPause) {
+                return { html: '<div class="dup-handle-left"></div><div class="ev-pause"><span>⏸ PAUSE</span></div><div class="dup-handle"></div>' };
+            }
+            return {
+                html: '<div class="dup-handle-left"></div><div class="ev"><div class="ev-t">' + (parts[0] || '') + '</div>' +
+                    (parts[1] ? '<div class="ev-s">' + parts[1] + '</div>' : '') +
+                    '</div><div class="dup-handle"></div>'
+            };
+        },
+
+        eventDidMount(arg) {
+            const handle = arg.el.querySelector('.dup-handle');
+            if (handle) initDupHandle(handle, arg.event);
+            const handleLeft = arg.el.querySelector('.dup-handle-left');
+            if (handleLeft) initDupHandle(handleLeft, arg.event);
+        },
+
+        // Drag depuis la sidebar → ouverture modale pour configurer avant création BDD
+        eventReceive(info) {
+            const ev = info.event;
+            const isPause = ev.extendedProps.isPause;
+            ev.setProp('id', nextLocalId--); // ID temporaire négatif
+            if (isPause) {
+                // Crée directement la pause sans passer par la modale
+                const startFmt = formatLocalTime(ev.start);
+                const endFmt   = formatLocalTime(ev.end);
+                createPlage({
+                    classeId:         CLASSE_ID,
+                    programmationUEId: null,
+                    jour:             startFmt.jour,
+                    heureDebut:       startFmt.heure,
+                    jourFin:          endFmt.jour,
+                    heureFin:         endFmt.heure,
+                    typeSeance:       'PAUSE',
+                    salle:            '',
+                    couleur:          '#52525b',
+                    titreAffiche:     'PAUSE',
+                    sousTitreAffiche: '',
+                    enseignantIds:    []
+                }).then(created => {
+                    ev.setProp('id', created.id);
+                    toast('Pause ajoutée');
+                }).catch(() => toast('Erreur création pause', true));
+            } else {
+                openModal(ev, true);
+            }
+        },
+
+        eventDrop:   handleEventMoveResize,
+        eventResize: handleEventMoveResize,
+
+        eventClick(info) {
+            if (suppressClick) { suppressClick = false; return; }
+            openModal(info.event, false);
+        },
+
+        datesSet(info) {
+            const s = info.start;
+            const e = new Date(info.end); e.setDate(e.getDate() - 1);
+            const f = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+            $('wlabel').textContent = `${f(s)} — ${f(e)}`;
+
+            // Charge les plages de la nouvelle semaine depuis le serveur
+            const tzOffset = s.getTimezoneOffset() * 60000;
+            const isoDate  = new Date(s - tzOffset).toISOString().slice(0, 10);
+            loadWeek(isoDate);
+            $('winput').value = isoDate;
+        }
+    });
+
+    calendar.render();
+
+    // ═══════════════════════════════════════════════════
+    // HANDLER DÉPLACEMENT ET REDIMENSIONNEMENT → API
+    // ═══════════════════════════════════════════════════
+    async function handleEventMoveResize(info) {
+        const ev  = info.event;
+        const id  = parseInt(ev.id);
+        if (id <= 0) return; // ID temporaire, pas encore en BDD
+
+        const startFmt = formatLocalTime(ev.start);
+        const endFmt   = formatLocalTime(ev.end);
+        try {
+            await updatePlage(id, {
+                jour:      startFmt.jour,
+                heureDebut: startFmt.heure,
+                jourFin:   endFmt.jour,
+                heureFin:  endFmt.heure
+            });
+            toast('✅ Plage mise à jour');
+        } catch (e) {
+            info.revert();
+            toast('Erreur mise à jour', true);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // DUPLICATION LATÉRALE (étirer l'événement vers un autre jour)
+    // ═══════════════════════════════════════════════════
+    let suppressClick = false;
+
+    function initDupHandle(handle, event) {
+        handle.addEventListener('mousedown', startDup);
+        handle.addEventListener('touchstart', startDup, { passive: false });
+
+        function startDup(startEvt) {
+            startEvt.preventDefault();
+            startEvt.stopPropagation();
+            suppressClick = true;
+
+            const calRect = $('calendar').getBoundingClientRect();
+            const eventEl = handle.closest('.fc-event');
+            const colEl   = eventEl.closest('.fc-timegrid-col');
+            const allCols = Array.from(document.querySelectorAll('.fc-timegrid-col[data-date]'));
+            const startColIndex = allCols.indexOf(colEl);
+            const colWidth = colEl.getBoundingClientRect().width;
+
+            const ghost = $('dup-ghost');
+            const eRect = eventEl.getBoundingClientRect();
+            ghost.style.height  = eRect.height + 'px';
+            ghost.style.top     = (eRect.top - calRect.top + $('calendar').scrollTop) + 'px';
+            ghost.style.background = event.backgroundColor || '#1e3a5f';
+            ghost.style.opacity = '0.35';
+            ghost.style.border  = '2px dashed ' + (event.backgroundColor || '#1e3a5f');
+
+            let targetColIndex = startColIndex;
+            let moved = false;
+            const getClientX = ev => ev.touches ? ev.touches[0].clientX : ev.clientX;
+
+            function onMove(moveEvt) {
+                moveEvt.preventDefault();
+                const clientX = getClientX(moveEvt);
+                const deltaX  = clientX - (eRect.left + eRect.width / 2);
+                let colShift  = Math.round(deltaX / colWidth);
+                targetColIndex = Math.min(allCols.length - 1, Math.max(0, startColIndex + colShift));
+                if (targetColIndex !== startColIndex) {
+                    moved = true;
+                    const tRect = allCols[targetColIndex].getBoundingClientRect();
+                    ghost.style.left  = (tRect.left - calRect.left) + 'px';
+                    ghost.style.width = tRect.width + 'px';
+                    ghost.style.display = 'block';
+                } else {
+                    ghost.style.display = 'none';
+                }
+            }
+
+            async function onUp() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup',  onUp);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend',  onUp);
+                ghost.style.display = 'none';
+
+                if (moved && targetColIndex !== startColIndex) {
+                    const targetDate = allCols[targetColIndex].getAttribute('data-date');
+                    const startTime  = event.start.toTimeString().slice(0, 8);
+                    const endTime    = (event.end || event.start).toTimeString().slice(0, 8);
+
+                    const payload = {
+                        classeId:          CLASSE_ID,
+                        programmationUEId: event.extendedProps.programmationUEId || null,
+                        jour:              targetDate,
+                        heureDebut:        startTime,
+                        jourFin:           targetDate,
+                        heureFin:          endTime,
+                        typeSeance:        event.extendedProps.isPause ? 'PAUSE' : 'CM',
+                        salle:             event.extendedProps.salle || '',
+                        couleur:           event.backgroundColor,
+                        titreAffiche:      event.title.split('\n')[0],
+                        sousTitreAffiche:  event.title.split('\n')[1] || '',
+                        enseignantIds:     event.extendedProps.enseignantIds || []
+                    };
+
+                    try {
+                        const created = await createPlage(payload);
+                        calendar.addEvent(plageToEvent(created));
+                        toast('Plage dupliquée le ' + new Date(targetDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }));
+                    } catch (e) {
+                        toast('Erreur lors de la duplication', true);
+                    }
+                }
+                setTimeout(() => { suppressClick = false; }, 50);
+            }
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup',  onUp);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend',  onUp);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // EXPORT PDF
+    // ═══════════════════════════════════════════════════
+    $('btn-pdf').addEventListener('click', async () => {
+        toast('Génération du PDF…');
+        const calEl = $('calendar');
+        const { jsPDF } = window.jspdf;
+        try {
+            const canvas  = await html2canvas(calEl, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const w = canvas.width, h = canvas.height;
+            const headerH = 440;
+            const totalH  = h + headerH;
+            const orientation = w > totalH ? 'landscape' : 'portrait';
+            const pdf = new jsPDF({ orientation, unit: 'px', format: [w, totalH] });
+
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(0, 0, w, headerH, 'F');
+            pdf.setTextColor(24, 23, 20);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(104);
+            pdf.text('Emploi du temps', w / 2, 180, { align: 'center' });
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(56);
+            pdf.setTextColor(106, 103, 96);
+            const infos = `${CLASSE_NOM} · Année académique ${ANNEE_ACADEMIQUE} · ${SEMESTRE} · Semaine du ${$('wlabel').textContent}`;
+            pdf.text(infos, w / 2, 290, { align: 'center' });
+            pdf.setDrawColor(228, 225, 216);
+            pdf.setLineWidth(1);
+            pdf.line(0, headerH - 1, w, headerH - 1);
+            pdf.addImage(imgData, 'PNG', 0, headerH, w, h);
+            const label = $('wlabel').textContent.replace(/[^\w-]+/g, '_');
+            pdf.save(`emploi-du-temps_${label}.pdf`);
+            toast('PDF téléchargé !');
+        } catch (err) {
+            console.error(err);
+            toast('Erreur lors de la génération du PDF', true);
+        }
+    });
+
+    // ═══════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════
+    $('btn-prev').addEventListener('click', () => calendar.prev());
+    $('btn-next').addEventListener('click', () => calendar.next());
+    $('winput').addEventListener('change', e => {
+        if (e.target.value) calendar.gotoDate(e.target.value);
+    });
+});
 </script>
 </body>
 </html>
